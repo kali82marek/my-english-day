@@ -1,0 +1,12 @@
+name = "my-english-day-api"
+main = "src/index.ts"
+compatibility_date = "2025-05-28"
+compatibility_flags = ["nodejs_compat"]
+
+[vars]
+ENVIRONMENT = "production"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "my-english-day-db"
+database_id = "9bc5235d-6547-4b4d-8d6d-b62380e6f678"

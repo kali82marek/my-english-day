@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": ".bootstrap-scaffold",
-    "slug": ".bootstrap-scaffold",
+    "name": "my-english-day",
+    "slug": "my-english-day",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "bootstrapscaffold",
+    "scheme": "myenglishday",
     "userInterfaceStyle": "automatic",
     "ios": {
       "icon": "./assets/expo.icon"

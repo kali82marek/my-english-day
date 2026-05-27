@@ -1,5 +1,5 @@
 {
-  "name": "bootstrap-scaffold",
+  "name": "my-english-day",
   "main": "expo-router/entry",
   "version": "1.0.0",
   "dependencies": {
@@ -29,7 +29,8 @@
   },
   "devDependencies": {
     "@types/react": "~19.2.2",
-    "typescript": "~6.0.3"
+    "typescript": "~6.0.3",
+    "wrangler": "^4.95.0"
   },
   "scripts": {
     "start": "expo start",
@@ -37,7 +38,11 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
-    "lint": "expo lint"
+    "lint": "expo lint",
+    "api:dev": "cd api && npm run dev",
+    "api:deploy": "cd api && npm run deploy",
+    "web:export": "npx expo export --platform web",
+    "web:deploy": "npx wrangler pages deploy dist --project-name my-english-day"
   },
   "private": true
 }
