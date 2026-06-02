@@ -439,14 +439,14 @@ Pierwsza migracja w projekcie ustala konwencję `api/migrations/NNNN_*.sql`. Sli
 
 #### Automated
 
-- [x] 4.1 Lint przechodzi: `npm run lint`
-- [x] 4.2 Typecheck frontu przechodzi (typedRoutes)
+- [x] 4.1 Lint przechodzi: `npm run lint` — 50e12bb
+- [x] 4.2 Typecheck frontu przechodzi (typedRoutes) — 50e12bb
 
 #### Manual
 
-- [x] 4.3 Świeży start bez tokenu → redirect na logowanie, renderowane BEZ tabów
-- [x] 4.4 Rejestracja → auto-login → ekran główny „Witaj, <email>" z widocznymi tabami
-- [x] 4.5 Restart aplikacji → sesja trwa (brak mignięcia logowania)
-- [x] 4.6 Wyloguj → powrót na logowanie; ponowne logowanie działa
-- [x] 4.7 Wejście na trasę chronioną bez sesji → redirect na logowanie
-- [x] 4.8 Taby działają natywnie i na web po przeniesieniu do `(app)` (`index`↔`explore`)
+- [x] 4.3 Świeży start bez tokenu → redirect na logowanie, renderowane BEZ tabów — 50e12bb
+- [x] 4.4 Rejestracja → auto-login → ekran główny „Witaj, <email>" z widocznymi tabami — 50e12bb
+- [x] 4.5 Restart aplikacji → sesja trwa (brak mignięcia logowania) — 50e12bb
+- [x] 4.6 Wyloguj → powrót na logowanie; ponowne logowanie działa — 50e12bb
+- [x] 4.7 Wejście na trasę chronioną bez sesji → redirect na logowanie — 50e12bb
+- [x] 4.8 Taby działają natywnie i na web po przeniesieniu do `(app)` (`index`↔`explore`) — 50e12bb

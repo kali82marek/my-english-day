@@ -1,7 +1,7 @@
 ---
 change_id: minimal-auth-app-spine
 title: Minimalny auth i uwierzytelniony szkielet aplikacji
-status: implementing
+status: implemented
 created: 2026-06-02
 updated: 2026-06-02
 archived_at: null
