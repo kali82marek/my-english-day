@@ -400,27 +400,27 @@ Pierwsza migracja w projekcie ustala konwencję `api/migrations/NNNN_*.sql`. Sli
 
 #### Automated
 
-- [x] 1.1 Migracja aplikuje się czysto: `wrangler d1 migrations apply my-english-day-db --local`
-- [x] 1.2 Testy jednostkowe przechodzą: `cd api && npm test`
-- [x] 1.3 Typecheck Workera przechodzi
+- [x] 1.1 Migracja aplikuje się czysto: `wrangler d1 migrations apply my-english-day-db --local` — 4f4e4bd
+- [x] 1.2 Testy jednostkowe przechodzą: `cd api && npm test` — 4f4e4bd
+- [x] 1.3 Typecheck Workera przechodzi — 4f4e4bd
 
 #### Manual
 
-- [x] 1.4 Tabela `users` istnieje w lokalnym D1 z UNIQUE na `email`
+- [x] 1.4 Tabela `users` istnieje w lokalnym D1 z UNIQUE na `email` — 4f4e4bd
 
 ### Phase 2: Endpointy auth + middleware (API)
 
 #### Automated
 
-- [ ] 2.1 Typecheck Workera przechodzi
-- [ ] 2.2 Testy z Phase 1 nadal przechodzą: `cd api && npm test`
+- [x] 2.1 Typecheck Workera przechodzi
+- [x] 2.2 Testy z Phase 1 nadal przechodzą: `cd api && npm test`
 
 #### Manual
 
-- [ ] 2.3 `cd api && npm run dev` startuje na porcie 3030
-- [ ] 2.4 `POST /auth/register` zwraca token+user; powtórzony email → 409
-- [ ] 2.5 `POST /auth/login` poprawne → token; złe hasło → 401 (ogólny komunikat)
-- [ ] 2.6 `GET /auth/me` z tokenem → user; bez/zły token → 401
+- [x] 2.3 `cd api && npm run dev` startuje na porcie 3030
+- [x] 2.4 `POST /auth/register` zwraca token+user; powtórzony email → 409
+- [x] 2.5 `POST /auth/login` poprawne → token; złe hasło → 401 (ogólny komunikat)
+- [x] 2.6 `GET /auth/me` z tokenem → user; bez/zły token → 401
 
 ### Phase 3: Sesja + klient API (front)
 

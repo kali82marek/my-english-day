@@ -45,3 +45,4 @@ example
 # API (Cloudflare Workers)
 api/node_modules/
 api/.wrangler/
+api/.dev.vars

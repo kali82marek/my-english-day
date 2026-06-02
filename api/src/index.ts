@@ -1,13 +1,9 @@
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
+import type { AppEnv } from './types';
+import { authRouter } from './routes/auth';
 
-type Bindings = {
-  DB: D1Database;
-  ENVIRONMENT: string;
-  JWT_SECRET: string;
-};
-
-const app = new Hono<{ Bindings: Bindings }>();
+const app = new Hono<AppEnv>();
 
 app.use('*', cors({
   origin: [
@@ -26,5 +22,7 @@ app.get('/health', (c) => {
     environment: c.env.ENVIRONMENT,
   });
 });
+
+app.route('/auth', authRouter);
 
 export default app;
