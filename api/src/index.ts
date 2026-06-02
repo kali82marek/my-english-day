@@ -4,6 +4,7 @@ import { cors } from 'hono/cors';
 type Bindings = {
   DB: D1Database;
   ENVIRONMENT: string;
+  JWT_SECRET: string;
 };
 
 const app = new Hono<{ Bindings: Bindings }>();
