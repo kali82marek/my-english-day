@@ -412,28 +412,28 @@ Pierwsza migracja w projekcie ustala konwencję `api/migrations/NNNN_*.sql`. Sli
 
 #### Automated
 
-- [x] 2.1 Typecheck Workera przechodzi
-- [x] 2.2 Testy z Phase 1 nadal przechodzą: `cd api && npm test`
+- [x] 2.1 Typecheck Workera przechodzi — 4c82c12
+- [x] 2.2 Testy z Phase 1 nadal przechodzą: `cd api && npm test` — 4c82c12
 
 #### Manual
 
-- [x] 2.3 `cd api && npm run dev` startuje na porcie 3030
-- [x] 2.4 `POST /auth/register` zwraca token+user; powtórzony email → 409
-- [x] 2.5 `POST /auth/login` poprawne → token; złe hasło → 401 (ogólny komunikat)
-- [x] 2.6 `GET /auth/me` z tokenem → user; bez/zły token → 401
+- [x] 2.3 `cd api && npm run dev` startuje na porcie 3030 — 4c82c12
+- [x] 2.4 `POST /auth/register` zwraca token+user; powtórzony email → 409 — 4c82c12
+- [x] 2.5 `POST /auth/login` poprawne → token; złe hasło → 401 (ogólny komunikat) — 4c82c12
+- [x] 2.6 `GET /auth/me` z tokenem → user; bez/zły token → 401 — 4c82c12
 
 ### Phase 3: Sesja + klient API (front)
 
 #### Automated
 
-- [ ] 3.1 Lint przechodzi: `npm run lint`
-- [ ] 3.2 Typecheck frontu przechodzi
+- [x] 3.1 Lint przechodzi: `npm run lint`
+- [x] 3.2 Typecheck frontu przechodzi
 
 #### Manual
 
-- [ ] 3.3 Aplikacja startuje na symulatorze po dodaniu `expo-secure-store`
-- [ ] 3.4 `setToken`→`getToken` round-trip i `clearToken` działają
-- [ ] 3.5 `authApi.me` trafia pod `extra.apiBaseUrl` (Worker na 3030), nie „network request failed"
+- [x] 3.3 Aplikacja startuje na symulatorze po dodaniu `expo-secure-store`
+- [x] 3.4 `setToken`→`getToken` round-trip i `clearToken` działają
+- [x] 3.5 `authApi.me` trafia pod `extra.apiBaseUrl` (Worker na 3030), nie „network request failed"
 
 ### Phase 4: Ekrany auth + routing chroniony (front)
 

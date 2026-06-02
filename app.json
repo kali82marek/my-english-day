@@ -34,11 +34,16 @@
             "imageWidth": 76
           }
         }
-      ]
+      ],
+      "expo-secure-store"
     ],
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "apiBaseUrl": "http://localhost:3030",
+      "apiBaseUrlNote": "Default targets iOS simulator. Alternatives: Android emulator -> http://10.0.2.2:3030; physical device -> http://<host-LAN-IP>:3030. Read via Constants.expoConfig?.extra?.apiBaseUrl."
     }
   }
 }
