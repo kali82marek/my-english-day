@@ -426,27 +426,27 @@ Pierwsza migracja w projekcie ustala konwencję `api/migrations/NNNN_*.sql`. Sli
 
 #### Automated
 
-- [x] 3.1 Lint przechodzi: `npm run lint`
-- [x] 3.2 Typecheck frontu przechodzi
+- [x] 3.1 Lint przechodzi: `npm run lint` — db1aaa7
+- [x] 3.2 Typecheck frontu przechodzi — db1aaa7
 
 #### Manual
 
-- [x] 3.3 Aplikacja startuje na symulatorze po dodaniu `expo-secure-store`
-- [x] 3.4 `setToken`→`getToken` round-trip i `clearToken` działają
-- [x] 3.5 `authApi.me` trafia pod `extra.apiBaseUrl` (Worker na 3030), nie „network request failed"
+- [x] 3.3 Aplikacja startuje na symulatorze po dodaniu `expo-secure-store` — db1aaa7
+- [x] 3.4 `setToken`→`getToken` round-trip i `clearToken` działają — db1aaa7
+- [x] 3.5 `authApi.me` trafia pod `extra.apiBaseUrl` (Worker na 3030), nie „network request failed" — db1aaa7
 
 ### Phase 4: Ekrany auth + routing chroniony (front)
 
 #### Automated
 
-- [ ] 4.1 Lint przechodzi: `npm run lint`
-- [ ] 4.2 Typecheck frontu przechodzi (typedRoutes)
+- [x] 4.1 Lint przechodzi: `npm run lint`
+- [x] 4.2 Typecheck frontu przechodzi (typedRoutes)
 
 #### Manual
 
-- [ ] 4.3 Świeży start bez tokenu → redirect na logowanie, renderowane BEZ tabów
-- [ ] 4.4 Rejestracja → auto-login → ekran główny „Witaj, <email>" z widocznymi tabami
-- [ ] 4.5 Restart aplikacji → sesja trwa (brak mignięcia logowania)
-- [ ] 4.6 Wyloguj → powrót na logowanie; ponowne logowanie działa
-- [ ] 4.7 Wejście na trasę chronioną bez sesji → redirect na logowanie
-- [ ] 4.8 Taby działają natywnie i na web po przeniesieniu do `(app)` (`index`↔`explore`)
+- [x] 4.3 Świeży start bez tokenu → redirect na logowanie, renderowane BEZ tabów
+- [x] 4.4 Rejestracja → auto-login → ekran główny „Witaj, <email>" z widocznymi tabami
+- [x] 4.5 Restart aplikacji → sesja trwa (brak mignięcia logowania)
+- [x] 4.6 Wyloguj → powrót na logowanie; ponowne logowanie działa
+- [x] 4.7 Wejście na trasę chronioną bez sesji → redirect na logowanie
+- [x] 4.8 Taby działają natywnie i na web po przeniesieniu do `(app)` (`index`↔`explore`)
