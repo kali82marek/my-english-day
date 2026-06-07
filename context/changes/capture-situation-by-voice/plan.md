@@ -377,24 +377,24 @@ Przepisuje ekran główny `(app)/index.tsx` na: przycisk nagrywania u góry + li
 
 #### Manual
 
-- [x] 3.3 Pierwsze nagranie prosi o zgodę na mikrofon (po polsku)
-- [x] 3.4 `start`/`stop` produkuje poprawny `uri`; < 1 s odrzucone; > 120 s auto-stop
-- [x] 3.5 `situationsApi.create(...)` zwraca wiersz `pending` przeciw `wrangler dev`
+- [x] 3.3 Pierwsze nagranie prosi o zgodę na mikrofon (po polsku) — aca8819
+- [x] 3.4 `start`/`stop` produkuje poprawny `uri`; < 1 s odrzucone; > 120 s auto-stop — aca8819
+- [x] 3.5 `situationsApi.create(...)` zwraca wiersz `pending` przeciw `wrangler dev` — aca8819
 
 ### Phase 4: Ekran nagrywania + lista (front)
 
 #### Automated
 
-- [x] 4.1 Typecheck przechodzi (`npm run typecheck`)
-- [x] 4.2 Lint przechodzi (`npm run lint`)
+- [x] 4.1 Typecheck przechodzi (`npm run typecheck`) — aca8819
+- [x] 4.2 Lint przechodzi (`npm run lint`) — aca8819
 
 #### Manual
 
-- [x] 4.3 Pełna ścieżka E2E: tap → mowa → `pending` < 1 s → transkrypt
-- [x] 4.4 Wiele nagrań w sesji dodaje wiele pozycji (FR-005)
-- [x] 4.5 Swipe-delete usuwa sytuację z listy i bazy
-- [x] 4.6 Wymuszony błąd pokazuje stan „nagraj ponownie"
-- [x] 4.7 Restart aplikacji zachowuje dzisiejsze sytuacje; lista pokazuje tylko dzisiejsze
-- [x] 4.8 Brak regresji w logowaniu/wylogowaniu i routingu chronionym
-- [x] 4.9 Osierocony `pending` po ~60 s → stan błędu i zatrzymany polling
-- [x] 4.10 Szablonowa zakładka „Explore" usunięta z UI (natywne + web)
+- [x] 4.3 Pełna ścieżka E2E: tap → mowa → `pending` < 1 s → transkrypt — aca8819
+- [x] 4.4 Wiele nagrań w sesji dodaje wiele pozycji (FR-005) — aca8819
+- [x] 4.5 Swipe-delete usuwa sytuację z listy i bazy — aca8819
+- [x] 4.6 Wymuszony błąd pokazuje stan „nagraj ponownie" — aca8819
+- [x] 4.7 Restart aplikacji zachowuje dzisiejsze sytuacje; lista pokazuje tylko dzisiejsze — aca8819
+- [x] 4.8 Brak regresji w logowaniu/wylogowaniu i routingu chronionym — aca8819
+- [x] 4.9 Osierocony `pending` po ~60 s → stan błędu i zatrzymany polling — aca8819
+- [x] 4.10 Szablonowa zakładka „Explore" usunięta z UI (natywne + web) — aca8819
