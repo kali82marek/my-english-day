@@ -1,5 +1,6 @@
 import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
 import { useColorScheme } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { AnimatedSplashOverlay } from '@/components/animated-icon';
 import { AuthProvider, useAuth } from '@/contexts/auth-context';
@@ -10,17 +11,21 @@ import { AuthProvider, useAuth } from '@/contexts/auth-context';
  * Drzewo owinięte w `AuthProvider` (stan sesji) i `ThemeProvider`. Zamiast
  * renderować `AppTabs` bezpośrednio, root renderuje `Stack` z dwiema grupami
  * gated po statusie sesji (zob. `RootNavigator`). Grupy w nawiasach NIE zmieniają
- * URL (`/`, `/explore` zostają).
+ * URL (ekran główny zostaje pod `/`).
  */
 export default function RootLayout() {
   const colorScheme = useColorScheme();
   return (
-    <AuthProvider>
-      <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-        <AnimatedSplashOverlay />
-        <RootNavigator />
-      </ThemeProvider>
-    </AuthProvider>
+    // `GestureHandlerRootView` u korzenia — wymagany przez `ReanimatedSwipeable`
+    // (swipe-delete na liście sytuacji). `flex: 1`, by drzewo wypełniło ekran.
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <AuthProvider>
+        <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+          <AnimatedSplashOverlay />
+          <RootNavigator />
+        </ThemeProvider>
+      </AuthProvider>
+    </GestureHandlerRootView>
   );
 }
 

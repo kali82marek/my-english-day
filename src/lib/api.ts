@@ -8,6 +8,7 @@
  */
 
 import Constants from 'expo-constants';
+import { File } from 'expo-file-system';
 
 import { getToken } from '@/lib/session';
 
@@ -143,11 +144,18 @@ export const situationsApi = {
    * Optymistyczny zapis: wysyła audio (multipart) i dostaje wiersz `pending`.
    * `FormData` z polem-plikiem w kształcie RN (`{ uri, name, type }`).
    */
-  create(audio: AudioUpload, durationMs: number): Promise<Situation> {
+  async create(audio: AudioUpload, durationMs: number): Promise<Situation> {
+    // Globalny `fetch` w Expo SDK 56 to WinterCG fetch. Jego `convertFormData`
+    // NIE obsługuje natywnego wariantu RN `{ uri }` ani Bloba z `ArrayBuffer`
+    // (RN-owy `Blob`). Akceptuje za to część będącą obiektem z metodą `bytes()`
+    // oraz polami `name`/`type` (nagłówki multipart). Wczytujemy nagranie do bajtów
+    // przez `expo-file-system` i dokładamy taką część — `name` z rozszerzeniem
+    // `.m4a` jest kluczowe (serwer i Whisper wykrywają format po nazwie pliku).
+    const bytes = new Uint8Array(await new File(audio.uri).arrayBuffer());
+    const filePart = { name: audio.name, type: audio.type, bytes: async () => bytes };
+
     const form = new FormData();
-    // RN przyjmuje obiekt pliku jako `{ uri, name, type }` (rzut przez unknown —
-    // typy DOM `FormData` nie znają wariantu natywnego).
-    form.append('audio', { uri: audio.uri, name: audio.name, type: audio.type } as unknown as Blob);
+    form.append('audio', filePart as unknown as Blob);
     form.append('duration_ms', String(durationMs));
 
     return apiFetch<Situation>('/situations', { method: 'POST', body: form });
