@@ -1,0 +1,14 @@
+# Lokalny stan Wrangler/Miniflare (D1, R2, KV)
+.wrangler/
+
+# Logi dev servera
+wrangler-dev*.log
+
+# Lokalne sekrety
+.dev.vars
+
+# Pliki audio używane do ręcznego smoke-testu (nie commitujemy nagrań)
+scripts/*.m4a
+scripts/*.mp3
+scripts/*.wav
+scripts/*.webm

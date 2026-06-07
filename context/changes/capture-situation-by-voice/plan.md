@@ -344,29 +344,29 @@ Przepisuje ekran główny `(app)/index.tsx` na: przycisk nagrywania u góry + li
 
 #### Automated
 
-- [x] 1.1 Migracja stosuje się czysto lokalnie (`wrangler d1 migrations apply --local`)
-- [x] 1.2 Typecheck przechodzi (`api && npm run typecheck`)
-- [x] 1.3 `wrangler types` regeneruje typy bez błędu (`cf-typegen`)
+- [x] 1.1 Migracja stosuje się czysto lokalnie (`wrangler d1 migrations apply --local`) — 8d207c4
+- [x] 1.2 Typecheck przechodzi (`api && npm run typecheck`) — 8d207c4
+- [x] 1.3 `wrangler types` regeneruje typy bez błędu (`cf-typegen`) — 8d207c4
 
 #### Manual
 
-- [x] 1.4 Tabela `situations` istnieje w lokalnym D1 z poprawnym schematem
-- [ ] 1.5 Bucket R2 `my-english-day-audio` istnieje na koncie Cloudflare
+- [x] 1.4 Tabela `situations` istnieje w lokalnym D1 z poprawnym schematem — 8d207c4
+- [x] 1.5 Bucket R2 `my-english-day-audio` istnieje na koncie Cloudflare
 
 ### Phase 2: Endpointy sytuacji + transkrypcja (API)
 
 #### Automated
 
-- [ ] 2.1 Typecheck przechodzi (`api && npm run typecheck`)
-- [ ] 2.2 Testy przechodzą (`api && npm test`)
+- [x] 2.1 Typecheck przechodzi (`api && npm run typecheck`)
+- [x] 2.2 Testy przechodzą (`api && npm test`)
 
 #### Manual
 
-- [ ] 2.3 `POST /situations` zwraca `201` ze `status: 'pending'` w < 1 s
-- [ ] 2.4 Po kilku sekundach `GET /situations` pokazuje `status: 'done'` z polskim transkryptem
-- [ ] 2.5 Plik R2 skasowany po sukcesie; przy błędzie `status: 'failed'` i plik pozostaje
-- [ ] 2.6 `GET /situations` zwraca tylko dzisiejsze sytuacje zalogowanego użytkownika
-- [ ] 2.7 `DELETE /situations/:id` usuwa wiersz; cudza sytuacja → `404`
+- [x] 2.3 `POST /situations` zwraca `201` ze `status: 'pending'` w < 1 s
+- [x] 2.4 Po kilku sekundach `GET /situations` pokazuje `status: 'done'` z polskim transkryptem
+- [x] 2.5 Plik R2 skasowany po sukcesie; przy błędzie `status: 'failed'` i plik pozostaje
+- [x] 2.6 `GET /situations` zwraca tylko dzisiejsze sytuacje zalogowanego użytkownika
+- [x] 2.7 `DELETE /situations/:id` usuwa wiersz; cudza sytuacja → `404`
 
 ### Phase 3: Nagrywanie + klient API (front)
 
