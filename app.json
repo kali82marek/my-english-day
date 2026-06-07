@@ -35,7 +35,13 @@
           }
         }
       ],
-      "expo-secure-store"
+      "expo-secure-store",
+      [
+        "expo-audio",
+        {
+          "microphonePermission": "Aplikacja używa mikrofonu, aby nagrać po polsku przeżytą sytuację do transkrypcji."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

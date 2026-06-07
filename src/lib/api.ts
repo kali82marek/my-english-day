@@ -68,7 +68,11 @@ export async function apiFetch<T>(path: string, opts: RequestInit = {}): Promise
   const token = await getToken();
 
   const headers = new Headers(opts.headers);
-  headers.set('Content-Type', 'application/json');
+  // Dla `FormData` NIE ustawiamy `Content-Type` — runtime sam dołoży
+  // `multipart/form-data; boundary=...`. Ręczne ustawienie zepsułoby boundary.
+  if (!(opts.body instanceof FormData)) {
+    headers.set('Content-Type', 'application/json');
+  }
   if (token) {
     headers.set('Authorization', `Bearer ${token}`);
   }
@@ -78,6 +82,11 @@ export async function apiFetch<T>(path: string, opts: RequestInit = {}): Promise
   if (!res.ok) {
     const body = (await res.json().catch(() => null)) as ErrorBody | null;
     throw new ApiError(res.status, messageFromBody(body, `Błąd żądania (${res.status}).`));
+  }
+
+  // 204 No Content (np. DELETE) nie ma ciała — nie parsuj JSON-a.
+  if (res.status === 204) {
+    return undefined as T;
   }
 
   return res.json() as Promise<T>;
@@ -106,5 +115,49 @@ export const authApi = {
 
   me(): Promise<{ user: AuthUser }> {
     return apiFetch<{ user: AuthUser }>('/auth/me', { method: 'GET' });
+  },
+};
+
+/**
+ * Sytuacja zwracana przez Worker (`/situations`). `audio_key` NIE jest eksponowany
+ * klientowi (kształt = DTO z `api/src/routes/situations.ts`).
+ */
+export type Situation = {
+  id: number;
+  status: 'pending' | 'done' | 'failed';
+  transcript: string | null;
+  duration_ms: number | null;
+  created_at: string;
+};
+
+/** Plik audio do uploadu — `uri` z `expo-audio`, plus nazwa i typ MIME. */
+export type AudioUpload = {
+  uri: string;
+  name: string;
+  type: string;
+};
+
+/** Operacje na sytuacjach dnia (S-01). */
+export const situationsApi = {
+  /**
+   * Optymistyczny zapis: wysyła audio (multipart) i dostaje wiersz `pending`.
+   * `FormData` z polem-plikiem w kształcie RN (`{ uri, name, type }`).
+   */
+  create(audio: AudioUpload, durationMs: number): Promise<Situation> {
+    const form = new FormData();
+    // RN przyjmuje obiekt pliku jako `{ uri, name, type }` (rzut przez unknown —
+    // typy DOM `FormData` nie znają wariantu natywnego).
+    form.append('audio', { uri: audio.uri, name: audio.name, type: audio.type } as unknown as Blob);
+    form.append('duration_ms', String(durationMs));
+
+    return apiFetch<Situation>('/situations', { method: 'POST', body: form });
+  },
+
+  list(): Promise<{ situations: Situation[] }> {
+    return apiFetch<{ situations: Situation[] }>('/situations', { method: 'GET' });
+  },
+
+  remove(id: number): Promise<void> {
+    return apiFetch<void>(`/situations/${id}`, { method: 'DELETE' });
   },
 };

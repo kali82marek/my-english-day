@@ -357,23 +357,23 @@ Przepisuje ekran główny `(app)/index.tsx` na: przycisk nagrywania u góry + li
 
 #### Automated
 
-- [x] 2.1 Typecheck przechodzi (`api && npm run typecheck`)
-- [x] 2.2 Testy przechodzą (`api && npm test`)
+- [x] 2.1 Typecheck przechodzi (`api && npm run typecheck`) — 8a2a474
+- [x] 2.2 Testy przechodzą (`api && npm test`) — 8a2a474
 
 #### Manual
 
-- [x] 2.3 `POST /situations` zwraca `201` ze `status: 'pending'` w < 1 s
-- [x] 2.4 Po kilku sekundach `GET /situations` pokazuje `status: 'done'` z polskim transkryptem
-- [x] 2.5 Plik R2 skasowany po sukcesie; przy błędzie `status: 'failed'` i plik pozostaje
-- [x] 2.6 `GET /situations` zwraca tylko dzisiejsze sytuacje zalogowanego użytkownika
-- [x] 2.7 `DELETE /situations/:id` usuwa wiersz; cudza sytuacja → `404`
+- [x] 2.3 `POST /situations` zwraca `201` ze `status: 'pending'` w < 1 s — 8a2a474
+- [x] 2.4 Po kilku sekundach `GET /situations` pokazuje `status: 'done'` z polskim transkryptem — 8a2a474
+- [x] 2.5 Plik R2 skasowany po sukcesie; przy błędzie `status: 'failed'` i plik pozostaje — 8a2a474
+- [x] 2.6 `GET /situations` zwraca tylko dzisiejsze sytuacje zalogowanego użytkownika — 8a2a474
+- [x] 2.7 `DELETE /situations/:id` usuwa wiersz; cudza sytuacja → `404` — 8a2a474
 
 ### Phase 3: Nagrywanie + klient API (front)
 
 #### Automated
 
-- [ ] 3.1 Typecheck przechodzi (`npm run typecheck`)
-- [ ] 3.2 Lint przechodzi (`npm run lint`)
+- [x] 3.1 Typecheck przechodzi (`npm run typecheck`)
+- [x] 3.2 Lint przechodzi (`npm run lint`)
 
 #### Manual
 
