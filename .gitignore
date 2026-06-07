@@ -46,3 +46,4 @@ example
 api/node_modules/
 api/.wrangler/
 api/.dev.vars
+api/worker-configuration.d.ts

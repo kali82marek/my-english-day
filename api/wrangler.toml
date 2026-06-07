@@ -11,3 +11,7 @@ binding = "DB"
 database_name = "my-english-day-db"
 database_id = "9bc5235d-6547-4b4d-8d6d-b62380e6f678"
 migrations_dir = "migrations"
+
+[[r2_buckets]]
+binding = "AUDIO_BUCKET"
+bucket_name = "my-english-day-audio"

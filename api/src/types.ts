@@ -8,6 +8,8 @@ export type Bindings = {
   DB: D1Database;
   ENVIRONMENT: string;
   JWT_SECRET: string;
+  AUDIO_BUCKET: R2Bucket;
+  OPENAI_API_KEY: string;
 };
 
 export type Variables = {
