@@ -350,26 +350,26 @@ Zamiana placeholderowego taba `explore` na tab „Fiszki" z ekranem przeglądu: 
 
 #### Automated
 
-- [x] 2.1 Typecheck przechodzi (`api && npm run typecheck`)
-- [x] 2.2 Testy przechodzą (`api && npm test`)
+- [x] 2.1 Typecheck przechodzi (`api && npm run typecheck`) — ea01049
+- [x] 2.2 Testy przechodzą (`api && npm test`) — ea01049
 
 #### Manual
 
-- [x] 2.3 Po transkrypcji `GET /flashcards/proposals` zwraca ~3-5 poprawnych fiszek
-- [x] 2.4 `flashcards_status` przechodzi `pending`→`done`; przy błędzie LLM → `failed`, transkrypt zachowany
-- [x] 2.5 `accept` ustawia `status='accepted'` (znika z proposals); `DELETE` kasuje wiersz
-- [x] 2.6 Izolacja po `user_id` (cudza fiszka → `404`)
+- [x] 2.3 Po transkrypcji `GET /flashcards/proposals` zwraca ~3-5 poprawnych fiszek — ea01049
+- [x] 2.4 `flashcards_status` przechodzi `pending`→`done`; przy błędzie LLM → `failed`, transkrypt zachowany — ea01049
+- [x] 2.5 `accept` ustawia `status='accepted'` (znika z proposals); `DELETE` kasuje wiersz — ea01049
+- [x] 2.6 Izolacja po `user_id` (cudza fiszka → `404`) — ea01049
 
 ### Phase 3: Klient API + typy (front)
 
 #### Automated
 
-- [ ] 3.1 Typecheck przechodzi (`npm run typecheck`)
-- [ ] 3.2 Lint przechodzi (`npm run lint`)
+- [x] 3.1 Typecheck przechodzi (`npm run typecheck`)
+- [x] 3.2 Lint przechodzi (`npm run lint`)
 
 #### Manual
 
-- [ ] 3.3 `flashcardsApi.listProposals()` zwraca propozycje + `generatingCount` przeciw `wrangler dev`
+- [x] 3.3 `flashcardsApi.listProposals()` zwraca propozycje + `generatingCount` przeciw `wrangler dev`
 
 ### Phase 4: Ekran przeglądu + nawigacja (front)
 

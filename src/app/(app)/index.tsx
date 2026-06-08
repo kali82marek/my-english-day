@@ -111,6 +111,7 @@ export default function HomeScreen() {
       transcript: null,
       duration_ms: durationMs,
       created_at: new Date().toISOString(),
+      flashcards_status: 'pending',
     };
     setSituations((prev) => [optimistic, ...prev]);
 

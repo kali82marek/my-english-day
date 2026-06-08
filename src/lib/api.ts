@@ -129,6 +129,9 @@ export type Situation = {
   transcript: string | null;
   duration_ms: number | null;
   created_at: string;
+  // Stan generowania fiszek (S-02): 'pending' = w toku, 'done' = gotowe,
+  // 'failed' = generowanie nie powiodło się (transkrypt i tak zachowany).
+  flashcards_status: 'pending' | 'done' | 'failed';
 };
 
 /** Plik audio do uploadu — `uri` z `expo-audio`, plus nazwa i typ MIME. */
@@ -167,5 +170,42 @@ export const situationsApi = {
 
   remove(id: number): Promise<void> {
     return apiFetch<void>(`/situations/${id}`, { method: 'DELETE' });
+  },
+};
+
+/**
+ * Propozycja fiszki zwracana przez Worker (`/flashcards/proposals`). Kształt = DTO
+ * z `api/src/routes/flashcards.ts`; `status` i `user_id` nieeksponowane (lista to
+ * z definicji `proposed`). `example_en` bywa pustym stringiem (gł. dla `sentence`).
+ */
+export type Flashcard = {
+  id: number;
+  situation_id: number;
+  type: 'word' | 'phrase' | 'sentence';
+  front_en: string;
+  back_pl: string;
+  example_en: string;
+  created_at: string;
+};
+
+/** Operacje na fiszkach (S-02): przegląd propozycji + bramka akceptacji. */
+export const flashcardsApi = {
+  /**
+   * Propozycje do przejrzenia + licznik sytuacji w trakcie generowania
+   * (`generatingCount` > 0 → front odpytuje, dopóki nie spadnie do 0).
+   */
+  listProposals(): Promise<{ proposals: Flashcard[]; generatingCount: number }> {
+    return apiFetch<{ proposals: Flashcard[]; generatingCount: number }>(
+      '/flashcards/proposals',
+      { method: 'GET' },
+    );
+  },
+
+  accept(id: number): Promise<void> {
+    return apiFetch<void>(`/flashcards/${id}/accept`, { method: 'POST' });
+  },
+
+  reject(id: number): Promise<void> {
+    return apiFetch<void>(`/flashcards/${id}`, { method: 'DELETE' });
   },
 };
