@@ -18,6 +18,9 @@ export type GeneratedCard = {
   front_en: string;
   back_pl: string;
   example_en: string;
+  // Pochodzenie karty: false = fiszka bazowa (z tego, co opisano),
+  // true = wariant (ten sam kontekst, podmienione detale). Tylko server-side.
+  is_variant: boolean;
 };
 
 // System prompt celuje w Kryterium sukcesu PRD: ≥70% fiszek akceptowanych bez poprawek.
@@ -31,7 +34,16 @@ Zasady:
 - front_en: poprawny, naturalny angielski (to, czego użytkownik ma się nauczyć),
 - back_pl: zwięzłe polskie tłumaczenie,
 - example_en: krótki angielski przykład użycia; dla typu "sentence" możesz zostawić pusty string.
-Twórz fiszki realnie przydatne w opisanej sytuacji, nie oderwane od kontekstu.`;
+Twórz fiszki realnie przydatne w opisanej sytuacji, nie oderwane od kontekstu.
+Te fiszki oznacz "is_variant": false (pochodzą z tego, co faktycznie opisano).
+
+Następnie dołóż dodatkowo ~2-3 WARIANTY — ściśle w obrębie tego samego kontekstu
+(ta sama sytuacja/miejsce/rozmowa), z podmienionymi detalami: inny produkt, inna
+kwota, inne pytanie, inny rozmówca w tej samej scenie. Warianty mają uczyć
+elastyczności językowej w tej sytuacji, NIE wychodź poza jej kontekst i NIE
+powielaj dosłownie fiszek bazowych. Każdy wariant oznacz "is_variant": true.
+Liczbę wariantów dobierz do bogactwa sytuacji — uboga sytuacja może dać mniej
+(lub żadnego), bogata 2-3. Warianty zwróć w tej samej tablicy "flashcards".`;
 
 // Schemat Structured Outputs — wszystkie pola required, additionalProperties: false.
 const RESPONSE_FORMAT = {
@@ -49,12 +61,13 @@ const RESPONSE_FORMAT = {
           items: {
             type: 'object',
             additionalProperties: false,
-            required: ['type', 'front_en', 'back_pl', 'example_en'],
+            required: ['type', 'front_en', 'back_pl', 'example_en', 'is_variant'],
             properties: {
               type: { type: 'string', enum: ['word', 'phrase', 'sentence'] },
               front_en: { type: 'string' },
               back_pl: { type: 'string' },
               example_en: { type: 'string' },
+              is_variant: { type: 'boolean' },
             },
           },
         },

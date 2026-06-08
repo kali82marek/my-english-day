@@ -170,8 +170,8 @@ Rozszerzenie pojedynczego wywołania generowania o warianty: typ, schemat Struct
 
 #### Automated
 
-- [x] 1.1 Migracja stosuje się czysto lokalnie (`wrangler d1 migrations apply --local`)
-- [x] 1.2 Typecheck przechodzi (`api && npm run typecheck`)
+- [x] 1.1 Migracja stosuje się czysto lokalnie (`wrangler d1 migrations apply --local`) — f29082b
+- [x] 1.2 Typecheck przechodzi (`api && npm run typecheck`) — f29082b
 
 #### Manual
 
@@ -182,8 +182,8 @@ Rozszerzenie pojedynczego wywołania generowania o warianty: typ, schemat Struct
 
 #### Automated
 
-- [ ] 2.1 Typecheck przechodzi (`api && npm run typecheck`)
-- [ ] 2.2 Testy przechodzą (`api && npm test`)
+- [x] 2.1 Typecheck przechodzi (`api && npm run typecheck`)
+- [x] 2.2 Testy przechodzą (`api && npm test`)
 
 #### Manual
 

@@ -78,9 +78,10 @@ async function generateAndStoreFlashcards(
     const cards = await generateFlashcards(transcript, env.OPENAI_API_KEY);
     for (const card of cards) {
       await env.DB.prepare(
-        'INSERT INTO flashcards (situation_id, user_id, type, front_en, back_pl, example_en) VALUES (?, ?, ?, ?, ?, ?)',
+        'INSERT INTO flashcards (situation_id, user_id, type, front_en, back_pl, example_en, is_variant) VALUES (?, ?, ?, ?, ?, ?, ?)',
       )
-        .bind(situationId, userId, card.type, card.front_en, card.back_pl, card.example_en)
+        // SQLite boolean = INTEGER: wariant → 1, fiszka bazowa → 0.
+        .bind(situationId, userId, card.type, card.front_en, card.back_pl, card.example_en, card.is_variant ? 1 : 0)
         .run();
     }
     await env.DB.prepare(

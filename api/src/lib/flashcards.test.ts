@@ -14,8 +14,8 @@ function chatResponse(flashcards: unknown, status = 200): Response {
 }
 
 const CARDS = [
-  { type: 'word', front_en: 'invoice', back_pl: 'faktura', example_en: 'Send me the invoice.' },
-  { type: 'sentence', front_en: 'Could you repeat that?', back_pl: 'Możesz powtórzyć?', example_en: '' },
+  { type: 'word', front_en: 'invoice', back_pl: 'faktura', example_en: 'Send me the invoice.', is_variant: false },
+  { type: 'sentence', front_en: 'Could you repeat that?', back_pl: 'Możesz powtórzyć?', example_en: '', is_variant: false },
 ];
 
 describe('generateFlashcards', () => {
@@ -36,6 +36,11 @@ describe('generateFlashcards', () => {
     expect(payload.response_format.type).toBe('json_schema');
     expect(payload.response_format.json_schema.strict).toBe(true);
     expect(payload.messages.at(-1)).toEqual({ role: 'user', content: 'Dziś byłem w banku.' });
+
+    // Schemat wymusza flagę pochodzenia na każdej karcie (S-03).
+    const item = payload.response_format.json_schema.schema.properties.flashcards.items;
+    expect(item.required).toContain('is_variant');
+    expect(item.properties.is_variant.type).toBe('boolean');
   });
 
   it('parsuje fiszki z odpowiedzi modelu', async () => {
@@ -43,6 +48,21 @@ describe('generateFlashcards', () => {
     const cards = await generateFlashcards('cokolwiek', 'sk-test');
     expect(cards).toHaveLength(2);
     expect(cards[0].front_en).toBe('invoice');
+  });
+
+  it('przenosi flagę is_variant z mieszanki fiszek bazowych i wariantów', async () => {
+    const mixed = [
+      { type: 'word', front_en: 'apple', back_pl: 'jabłko', example_en: 'I bought an apple.', is_variant: false },
+      { type: 'word', front_en: 'tomato', back_pl: 'pomidor', example_en: 'I bought a tomato.', is_variant: true },
+      { type: 'phrase', front_en: 'how much is it', back_pl: 'ile to kosztuje', example_en: 'How much is it?', is_variant: true },
+    ];
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(chatResponse(mixed));
+
+    const cards = await generateFlashcards('Byłem w sklepie.', 'sk-test');
+
+    expect(cards).toEqual(mixed);
+    expect(cards.filter((c) => c.is_variant)).toHaveLength(2);
+    expect(cards.find((c) => c.front_en === 'apple')?.is_variant).toBe(false);
   });
 
   it('odpowiedź non-2xx → wyjątek', async () => {
