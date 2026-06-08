@@ -1,7 +1,7 @@
 ---
 change_id: capture-situation-by-voice
 title: Przechwytywanie sytuacji głosem — nagranie po polsku, transkrypcja i zapis
-status: implemented
+status: impl_reviewed
 created: 2026-06-07
 updated: 2026-06-08
 archived_at: null
