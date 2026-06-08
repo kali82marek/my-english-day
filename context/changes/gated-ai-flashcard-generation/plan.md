@@ -375,14 +375,14 @@ Zamiana placeholderowego taba `explore` na tab „Fiszki" z ekranem przeglądu: 
 
 #### Automated
 
-- [x] 4.1 Typecheck przechodzi (`npm run typecheck`)
-- [x] 4.2 Lint przechodzi (`npm run lint`)
+- [x] 4.1 Typecheck przechodzi (`npm run typecheck`) — bc8e89e
+- [x] 4.2 Lint przechodzi (`npm run lint`) — bc8e89e
 
 #### Manual
 
-- [x] 4.3 Pełna ścieżka E2E: nagranie → transkrypt → fiszki w zakładce „Fiszki"
-- [x] 4.4 Akceptuj → fiszka w bazie (`accepted`, znika z przeglądu)
-- [x] 4.5 Odrzuć → fiszka skasowana (znika z przeglądu i bazy)
-- [x] 4.6 Stan pusty po przejrzeniu wszystkich; stan „generuję…" w trakcie
-- [x] 4.7 Osierocone generowanie po ~90 s → stan informacyjny, polling zatrzymany
-- [x] 4.8 Brak regresji w auth, routingu chronionym i ekranie sytuacji (S-01)
+- [x] 4.3 Pełna ścieżka E2E: nagranie → transkrypt → fiszki w zakładce „Fiszki" — bc8e89e
+- [x] 4.4 Akceptuj → fiszka w bazie (`accepted`, znika z przeglądu) — bc8e89e
+- [x] 4.5 Odrzuć → fiszka skasowana (znika z przeglądu i bazy) — bc8e89e
+- [x] 4.6 Stan pusty po przejrzeniu wszystkich; stan „generuję…" w trakcie — bc8e89e
+- [x] 4.7 Osierocone generowanie po ~90 s → stan informacyjny, polling zatrzymany — bc8e89e
+- [x] 4.8 Brak regresji w auth, routingu chronionym i ekranie sytuacji (S-01) — bc8e89e
