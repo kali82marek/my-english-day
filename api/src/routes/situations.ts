@@ -17,6 +17,7 @@ import { Hono } from 'hono';
 import type { AppEnv, Bindings } from '../types';
 import { requireAuth } from '../middleware/auth';
 import { transcribeAudio } from '../lib/transcription';
+import { generateFlashcards } from '../lib/flashcards';
 
 // Limit Whisper to 25 MB — większy plik odrzucamy od razu jako 400.
 const MAX_AUDIO_BYTES = 25 * 1024 * 1024;
@@ -29,6 +30,7 @@ type SituationRow = {
   status: 'pending' | 'done' | 'failed';
   audio_key: string | null;
   duration_ms: number | null;
+  flashcards_status: 'pending' | 'done' | 'failed';
   created_at: string;
 };
 
@@ -38,6 +40,7 @@ type SituationDTO = {
   status: 'pending' | 'done' | 'failed';
   transcript: string | null;
   duration_ms: number | null;
+  flashcards_status: 'pending' | 'done' | 'failed';
   created_at: string;
 };
 
@@ -47,6 +50,7 @@ function toDTO(row: SituationRow): SituationDTO {
     status: row.status,
     transcript: row.transcript,
     duration_ms: row.duration_ms,
+    flashcards_status: row.flashcards_status,
     created_at: row.created_at,
   };
 }
@@ -59,14 +63,52 @@ function extFromName(name: string): string {
 }
 
 /**
- * Praca w tle: transkrypcja → finalizacja wiersza. Bufor `data` jest tą samą
- * kopią, którą zapisano do R2 (czytany raz z multipart) — nie odczytujemy z R2.
- * Sukces: UPDATE transkryptu + status='done', POTEM delete pliku R2.
- * Błąd: UPDATE status='failed' (plik R2 zostaje — hak na ewentualne przyszłe retry).
+ * Generowanie fiszek w tle — odpalane PO udanej transkrypcji, w tym samym
+ * `waitUntil`. Owinięte własnym try/catch: błąd LLM ustawia `flashcards_status='failed'`,
+ * ale NIE wywraca finalizacji transkrypcji ani kasowania R2 (transkrypt zostaje `done`).
+ * `userId` brany z handlera POST — kontekst tła nie ma `c.get('userId')`.
+ */
+async function generateAndStoreFlashcards(
+  env: Bindings,
+  situationId: number,
+  userId: string,
+  transcript: string,
+): Promise<void> {
+  try {
+    const cards = await generateFlashcards(transcript, env.OPENAI_API_KEY);
+    for (const card of cards) {
+      await env.DB.prepare(
+        'INSERT INTO flashcards (situation_id, user_id, type, front_en, back_pl, example_en) VALUES (?, ?, ?, ?, ?, ?)',
+      )
+        .bind(situationId, userId, card.type, card.front_en, card.back_pl, card.example_en)
+        .run();
+    }
+    await env.DB.prepare(
+      "UPDATE situations SET flashcards_status = 'done' WHERE id = ?",
+    )
+      .bind(situationId)
+      .run();
+  } catch {
+    await env.DB.prepare(
+      "UPDATE situations SET flashcards_status = 'failed' WHERE id = ?",
+    )
+      .bind(situationId)
+      .run();
+  }
+}
+
+/**
+ * Praca w tle: transkrypcja → finalizacja wiersza → generowanie fiszek. Bufor
+ * `data` jest tą samą kopią, którą zapisano do R2 (czytany raz z multipart) —
+ * nie odczytujemy z R2.
+ * Sukces: UPDATE transkryptu + status='done', generowanie fiszek, POTEM delete R2.
+ * Błąd transkrypcji: UPDATE status='failed' (plik R2 zostaje — hak na retry,
+ * generowanie się nie odpala).
  */
 async function transcribeAndFinalize(
   env: Bindings,
   situationId: number,
+  userId: string,
   audioKey: string,
   audio: { data: ArrayBuffer; name: string; type: string },
 ): Promise<void> {
@@ -77,7 +119,9 @@ async function transcribeAndFinalize(
     )
       .bind(transcript, situationId)
       .run();
-    // Dopiero po potwierdzonym UPDATE kasujemy tymczasowy plik audio.
+    // Generowanie fiszek po potwierdzonej transkrypcji; własny try/catch w środku.
+    await generateAndStoreFlashcards(env, situationId, userId, transcript);
+    // Dopiero po finalizacji transkryptu (i próbie generowania) kasujemy plik audio.
     await env.AUDIO_BUCKET.delete(audioKey);
   } catch {
     await env.DB.prepare("UPDATE situations SET status = 'failed' WHERE id = ?")
@@ -134,7 +178,7 @@ situationsRouter.post('/', async (c) => {
 
   // Transkrypcja PO odpowiedzi — odpowiedź 201 musi wyjść natychmiast.
   c.executionCtx.waitUntil(
-    transcribeAndFinalize(c.env, row.id, audioKey, {
+    transcribeAndFinalize(c.env, row.id, userId, audioKey, {
       data,
       name: audio.name,
       type: audio.type || 'application/octet-stream',
@@ -148,7 +192,7 @@ situationsRouter.post('/', async (c) => {
 situationsRouter.get('/', async (c) => {
   const userId = c.get('userId');
   const { results } = await c.env.DB.prepare(
-    "SELECT id, user_id, transcript, status, audio_key, duration_ms, created_at FROM situations WHERE user_id = ? AND date(created_at) = date('now') ORDER BY created_at DESC",
+    "SELECT id, user_id, transcript, status, audio_key, duration_ms, flashcards_status, created_at FROM situations WHERE user_id = ? AND date(created_at) = date('now') ORDER BY created_at DESC",
   )
     .bind(userId)
     .all<SituationRow>();

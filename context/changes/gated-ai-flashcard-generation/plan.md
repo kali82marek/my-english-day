@@ -338,8 +338,8 @@ Zamiana placeholderowego taba `explore` na tab „Fiszki" z ekranem przeglądu: 
 
 #### Automated
 
-- [x] 1.1 Migracja stosuje się czysto lokalnie (`wrangler d1 migrations apply --local`)
-- [x] 1.2 Typecheck przechodzi (`api && npm run typecheck`)
+- [x] 1.1 Migracja stosuje się czysto lokalnie (`wrangler d1 migrations apply --local`) — ad63434
+- [x] 1.2 Typecheck przechodzi (`api && npm run typecheck`) — ad63434
 
 #### Manual
 
@@ -350,15 +350,15 @@ Zamiana placeholderowego taba `explore` na tab „Fiszki" z ekranem przeglądu: 
 
 #### Automated
 
-- [ ] 2.1 Typecheck przechodzi (`api && npm run typecheck`)
-- [ ] 2.2 Testy przechodzą (`api && npm test`)
+- [x] 2.1 Typecheck przechodzi (`api && npm run typecheck`)
+- [x] 2.2 Testy przechodzą (`api && npm test`)
 
 #### Manual
 
-- [ ] 2.3 Po transkrypcji `GET /flashcards/proposals` zwraca ~3-5 poprawnych fiszek
-- [ ] 2.4 `flashcards_status` przechodzi `pending`→`done`; przy błędzie LLM → `failed`, transkrypt zachowany
-- [ ] 2.5 `accept` ustawia `status='accepted'` (znika z proposals); `DELETE` kasuje wiersz
-- [ ] 2.6 Izolacja po `user_id` (cudza fiszka → `404`)
+- [x] 2.3 Po transkrypcji `GET /flashcards/proposals` zwraca ~3-5 poprawnych fiszek
+- [x] 2.4 `flashcards_status` przechodzi `pending`→`done`; przy błędzie LLM → `failed`, transkrypt zachowany
+- [x] 2.5 `accept` ustawia `status='accepted'` (znika z proposals); `DELETE` kasuje wiersz
+- [x] 2.6 Izolacja po `user_id` (cudza fiszka → `404`)
 
 ### Phase 3: Klient API + typy (front)
 
