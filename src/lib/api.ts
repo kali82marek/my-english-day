@@ -85,12 +85,11 @@ export async function apiFetch<T>(path: string, opts: RequestInit = {}): Promise
     throw new ApiError(res.status, messageFromBody(body, `Błąd żądania (${res.status}).`));
   }
 
-  // 204 No Content (np. DELETE) nie ma ciała — nie parsuj JSON-a.
-  if (res.status === 204) {
-    return undefined as T;
-  }
-
-  return res.json() as Promise<T>;
+  // Część endpointów nie zwraca ciała (np. accept → 200 puste, delete → 204).
+  // `res.json()` na pustym body rzuca SyntaxError, co fałszywie wywracało akcję
+  // (rollback) mimo sukcesu serwera. Czytamy tekst i parsujemy tylko gdy niepusty.
+  const text = await res.text();
+  return (text ? JSON.parse(text) : undefined) as T;
 }
 
 type Credentials = {

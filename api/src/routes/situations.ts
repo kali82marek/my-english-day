@@ -221,6 +221,12 @@ situationsRouter.delete('/:id', async (c) => {
   if (row.audio_key) {
     await c.env.AUDIO_BUCKET.delete(row.audio_key);
   }
+  // Fiszki-dzieci PRZED sytuacją — `flashcards.situation_id` ma klucz obcy do
+  // `situations(id)` (migracja 0003), a D1 egzekwuje FK; bez tego DELETE łamie
+  // ograniczenie (500). Sytuacja zabiera ze sobą swoje fiszki (propozycje i przyjęte).
+  await c.env.DB.prepare('DELETE FROM flashcards WHERE situation_id = ? AND user_id = ?')
+    .bind(id, userId)
+    .run();
   await c.env.DB.prepare('DELETE FROM situations WHERE id = ? AND user_id = ?')
     .bind(id, userId)
     .run();

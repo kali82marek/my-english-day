@@ -55,9 +55,16 @@ function SituationCard({ item }: { item: LocalSituation }) {
       {item.status === 'done' && (
         <>
           <ThemedText type="default">{item.transcript ?? ''}</ThemedText>
-          <ThemedText type="small" themeColor="textSecondary" style={styles.meta}>
-            {formatTime(item.created_at)}
-          </ThemedText>
+          <View style={styles.metaRow}>
+            <ThemedText type="small" themeColor="textSecondary">
+              {formatTime(item.created_at)}
+            </ThemedText>
+            {item.flashcards_status === 'pending' && (
+              <ThemedText type="small" themeColor="textSecondary">
+                · Generuję fiszki…
+              </ThemedText>
+            )}
+          </View>
         </>
       )}
 
@@ -149,7 +156,10 @@ const styles = StyleSheet.create({
     borderRadius: Spacing.three,
     gap: Spacing.one,
   },
-  meta: {
+  metaRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: Spacing.one,
     marginTop: Spacing.one,
   },
   failedText: {

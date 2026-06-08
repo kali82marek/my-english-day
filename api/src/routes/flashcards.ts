@@ -41,8 +41,10 @@ flashcardsRouter.get('/proposals', async (c) => {
     .all<FlashcardDTO>();
 
   // Sytuacje stranskrybowane, ale wciąż generujące fiszki — front pokazuje „generuję…".
+  // Zakres dnia (jak `GET /situations`) — osierocony `pending` z poprzednich dni nie
+  // może wiecznie blokować ekranu propozycji.
   const generating = await c.env.DB.prepare(
-    "SELECT COUNT(*) AS count FROM situations WHERE user_id = ? AND status = 'done' AND flashcards_status = 'pending'",
+    "SELECT COUNT(*) AS count FROM situations WHERE user_id = ? AND status = 'done' AND flashcards_status = 'pending' AND date(created_at) = date('now')",
   )
     .bind(userId)
     .first<{ count: number }>();

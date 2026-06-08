@@ -1,5 +1,5 @@
 import { useFocusEffect } from 'expo-router';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -58,11 +58,19 @@ function mergeFromServer(prev: LocalSituation[], server: Situation[]): LocalSitu
 export default function HomeScreen() {
   const { user, signOut } = useAuth();
   const [situations, setSituations] = useState<LocalSituation[]>([]);
+  // Id-ki usuwane (optymistycznie) — strażnik przed wyścigiem: polling/`mergeFromServer`
+  // ufa serwerowi, więc bez tego wiersz wracał, gdy GET wyścignął DELETE. Przy realnym
+  // błędzie DELETE id jest zdejmowane i `refresh()` przywraca wiersz.
+  const deletingRef = useRef<Set<number>>(new Set());
 
   const refresh = useCallback(async () => {
     try {
       const { situations: server } = await situationsApi.list();
-      setSituations((prev) => mergeFromServer(prev, server));
+      setSituations((prev) =>
+        mergeFromServer(prev, server).filter(
+          (r) => r.id == null || !deletingRef.current.has(r.id),
+        ),
+      );
     } catch {
       // Cicho — kolejny tick / focus spróbuje ponownie; brak sieci nie wywala ekranu.
     }
@@ -132,9 +140,12 @@ export default function HomeScreen() {
 
   const handleDelete = useCallback(
     (id: number) => {
-      // Optymistyczne usunięcie; przy błędzie sieci przywracamy stan z serwera.
+      // Optymistyczne usunięcie + strażnik (chroni przed powrotem wiersza, gdy polling
+      // wyścignie DELETE). Przy błędzie: zdejmij strażnika i przywróć stan z serwera.
+      deletingRef.current.add(id);
       setSituations((prev) => prev.filter((r) => r.id !== id));
       situationsApi.remove(id).catch(() => {
+        deletingRef.current.delete(id);
         void refresh();
       });
     },

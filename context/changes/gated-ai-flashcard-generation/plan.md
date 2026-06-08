@@ -343,8 +343,8 @@ Zamiana placeholderowego taba `explore` na tab „Fiszki" z ekranem przeglądu: 
 
 #### Manual
 
-- [ ] 1.3 Tabela `flashcards` istnieje w lokalnym D1 z poprawnym schematem
-- [ ] 1.4 Kolumna `flashcards_status` istnieje w `situations` z domyślną `pending`
+- [x] 1.3 Tabela `flashcards` istnieje w lokalnym D1 z poprawnym schematem — ad63434
+- [x] 1.4 Kolumna `flashcards_status` istnieje w `situations` z domyślną `pending` — ad63434
 
 ### Phase 2: Generowanie fiszek + endpointy (API)
 
@@ -364,25 +364,25 @@ Zamiana placeholderowego taba `explore` na tab „Fiszki" z ekranem przeglądu: 
 
 #### Automated
 
-- [x] 3.1 Typecheck przechodzi (`npm run typecheck`)
-- [x] 3.2 Lint przechodzi (`npm run lint`)
+- [x] 3.1 Typecheck przechodzi (`npm run typecheck`) — 88e78f2
+- [x] 3.2 Lint przechodzi (`npm run lint`) — 88e78f2
 
 #### Manual
 
-- [x] 3.3 `flashcardsApi.listProposals()` zwraca propozycje + `generatingCount` przeciw `wrangler dev`
+- [x] 3.3 `flashcardsApi.listProposals()` zwraca propozycje + `generatingCount` przeciw `wrangler dev` — 88e78f2
 
 ### Phase 4: Ekran przeglądu + nawigacja (front)
 
 #### Automated
 
-- [ ] 4.1 Typecheck przechodzi (`npm run typecheck`)
-- [ ] 4.2 Lint przechodzi (`npm run lint`)
+- [x] 4.1 Typecheck przechodzi (`npm run typecheck`)
+- [x] 4.2 Lint przechodzi (`npm run lint`)
 
 #### Manual
 
-- [ ] 4.3 Pełna ścieżka E2E: nagranie → transkrypt → fiszki w zakładce „Fiszki"
-- [ ] 4.4 Akceptuj → fiszka w bazie (`accepted`, znika z przeglądu)
-- [ ] 4.5 Odrzuć → fiszka skasowana (znika z przeglądu i bazy)
-- [ ] 4.6 Stan pusty po przejrzeniu wszystkich; stan „generuję…" w trakcie
-- [ ] 4.7 Osierocone generowanie po ~90 s → stan informacyjny, polling zatrzymany
-- [ ] 4.8 Brak regresji w auth, routingu chronionym i ekranie sytuacji (S-01)
+- [x] 4.3 Pełna ścieżka E2E: nagranie → transkrypt → fiszki w zakładce „Fiszki"
+- [x] 4.4 Akceptuj → fiszka w bazie (`accepted`, znika z przeglądu)
+- [x] 4.5 Odrzuć → fiszka skasowana (znika z przeglądu i bazy)
+- [x] 4.6 Stan pusty po przejrzeniu wszystkich; stan „generuję…" w trakcie
+- [x] 4.7 Osierocone generowanie po ~90 s → stan informacyjny, polling zatrzymany
+- [x] 4.8 Brak regresji w auth, routingu chronionym i ekranie sytuacji (S-01)
