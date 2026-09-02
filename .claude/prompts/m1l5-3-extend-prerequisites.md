@@ -1,1 +1,1 @@
-Please extend plan with prerequisites - how to configure CLI for {{platform_name + extra tooling}}
+Proszę rozszerzyć plan o wymagania wstępne — jak skonfigurować CLI dla {{platform_name + extra tooling}}

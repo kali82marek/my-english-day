@@ -16,618 +16,619 @@ allowed-tools:
   - TaskGet
 ---
 
-# Implementation Plan
+# Plan implementacji
 
-You are tasked with creating detailed implementation plans through an interactive, iterative process. You should be skeptical, thorough, and work collaboratively with the user to produce high-quality technical specifications.
+Twoim zadaniem jest tworzenie szczegółowych planów implementacji poprzez interaktywny, iteracyjny proces. Powinieneś być sceptyczny, dokładny i współpracować z użytkownikiem, aby tworzyć wysokiej jakości specyfikacje techniczne.
 
-## Initial Response
+## Początkowa odpowiedź
 
-When this command is invoked:
+Po wywołaniu tej komendy:
 
-1. **Check if parameters were provided**:
-   - If a file path or ticket reference was provided as a parameter, skip the default message
-   - Immediately read any provided files FULLY
-   - Begin the research process
+1. **Sprawdź, czy podano parametry**:
+   - Jeśli podano ścieżkę pliku lub odniesienie do zgłoszenia jako parametr, pomiń domyślną wiadomość
+   - Natychmiast przeczytaj WSZYSTKIE podane pliki
+   - Rozpocznij proces badawczy
 
-2. **If no parameters provided**, respond with:
+2. **Jeśli nie podano parametrów**, odpowiedz:
 
 ```
-I'll help you create a detailed implementation plan. Let me start by understanding what we're building.
+Pomogę Ci stworzyć szczegółowy plan implementacji. Zacznijmy od zrozumienia, co budujemy.
 
-Please provide:
-1. The task/ticket description (or reference to a ticket file)
-2. Any relevant context, constraints, or specific requirements
-3. Links to related research or previous implementations
+Proszę podać:
+1. Opis zadania/zgłoszenia (lub odniesienie do pliku zgłoszenia)
+2. Wszelkie istotne konteksty, ograniczenia lub specyficzne wymagania
+3. Linki do powiązanych badań lub poprzednich implementacji
 
-The more upstream context you pass in, the fewer questions I'll ask:
-- Just a task description → full questioning
-- Task + research doc (`context/changes/<change-id>/research.md`) → fewer questions; I won't redo what research covered
-- Task + frame brief (`context/changes/<change-id>/frame.md`) → far fewer questions; the problem framing is already settled
-- Task + frame + research → minimum questions; I focus only on solution-design decisions that need your input
+Im więcej kontekstu mi przekażesz, tym mniej pytań zadam:
+- Tylko opis zadania → pełne pytania
+- Zadanie + dokument badawczy (`context/changes/<change-id>/research.md`) → mniej pytań; nie będę powtarzać tego, co zostało omówione w badaniu
+- Zadanie + brief ramowy (`context/changes/<change-id>/frame.md`) → znacznie mniej pytań; problem jest już ustalony
+- Zadanie + ramka + badanie → minimalne pytania; skupiam się tylko na decyzjach dotyczących projektowania rozwiązania, które wymagają Twojego wkładu
 
-Tip: invoke directly with a change-id or path — `/10x-plan oauth-login` or `/10x-plan @context/changes/oauth-login/frame.md`
-For deeper analysis, try: `/10x-plan think deeply about @context/changes/oauth-login/research.md`
+Wskazówka: wywołaj bezpośrednio z change-id lub ścieżką — `/10x-plan oauth-login` lub `/10x-plan @context/changes/oauth-login/frame.md`
+Aby uzyskać głębszą analizę, spróbuj: `/10x-plan think deeply about @context/changes/oauth-login/research.md`
 ```
 
-Then wait for the user's input.
+Następnie poczekaj na dane wejściowe od użytkownika.
 
-## Process Steps
+## Kroki procesu
 
-### Step 1: Context Gathering & Initial Analysis
+### Krok 1: Gromadzenie kontekstu i wstępna analiza
 
-#### Step 1.0: Identify upstream artifacts and scale questioning depth
+#### Krok 1.0: Identyfikacja artefaktów nadrzędnych i skalowanie głębokości pytań
 
-Before any reading, identify what kinds of upstream artifacts the user passed in. Each one represents decisions already made — don't re-ask them.
+Przed jakimkolwiek czytaniem, zidentyfikuj, jakie rodzaje artefaktów nadrzędnych przekazał użytkownik. Każdy z nich reprezentuje już podjęte decyzje — nie pytaj o nie ponownie.
 
-- **Frame brief** — path matches `context/changes/<change-id>/frame.md`, or content begins with `# Frame Brief:` / contains a `## Reframed` section.
-- **Research doc** — path matches `context/changes/<change-id>/research.md`, or YAML frontmatter contains `topic:` and `researcher:` fields.
-- **Existing plan** — path matches `context/changes/<change-id>/plan.md` (resume/refine mode — out of scope for this scaling logic).
-- **Task description only** — none of the above.
+- **Brief ramowy** — ścieżka pasuje do `context/changes/<change-id>/frame.md`, lub zawartość zaczyna się od `# Frame Brief:` / zawiera sekcję `## Reframed`.
+- **Dokument badawczy** — ścieżka pasuje do `context/changes/<change-id>/research.md`, lub YAML frontmatter zawiera pola `topic:` i `researcher:`.
+- **Istniejący plan** — ścieżka pasuje do `context/changes/<change-id>/plan.md` (tryb wznowienia/dopracowania — poza zakresem tej logiki skalowania).
+- **Tylko opis zadania** — żadne z powyższych.
 
-**Question count and focus scale with what's provided:**
+**Liczba pytań i skala skupienia w zależności od dostarczonych informacji:**
 
-| Upstream artifacts          | LOW   | MEDIUM | HIGH  | What changes vs. baseline                                                                                                              |
-| --------------------------- | ----- | ------ | ----- | -------------------------------------------------------------------------------------------------------------------------------------- |
-| Task only (baseline)        | 4–6   | 7–10   | 11–15 | Full questioning across all relevant categories.                                                                                       |
-| Task + research             | 3–5   | 5–7    | 8–11  | Skip questions whose answer is already in the research doc. Don't re-spawn sub-agents to find what research already mapped.            |
-| Task + frame                | 2–3   | 4–6    | 7–9   | Skip [D]iagnostic categories — frame settled problem framing. Treat the Reframed (or Confirmed) Problem Statement as authoritative.    |
-| Task + frame + research     | 1–2   | 3–5    | 5–7   | Skip both. Ask only [S]olution-design questions that genuinely need user input.                                                        |
+| Artefakty nadrzędne         | NISKI | ŚREDNI | WYSOKI | Co zmienia się w stosunku do punktu odniesienia                                                                                                              |
+| --------------------------- | ----- | ------ | ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Tylko zadanie (punkt odniesienia) | 4–6   | 7–10   | 11–15 | Pełne pytania we wszystkich odpowiednich kategoriach.                                                                                       |
+| Zadanie + badanie             | 3–5   | 5–7    | 8–11  | Pomiń pytania, których odpowiedź znajduje się już w dokumencie badawczym. Nie odtwarzaj podagentów, aby znaleźć to, co badanie już zmapowało.            |
+| Zadanie + ramka                | 2–3   | 4–6    | 7–9   | Pomiń kategorie [D]iagnostyczne — ramka ustaliła ramy problemu. Traktuj Przeformułowane (lub Potwierdzone) Oświadczenie o Problemie jako autorytatywne.    |
+| Zadanie + ramka + badanie     | 1–2   | 3–5    | 5–7   | Pomiń oba. Zadawaj tylko pytania dotyczące projektowania rozwiązania [S], które naprawdę wymagają wkładu użytkownika.                                                        |
 
-**Principle**: every artifact passed in is a source of decisions already made. Reading them counts as listening to the user. Don't ask the user what they already wrote down.
+**Zasada**: każdy przekazany artefakt jest źródłem już podjętych decyzji. Czytanie ich liczy się jako słuchanie użytkownika. Nie pytaj użytkownika o to, co już napisał.
 
-**When a frame is present**, read it FULLY and treat as authoritative:
-- Copy the **Reported Observation** + **Reframed (or Confirmed) Problem Statement** as the task definition. Do not re-question the framing.
-- Lift the **Hypothesis Investigation** table and **Narrowing Signals** into your "Current State Analysis" — this work is already done.
-- If the frame **Confidence: LOW** is flagged, surface that in the plan's "Open Risks & Assumptions" and ask ONE clarifying question about how to proceed (verify first, or plan with risk acknowledged).
-- Do NOT re-investigate the framing. Frame owns problem framing; you own solution design.
+**Gdy obecna jest ramka**, przeczytaj ją W CAŁOŚCI i traktuj jako autorytatywną:
+- Skopiuj **Zgłoszoną Obserwację** + **Przeformułowane (lub Potwierdzone) Oświadczenie o Problemie** jako definicję zadania. Nie kwestionuj ponownie ram.
+- Przenieś tabelę **Badanie Hipotez** i **Sygnały Zwężające** do swojej "Analizy Stanu Obecnego" — ta praca jest już wykonana.
+- Jeśli ramka **Confidence: LOW** jest oznaczona, uwzględnij to w sekcji "Otwarte Ryzyka i Założenia" planu i zadaj JEDNO pytanie wyjaśniające, jak postępować (najpierw zweryfikuj, lub planuj z uznanym ryzykiem).
+- NIE badaj ponownie ram. Ramka odpowiada za ramy problemu; Ty odpowiadasz za projekt rozwiązania.
 
-**When research is present**, read it FULLY and use as the codebase baseline:
-- "Code References" section IS your codebase grounding — don't re-spawn Explore agents to find the same files.
-- "Architecture Insights" feed directly into "Current State Analysis."
-- Spawn sub-agents only to fill specific gaps research didn't cover (e.g., the exact files this plan will modify if research was broader).
+**Gdy obecne są badania**, przeczytaj je W CAŁOŚCI i użyj jako punktu odniesienia dla bazy kodu:
+- Sekcja "Odnośniki do kodu" JEST Twoim ugruntowaniem bazy kodu — nie odtwarzaj agentów Explore, aby znaleźć te same pliki.
+- "Wnioski architektoniczne" bezpośrednio zasilają "Analizę Stanu Obecnego".
+- Uruchamiaj podagentów tylko w celu wypełnienia konkretnych luk, których badania nie objęły (np. dokładne pliki, które ten plan zmodyfikuje, jeśli badania były szersze).
 
-#### Step 1.1: Read and research
+#### Krok 1.1: Czytanie i badanie
 
-1. **Read all mentioned files immediately and FULLY**:
-   - Reference files (e.g., `context/changes/<change-id>/research.md`, `context/changes/<change-id>/frame.md`)
-   - Research documents
-   - Frame briefs
-   - Related implementation plans
-   - Any JSON/data files mentioned
-   - `context/foundation/lessons.md` if present — treat its rules as priors when probing scope, edge cases, and architecture choices; rules already accepted by the team narrow which design pitfalls still need fresh questioning.
-   - **IMPORTANT**: Use the Read tool WITHOUT limit/offset parameters to read entire files
-   - **CRITICAL**: DO NOT spawn sub-tasks before reading these files yourself in the main context
-   - **NEVER** read files partially - if a file is mentioned, read it completely
+1. **Natychmiast i W CAŁOŚCI przeczytaj wszystkie wymienione pliki**:
+   - Pliki referencyjne (np. `context/changes/<change-id>/research.md`, `context/changes/<change-id>/frame.md`)
+   - Dokumenty badawcze
+   - Briefy ramowe
+   - Powiązane plany implementacji
+   - Wszelkie wymienione pliki JSON/danych
+   - `context/foundation/lessons.md` jeśli istnieje — traktuj jego zasady jako priorytety podczas badania zakresu, przypadków brzegowych i wyborów architektonicznych; zasady już zaakceptowane przez zespół zawężają, które pułapki projektowe nadal wymagają świeżego kwestionowania.
+   - **WAŻNE**: Użyj narzędzia Read BEZ parametrów limit/offset, aby przeczytać całe pliki
+   - **KRYTYCZNE**: NIE uruchamiaj podzadań przed samodzielnym przeczytaniem tych plików w głównym kontekście
+   - **NIGDY** nie czytaj plików częściowo — jeśli plik jest wymieniony, przeczytaj go w całości
 
-2. **Spawn initial research tasks to gather context** (skip or narrow based on Step 1.0):
-   Before asking the user any questions, use the Task tool with parallel sub-agents to research:
-   - **Explore agent** (`subagent_type: "Explore"`) — find all files related to the task, search for patterns, trace code paths. Use for file discovery and codebase structure questions.
-   - **general-purpose agent** (`subagent_type: "general-purpose"`) — for deeper analysis that may require reading many files and synthesizing findings. Use for understanding complex systems.
+2. **Uruchom początkowe zadania badawcze w celu zebrania kontekstu** (pomiń lub zawęź na podstawie Kroku 1.0):
+   Zanim zadasz użytkownikowi jakiekolwiek pytania, użyj narzędzia Task z równoległymi podagentami do zbadania:
+   - **Agent Explore** (`subagent_type: "Explore"`) — znajdź wszystkie pliki związane z zadaniem, szukaj wzorców, śledź ścieżki kodu. Użyj do odkrywania plików i pytań dotyczących struktury bazy kodu.
+   - **Agent ogólnego przeznaczenia** (`subagent_type: "general-purpose"`) — do głębszej analizy, która może wymagać przeczytania wielu plików i syntezy wyników. Użyj do zrozumienia złożonych systemów.
 
-   Example: spawn 2-3 Explore agents in parallel for different search dimensions (e.g., "find all files related to X", "find similar implementations of Y", "find prior decisions about Z in `context/changes/**/` and `context/archive/**/`").
+   Przykład: uruchom 2-3 agentów Explore równolegle dla różnych wymiarów wyszukiwania (np. "znajdź wszystkie pliki związane z X", "znajdź podobne implementacje Y", "znajdź wcześniejsze decyzje dotyczące Z w `context/changes/**/` i `context/archive/**/`").
 
-   These agents will:
-   - Find relevant source files, configs, and tests
-   - Trace data flow and key functions
-   - Return detailed explanations with file:line references
+   Ci agenci będą:
+   - Znajdować odpowiednie pliki źródłowe, konfiguracje i testy
+   - Śledzić przepływ danych i kluczowe funkcje
+   - Zwracać szczegółowe wyjaśnienia z odniesieniami file:line
 
-3. **Read all files identified by research tasks**:
-   - After research tasks complete, read ALL files they identified as relevant
-   - Read them FULLY into the main context
-   - This ensures you have complete understanding before proceeding
+3. **Przeczytaj wszystkie pliki zidentyfikowane przez zadania badawcze**:
+   - Po zakończeniu zadań badawczych, przeczytaj WSZYSTKIE pliki, które zidentyfikowały jako istotne
+   - Przeczytaj je W CAŁOŚCI do głównego kontekstu
+   - Zapewnia to pełne zrozumienie przed kontynuowaniem
 
-4. **Analyze and verify understanding**:
-   - Cross-reference the ticket requirements with actual code
-   - Identify any discrepancies or misunderstandings
-   - Note assumptions that need verification
-   - Determine true scope based on codebase reality
+4. **Analizuj i weryfikuj zrozumienie**:
+   - Porównaj wymagania zgłoszenia z rzeczywistym kodem
+   - Zidentyfikuj wszelkie rozbieżności lub nieporozumienia
+   - Zauważ założenia, które wymagają weryfikacji
+   - Określ prawdziwy zakres na podstawie rzeczywistości bazy kodu
 
-5. **Present informed understanding and assess complexity**:
+5. **Przedstaw świadome zrozumienie i oceń złożoność**:
 
-   First, present a brief summary of what you found:
-
-   ```
-   Based on [the ticket and my research of the codebase / your description and my analysis], I understand we need to [accurate summary].
-
-   I've found that:
-   - [Key discovery — code reference, existing asset, prior work, or domain constraint]
-   - [Relevant pattern, convention, or constraint discovered]
-   - [Potential complexity or edge case identified]
-   ```
-
-   Then assess the task complexity and present it to the user for confirmation:
+   Najpierw przedstaw krótkie podsumowanie tego, co znalazłeś:
 
    ```
-   **Complexity Assessment: [HIGH / MEDIUM / LOW]**
+   Na podstawie [zgłoszenia i moich badań bazy kodu / Twojego opisu i mojej analizy], rozumiem, że musimy [dokładne podsumowanie].
 
-   [2-3 sentence explanation of WHY this complexity level, referencing specific factors:
-   number of systems touched, integration points, state management needs,
-   data model changes, unknown unknowns, testing surface area, etc.]
-
-   I'd like to ask **[N] questions** across multiple rounds to nail down the important
-   decisions about [list key decision areas: architecture, edge cases, data model, UX, testing, etc.].
-
-   Does this feel right, or would you adjust the complexity level?
+   Znalazłem, że:
+   - [Kluczowe odkrycie — odniesienie do kodu, istniejący zasób, wcześniejsza praca lub ograniczenie domeny]
+   - [Odpowiedni wzorzec, konwencja lub odkryte ograniczenie]
+   - [Potencjalna złożoność lub zidentyfikowany przypadek brzegowy]
    ```
 
-   Use AskUserQuestion for confirmation:
-   - question: "Does this complexity assessment match your expectations?"
-     header: "Complexity"
+   Następnie oceń złożoność zadania i przedstaw ją użytkownikowi do potwierdzenia:
+
+   ```
+   **Ocena złożoności: [WYSOKA / ŚREDNIA / NISKA]**
+
+   [Wyjaśnienie w 2-3 zdaniach, DLACZEGO ten poziom złożoności, odwołujące się do konkretnych czynników:
+   liczba dotkniętych systemów, punkty integracji, potrzeby zarządzania stanem,
+   zmiany modelu danych, nieznane niewiadome, obszar testowania itp.]
+
+   Chciałbym zadać **[N] pytań** w kilku rundach, aby ustalić ważne
+   decyzje dotyczące [wymień kluczowe obszary decyzyjne: architektura, przypadki brzegowe, model danych, UX, testowanie itp.].
+
+   Czy to wydaje się słuszne, czy chciałbyś dostosować poziom złożoności?
+   ```
+
+   Użyj AskUserQuestion do potwierdzenia:
+   - question: "Czy ta ocena złożoności odpowiada Twoim oczekiwaniom?"
+     header: "Złożoność"
      options:
-     - label: "Agree — proceed with [N] questions"
-       description: "The assessment is accurate, let's dig into the details."
-     - label: "Higher — ask more questions"
-       description: "There's more complexity than identified. I'll explain what's missing."
-     - label: "Lower — fewer questions needed"
-       description: "This is simpler than it looks. Let's keep it focused."
+     - label: "Zgadzam się — przejdź do [N] pytań"
+       description: "Ocena jest dokładna, zagłębmy się w szczegóły."
+     - label: "Wyższa — zadaj więcej pytań"
+       description: "Jest więcej złożoności niż zidentyfikowano. Wyjaśnię, czego brakuje."
+     - label: "Niższa — potrzeba mniej pytań"
+       description: "To jest prostsze niż się wydaje. Skupmy się na tym."
        multiSelect: false
 
-   **Complexity scale:**
+   **Skala złożoności:**
 
-   | Level      | Questions | When to use                                                                                                                                                                                                                                                                                                           |
+   | Poziom     | Pytania | Kiedy używać                                                                                                                                                                                                                                                                                                           |
    | ---------- | --------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-   | **LOW**    | 4-6       | Straightforward task with clear requirements. Few moving parts, follows established patterns or conventions, limited unknowns. Software examples: single-file change, config tweak. Non-software examples: single-topic outline, simple process tweak.                                                                |
-   | **MEDIUM** | 7-10      | Multiple components or considerations that interact. Requires design decisions, has edge cases worth discussing, some ambiguity in approach. Software examples: multi-file feature, new API endpoint. Non-software examples: multi-part content plan, workflow redesign, course module.                               |
-   | **HIGH**   | 11-15     | Cross-cutting concerns, significant unknowns, many stakeholders or constraints. Requires architectural thinking, has risk of expensive rework if wrong. Software examples: system redesign, data migration. Non-software examples: multi-channel launch strategy, curriculum overhaul, organizational process change. |
+   | **NISKI**  | 4-6       | Proste zadanie z jasnymi wymaganiami. Niewiele ruchomych części, zgodne z ustalonymi wzorcami lub konwencjami, ograniczone niewiadome. Przykłady oprogramowania: zmiana pojedynczego pliku, drobna zmiana konfiguracji. Przykłady poza oprogramowaniem: zarys pojedynczego tematu, prosta zmiana procesu.                                 |
+   | **ŚREDNI** | 7-10      | Wiele komponentów lub rozważań, które współdziałają. Wymaga decyzji projektowych, ma przypadki brzegowe warte omówienia, pewna niejednoznaczność w podejściu. Przykłady oprogramowania: funkcja wieloplikowa, nowy punkt końcowy API. Przykłady poza oprogramowaniem: wieloczęściowy plan treści, przeprojektowanie przepływu pracy, moduł kursu.                               |
+   | **WYSOKI** | 11-15     | Zagadnienia przekrojowe, znaczące niewiadome, wielu interesariuszy lub ograniczeń. Wymaga myślenia architektonicznego, wiąże się z ryzykiem kosztownych przeróbek, jeśli jest błędne. Przykłady oprogramowania: przeprojektowanie systemu, migracja danych. Przykłady poza oprogramowaniem: strategia uruchomienia wielokanałowego, przegląd programu nauczania, zmiana procesu organizacyjnego. |
 
-   After the user confirms (or adjusts), proceed to questioning.
+   Po potwierdzeniu (lub dostosowaniu) przez użytkownika, przejdź do zadawania pytań.
 
-6. **Ask deep probing questions using AskUserQuestion**:
+6. **Zadawaj głębokie, dociekliwe pytania za pomocą AskUserQuestion**:
 
-   Ask the confirmed number of questions across multiple rounds (1-4 questions per round, as many rounds as needed).
+   Zadaj potwierdzoną liczbę pytań w kilku rundach (1-4 pytania na rundę, tyle rund, ile potrzeba).
 
-   **Rules for structuring questions:**
-   - Each question should have 2-4 concrete options
-   - Use `multiSelect: true` only when choices aren't mutually exclusive
-   - Keep `header` short (max 12 chars): "Scope", "Edge cases", "Priority"
-   - The user can always choose "Other" for free-form input
+   **Zasady strukturyzowania pytań:**
+   - Każde pytanie powinno mieć 2-4 konkretne opcje
+   - Użyj `multiSelect: true` tylko wtedy, gdy wybory nie wykluczają się wzajemnie
+   - Zachowaj krótki `header` (maks. 12 znaków): "Zakres", "Przypadki brzegowe", "Priorytet"
+   - Użytkownik zawsze może wybrać "Inne" dla swobodnego wprowadzania
 
-   **Every option MUST include a recommendation signal and tradeoff analysis:**
-   - Mark exactly one option as `⭐ Recommended` in its label
-   - Each option's `description` must follow this format:
-     `[1-sentence what this does] · Strength: [key advantage] · Tradeoff: [key cost or risk]`
-   - The recommendation should be grounded in research (codebase patterns for software, domain knowledge and context for non-software) — not guessing
+   **Każda opcja MUSI zawierać sygnał rekomendacji i analizę kompromisów:**
+   - Oznacz dokładnie jedną opcję jako `⭐ Recommended` w jej etykiecie
+   - `description` każdej opcji musi być zgodny z tym formatem:
+     `[1-zdaniowe co to robi] · Mocna strona: [kluczowa zaleta] · Kompromis: [kluczowy koszt lub ryzyko]`
+   - Rekomendacja powinna być oparta na badaniach (wzorce bazy kodu dla oprogramowania, wiedza dziedzinowa i kontekst dla zadań poza oprogramowaniem) — a nie na zgadywaniu
 
-   **Example AskUserQuestion call with recommendations (software):** `Conflicts` is `[S]` — solution architecture; always asked even when a frame defined the problem.
+   **Przykład wywołania AskUserQuestion z rekomendacjami (oprogramowanie):** `Conflicts` to `[S]` — architektura rozwiązania; zawsze zadawane, nawet gdy ramka zdefiniowała problem.
 
-   AskUserQuestion with questions:
-   - question: "How should the system handle conflicts when two users edit simultaneously?"
-     header: "Conflicts"
+   AskUserQuestion z pytaniami:
+   - question: "Jak system powinien obsługiwać konflikty, gdy dwóch użytkowników edytuje jednocześnie?"
+     header: "Konflikty"
      options:
-     - label: "Last write wins"
-       description: "Later save silently overwrites earlier one. · Strength: Zero added complexity, no UI changes needed. · Tradeoff: Users can lose work without warning — acceptable only if edits are rare or low-stakes."
-     - label: "⭐ Recommended: Notify and merge"
-       description: "Show conflict to user, let them choose which version to keep. · Strength: Prevents data loss while keeping UX simple — matches the pattern in existing EditPanel component. · Tradeoff: Adds a conflict resolution modal and WebSocket subscription for real-time detection."
-     - label: "Lock-based"
-       description: "First editor locks the resource; others see read-only until released. · Strength: Prevents conflicts entirely — simplest mental model for users. · Tradeoff: Stale locks require TTL + cleanup logic; blocks legitimate concurrent work."
+     - label: "Ostatni zapis wygrywa"
+       description: "Późniejszy zapis cicho nadpisuje wcześniejszy. · Mocna strona: Zero dodatkowej złożoności, brak potrzeby zmian w interfejsie użytkownika. · Kompromis: Użytkownicy mogą stracić pracę bez ostrzeżenia — akceptowalne tylko, jeśli edycje są rzadkie lub niskiego ryzyka."
+     - label: "⭐ Recommended: Powiadom i scal"
+       description: "Pokaż konflikt użytkownikowi, pozwól mu wybrać, którą wersję zachować. · Mocna strona: Zapobiega utracie danych, jednocześnie utrzymując prosty interfejs użytkownika — pasuje do wzorca w istniejącym komponencie EditPanel. · Kompromis: Dodaje modal do rozwiązywania konfliktów i subskrypcję WebSocket do wykrywania w czasie rzeczywistym."
+     - label: "Oparte na blokadach"
+       description: "Pierwszy edytor blokuje zasób; inni widzą tylko do odczytu, dopóki nie zostanie zwolniony. · Mocna strona: Całkowicie zapobiega konfliktom — najprostszy model mentalny dla użytkowników. · Kompromis: Zastarzałe blokady wymagają TTL + logiki czyszczenia; blokuje legalną równoczesną pracę."
        multiSelect: false
 
-   **Example AskUserQuestion call with recommendations (non-software — content/strategy):** `Depth` is `[D]` — diagnostic about audience/scope; skip if a frame brief already settled who this is for.
+   **Przykład wywołania AskUserQuestion z rekomendacjami (poza oprogramowaniem — treść/strategia):** `Depth` to `[D]` — diagnostyka dotycząca odbiorców/zakresu; pomiń, jeśli brief ramowy już ustalił, dla kogo to jest.
 
-   AskUserQuestion with questions:
-   - question: "What depth of technical detail should the course module target?"
-     header: "Depth"
+   AskUserQuestion z pytaniami:
+   - question: "Jaką głębokość szczegółów technicznych powinien mieć moduł kursu?"
+     header: "Głębokość"
      options:
-     - label: "Conceptual overview"
-       description: "High-level principles, no code. · Strength: Accessible to all skill levels, faster to produce. · Tradeoff: Advanced learners may find it too shallow — risks losing engagement."
-     - label: "⭐ Recommended: Hands-on with guided examples"
-       description: "Concepts paired with step-by-step exercises. · Strength: Balances understanding and practice — matches the format that got highest completion rates in 10xDevs2. · Tradeoff: 2-3x more prep time per lesson; requires working example repos."
-     - label: "Deep dive with open challenges"
-       description: "Minimal scaffolding, real-world problems. · Strength: Forces genuine problem-solving, highest learning retention. · Tradeoff: High dropout risk for less experienced learners; harder to support at scale."
+     - label: "Przegląd koncepcyjny"
+       description: "Zasady wysokiego poziomu, bez kodu. · Mocna strona: Dostępne dla wszystkich poziomów umiejętności, szybsze do wyprodukowania. · Kompromis: Zaawansowani uczniowie mogą uznać to za zbyt płytkie — ryzyko utraty zaangażowania."
+     - label: "⭐ Recommended: Praktyczne z przykładami z przewodnikiem"
+       description: "Koncepcje połączone z ćwiczeniami krok po kroku. · Mocna strona: Równoważy zrozumienie i praktykę — pasuje do formatu, który uzyskał najwyższe wskaźniki ukończenia w 10xDevs2. · Kompromis: 2-3 razy więcej czasu na przygotowanie na lekcję; wymaga działających repozytoriów przykładów."
+     - label: "Głębokie zanurzenie z otwartymi wyzwaniami"
+       description: "Minimalne rusztowanie, problemy z prawdziwego świata. · Mocna strona: Wymusza prawdziwe rozwiązywanie problemów, najwyższe utrzymanie wiedzy. · Kompromis: Wysokie ryzyko rezygnacji dla mniej doświadczonych uczniów; trudniejsze do wsparcia na dużą skalę."
        multiSelect: false
 
-   **What to ask about** — adapt categories to the domain of the task:
+   **O co pytać** — dostosuj kategorie do dziedziny zadania:
 
-   First, identify the task domain: **software**, **content/education**, **strategy/process**, or **hybrid**. Then pick question categories that fit. The categories below are organized by domain — select what's relevant, don't force software categories onto non-software tasks.
+   Najpierw zidentyfikuj dziedzinę zadania: **oprogramowanie**, **treści/edukacja**, **strategia/proces** lub **hybryda**. Następnie wybierz odpowiednie kategorie pytań. Poniższe kategorie są uporządkowane według dziedziny — wybierz to, co istotne, nie narzucaj kategorii oprogramowania zadaniom poza oprogramowaniem.
 
-   **Each category is tagged `[D]` (diagnostic — about the problem) or `[S]` (solution — about how to build it).** When a frame brief was provided in Step 1.0, **skip all `[D]` categories** — frame settled them. Always ask `[S]` categories the user input still needs to drive.
+   **Każda kategoria jest oznaczona `[D]` (diagnostyczna — dotycząca problemu) lub `[S]` (rozwiązanie — dotyczące sposobu budowania).** Gdy w Kroku 1.0 dostarczono brief ramowy, **pomiń wszystkie kategorie `[D]`** — ramka je ustaliła. Zawsze zadawaj kategorie `[S]`, które nadal wymagają wkładu użytkownika.
 
-   **Universal categories (all domains, all levels):**
-   - **Scope boundaries** `[D]`: What's in vs out
-   - **Edge cases / failure modes** `[S]`: What happens when things go wrong or get weird (implementation handling, even if a frame named the observation class)
-   - **Success criteria** `[D]`: How do we know this worked — from the end user's or stakeholder's perspective
-   - **Priority** `[D]`: Must-have vs nice-to-have — what gets cut if time is tight
+   **Uniwersalne kategorie (wszystkie dziedziny, wszystkie poziomy):**
+   - **Granice zakresu** `[D]`: Co jest w zakresie, a co poza nim
+   - **Przypadki brzegowe / tryby awarii** `[S]`: Co się dzieje, gdy coś pójdzie nie tak lub stanie się dziwne (obsługa implementacji, nawet jeśli ramka nazwała klasę obserwacji)
+   - **Kryteria sukcesu** `[D]`: Jak wiemy, że to zadziałało — z perspektywy użytkownika końcowego lub interesariusza
+   - **Priorytet** `[D]`: Musi być vs miło mieć — co zostanie odrzucone, jeśli czas jest ograniczony
 
-   **Software-specific categories (add based on complexity):**
+   **Kategorie specyficzne dla oprogramowania (dodaj w zależności od złożoności):**
 
-   MEDIUM+:
-   - **Data model decisions** `[S]`: Schema, relationships, constraints, migrations
-   - **Error handling strategy** `[S]`: Failure modes, retry logic, user-facing messages
-   - **Testing approach** `[S]`: Coverage level, which edge cases to test explicitly
-   - **Performance boundaries** `[S]`: Expected load, acceptable latency, caching
+   ŚREDNI+:
+   - **Decyzje dotyczące modelu danych** `[S]`: Schemat, relacje, ograniczenia, migracje
+   - **Strategia obsługi błędów** `[S]`: Tryby awarii, logika ponawiania, komunikaty dla użytkownika
+   - **Podejście do testowania** `[S]`: Poziom pokrycia, które przypadki brzegowe testować jawnie
+   - **Granice wydajności** `[S]`: Oczekiwane obciążenie, akceptowalne opóźnienie, buforowanie
 
-   HIGH:
-   - **Architecture choices** `[S]`: Service boundaries, sync vs async, event-driven vs request-response
-   - **State management** `[S]`: Where state lives, consistency guarantees, conflict resolution
-   - **Security model** `[S]`: Auth boundaries, data access, input validation
-   - **Migration & rollback** `[S]`: Incremental deployment, revert strategy
-   - **Observability** `[S]`: Key metrics, alerting, debugging surface
+   WYSOKI:
+   - **Wybory architektoniczne** `[S]`: Granice usług, synchroniczne vs asynchroniczne, sterowane zdarzeniami vs żądanie-odpowiedź
+   - **Zarządzanie stanem** `[S]`: Gdzie znajduje się stan, gwarancje spójności, rozwiązywanie konfliktów
+   - **Model bezpieczeństwa** `[S]`: Granice uwierzytelniania, dostęp do danych, walidacja danych wejściowych
+   - **Migracja i wycofywanie** `[S]`: Wdrażanie przyrostowe, strategia wycofywania
+   - **Obserwowalność** `[S]`: Kluczowe metryki, alerty, powierzchnia debugowania
 
-   **Content / education categories (add based on complexity):**
+   **Kategorie treści / edukacji (dodaj w zależności od złożoności):**
 
-   MEDIUM+:
-   - **Audience & prerequisites** `[D]`: Who is this for, what do they already know
-   - **Format & medium** `[S]`: Written, video, interactive, live — and why
-   - **Narrative arc** `[S]`: What journey does the reader/learner go on
-   - **Examples & exercises** `[S]`: What makes concepts stick
+   ŚREDNI+:
+   - **Odbiorcy i wymagania wstępne** `[D]`: Dla kogo to jest, co już wiedzą
+   - **Format i medium** `[S]`: Pisemne, wideo, interaktywne, na żywo — i dlaczego
+   - **Łuk narracyjny** `[S]`: Jaką podróż odbywa czytelnik/uczeń
+   - **Przykłady i ćwiczenia** `[S]`: Co sprawia, że koncepcje zapadają w pamięć
 
-   HIGH:
-   - **Curriculum dependencies** `[D]`: What must be learned before what
-   - **Assessment strategy** `[S]`: How to verify learning happened
-   - **Reuse & modularity** `[S]`: Can parts be used standalone or in other contexts
-   - **Distribution & access** `[D]`: Where does this live, how do people find it
+   WYSOKI:
+   - **Zależności programowe** `[D]`: Co musi być nauczone przed czym
+   - **Strategia oceny** `[S]`: Jak zweryfikować, czy nauka nastąpiła
+   - **Ponowne użycie i modułowość** `[S]`: Czy części mogą być używane samodzielnie lub w innych kontekstach
+   - **Dystrybucja i dostęp** `[D]`: Gdzie to się znajduje, jak ludzie to znajdują
 
-   **Strategy / process categories (add based on complexity):**
+   **Kategorie strategii / procesu (dodaj w zależności od złożoności):**
 
-   MEDIUM+:
-   - **Stakeholders & roles** `[D]`: Who's involved, who decides, who executes
-   - **Timeline & milestones** `[S]`: Key dates, dependencies, critical path
-   - **Risk identification** `[S]`: What could go wrong, what's the fallback
-   - **Resource constraints** `[D]`: Budget, time, people, tools
+   ŚREDNI+:
+   - **Interesariusze i role** `[D]`: Kto jest zaangażowany, kto decyduje, kto wykonuje
+   - **Harmonogram i kamienie milowe** `[S]`: Kluczowe daty, zależności, ścieżka krytyczna
+   - **Identyfikacja ryzyka** `[S]`: Co może pójść nie tak, jaki jest plan awaryjny
+   - **Ograniczenia zasobów** `[D]`: Budżet, czas, ludzie, narzędzia
 
-   HIGH:
-   - **Change management** `[S]`: How do affected people learn about and adopt this
-   - **Measurement framework** `[D]`: Leading vs lagging indicators, how to course-correct
-   - **Dependencies & sequencing** `[S]`: What blocks what, what can run in parallel
-   - **Communication plan** `[S]`: Who needs to know what, when, through which channel
+   WYSOKI:
+   - **Zarządzanie zmianą** `[S]`: Jak osoby dotknięte zmianą dowiadują się o niej i ją przyjmują
+   - **Ramy pomiarowe** `[D]`: Wskaźniki wiodące vs opóźnione, jak korygować kurs
+   - **Zależności i sekwencjonowanie** `[S]`: Co blokuje co, co może działać równolegle
+   - **Plan komunikacji** `[S]`: Kto musi wiedzieć co, kiedy, za pośrednictwem jakiego kanału
 
-   **What NOT to ask about:**
-   - Anything already settled in upstream artifacts (frame brief, research doc) — re-asking is the failure mode this scaling is designed to prevent
-   - Low-level implementation details you can determine yourself (from codebase research for software, from context files and prior work for non-software)
-   - Questions with obvious answers given the context already provided
-   - Preferences that don't affect the plan's structure or success
+   **O czym NIE pytać:**
+   - O cokolwiek, co zostało już ustalone w artefaktach nadrzędnych (brief ramowy, dokument badawczy) — ponowne pytanie to tryb awarii, któremu ma zapobiec to skalowanie
+   - Niskopoziomowe szczegóły implementacji, które możesz ustalić samodzielnie (na podstawie badań bazy kodu dla oprogramowania, na podstawie plików kontekstowych i wcześniejszych prac dla zadań poza oprogramowaniem)
+   - Pytania z oczywistymi odpowiedziami, biorąc pod uwagę już dostarczony kontekst
+   - Preferencje, które nie wpływają na strukturę ani sukces planu
 
-   **CRITICAL**: You MUST ask the number of questions appropriate to the confirmed complexity level *and* the upstream-artifacts scaling from Step 1.0. Do not shortcut this when no upstream artifacts were provided — thorough questioning prevents costly rework. Equally, do not pad questions when a frame or research already covers the ground — re-asking erodes trust in the upstream artifact. Each question should force a real decision, not confirm something obvious.
+   **KRYTYCZNE**: MUSISZ zadać liczbę pytań odpowiednią do potwierdzonego poziomu złożoności *i* skalowania artefaktów nadrzędnych z Kroku 1.0. Nie skracaj tego, gdy nie dostarczono żadnych artefaktów nadrzędnych — dokładne pytania zapobiegają kosztownym przeróbkom. Równie ważne jest, aby nie dodawać pytań, gdy ramka lub badania już pokrywają dany obszar — ponowne pytanie podważa zaufanie do artefaktu nadrzędnego. Każde pytanie powinno wymusić prawdziwą decyzję, a nie potwierdzać coś oczywistego.
 
-### Step 2: Research & Discovery
+### Krok 2: Badania i odkrycia
 
-After getting initial clarifications from the user, NOW is when you address the implementation details:
+Po uzyskaniu wstępnych wyjaśnień od użytkownika, TERAZ jest czas na zajęcie się szczegółami implementacji:
 
-1. **Research implementation patterns and prior work**:
-   During this phase, answer implementation questions yourself — don't ask the user to make these decisions.
+1. **Badanie wzorców implementacji i wcześniejszych prac**:
+   Na tym etapie samodzielnie odpowiadaj na pytania dotyczące implementacji — nie proś użytkownika o podejmowanie tych decyzji.
 
-   **For software tasks**, research the codebase:
-   - What patterns does the codebase use for similar features?
-   - What's the established error handling / logging / testing approach?
-   - Which existing components or utilities can be reused?
-   - What constraints does the current architecture impose?
+   **Dla zadań programistycznych**, zbadaj bazę kodu:
+   - Jakie wzorce baza kodu wykorzystuje dla podobnych funkcji?
+   - Jakie jest ustalone podejście do obsługi błędów / logowania / testowania?
+   - Które istniejące komponenty lub narzędzia można ponownie wykorzystać?
+   - Jakie ograniczenia narzuca obecna architektura?
 
-   **For non-software tasks**, research context files and prior work:
-   - What formats, structures, or templates were used for similar work before?
-   - What constraints exist from prior decisions, audience, or platform?
-   - What related content or processes already exist that this should align with?
-   - What worked well (or didn't) in previous iterations?
+   **Dla zadań poza oprogramowaniem**, zbadaj pliki kontekstowe i wcześniejsze prace:
+   - Jakie formaty, struktury lub szablony były używane do podobnych prac wcześniej?
+   - Jakie ograniczenia wynikają z wcześniejszych decyzji, odbiorców lub platformy?
+   - Jakie powiązane treści lub procesy już istnieją, z którymi to powinno być zgodne?
+   - Co działało dobrze (lub nie) w poprzednich iteracjach?
 
-   **This is NOT for users to decide** — you determine this by researching existing patterns, files, and context.
+   **To NIE jest do decyzji użytkowników** — Ty określasz to, badając istniejące wzorce, pliki i kontekst.
 
-2. **If the user corrects any misunderstanding**:
-   - DO NOT just accept the correction
-   - Spawn new research tasks to verify the correct information
-   - Read the specific files/directories they mention
-   - Only proceed once you've verified the facts yourself
+2. **Jeśli użytkownik poprawi jakiekolwiek nieporozumienie**:
+   - NIE akceptuj po prostu poprawki
+   - Uruchom nowe zadania badawcze, aby zweryfikować poprawne informacje
+   - Przeczytaj konkretne pliki/katalogi, które wymienia
+   - Kontynuuj dopiero po samodzielnym zweryfikowaniu faktów
 
-3. **Create research tasks** using TaskCreate to track exploration (these appear in the user's status bar). Update them via TaskUpdate as research completes.
+3. **Twórz zadania badawcze** za pomocą TaskCreate, aby śledzić eksplorację (pojawiają się one na pasku stanu użytkownika). Aktualizuj je za pomocą TaskUpdate w miarę postępu badań.
 
-4. **Spawn parallel sub-tasks for comprehensive research**:
-   - Create multiple Task agents to research different aspects concurrently
-   - Use the right agent type for each research need:
+4. **Uruchom równoległe podzadania do kompleksowych badań**:
+   - Utwórz wielu agentów Task do równoczesnego badania różnych aspektów
+   - Użyj odpowiedniego typu agenta dla każdej potrzeby badawczej:
 
-   **For codebase investigation:**
-   - **Explore** (`subagent_type: "Explore"`) — Fast file/pattern search, code structure analysis
-   - **general-purpose** (`subagent_type: "general-purpose"`) — Deep analysis requiring multi-step reasoning
+   **Do badania bazy kodu:**
+   - **Explore** (`subagent_type: "Explore"`) — Szybkie wyszukiwanie plików/wzorców, analiza struktury kodu
+   - **general-purpose** (`subagent_type: "general-purpose"`) — Głęboka analiza wymagająca wieloetapowego rozumowania
 
-   **For historical context:**
-   - **Explore** — Search `context/changes/**/research.md` and `context/changes/**/plan.md` (and the same paths under `context/archive/`) for related documents
+   **Dla kontekstu historycznego:**
+   - **Explore** — Wyszukaj `context/changes/**/research.md` i `context/changes/**/plan.md` (oraz te same ścieżki w `context/archive/`) w poszukiwaniu powiązanych dokumentów
 
-   Each agent will:
-   - Find the right files and code patterns
-   - Identify conventions and patterns to follow
-   - Look for integration points and dependencies
-   - Return specific file:line references
-   - Find tests and examples
+   Każdy agent będzie:
+   - Znajdować odpowiednie pliki i wzorce kodu
+   - Identyfikować konwencje i wzorce do naśladowania
+   - Szukać punktów integracji i zależności
+   - Zwracać konkretne odniesienia file:line
+   - Znajdować testy i przykłady
 
-5. **Wait for ALL sub-tasks to complete** before proceeding
+5. **Poczekaj na zakończenie WSZYSTKICH podzadań** przed kontynuowaniem
 
-6. **Present findings and design options using AskUserQuestion**:
+6. **Przedstaw wyniki i opcje projektowe za pomocą AskUserQuestion**:
 
-   First, present a brief summary of research findings:
+   Najpierw przedstaw krótkie podsumowanie wyników badań:
 
    ```
-   Based on my research, here's what I found:
+   Na podstawie moich badań, oto co znalazłem:
 
-   **Current State:**
-   - [Key discovery about existing code]
-   - [Pattern or convention to follow]
+   **Stan obecny:**
+   - [Kluczowe odkrycie dotyczące istniejącego kodu]
+   - [Wzorzec lub konwencja do naśladowania]
    ```
 
-   Then, if there are multiple valid approaches, present them as structured choices using AskUserQuestion:
+   Następnie, jeśli istnieje wiele prawidłowych podejść, przedstaw je jako ustrukturyzowane wybory za pomocą AskUserQuestion:
 
    AskUserQuestion:
-   - question: "Which implementation approach should we use?"
-     header: "Approach"
+   - question: "Które podejście implementacyjne powinniśmy zastosować?"
+     header: "Podejście"
      options:
-     - label: "[Option A name]"
-       description: "[Key tradeoffs: simpler but X, or faster but Y]"
-     - label: "[Option B name]"
-       description: "[Key tradeoffs]"
+     - label: "[Nazwa opcji A]"
+       description: "[Kluczowe kompromisy: prostsze, ale X, lub szybsze, ale Y]"
+     - label: "[Nazwa opcji B]"
+       description: "[Kluczowe kompromisy]"
 
-   If there's clearly one best approach, skip AskUserQuestion and explain why you chose it.
-   Only ask when the choice genuinely matters and you can't determine the answer from codebase patterns.
+   Jeśli istnieje wyraźnie jedno najlepsze podejście, pomiń AskUserQuestion i wyjaśnij, dlaczego je wybrałeś.
+   Pytaj tylko wtedy, gdy wybór ma naprawdę znaczenie i nie możesz określić odpowiedzi na podstawie wzorców bazy kodu.
 
-### Step 3: Plan Structure Development
+### Krok 3: Rozwój struktury planu
 
-Once aligned on approach:
+Po uzgodnieniu podejścia:
 
-1. **Present plan outline and get structured feedback**:
+1. **Przedstaw zarys planu i uzyskaj ustrukturyzowane informacje zwrotne**:
 
-   First, print the proposed phases as text (informational):
+   Najpierw wydrukuj proponowane fazy jako tekst (informacyjnie):
 
    ```
-   Here's my proposed plan structure:
+   Oto moja proponowana struktura planu:
 
-   ## Overview
-   [1-2 sentence summary]
+   ## Przegląd
+   [Podsumowanie w 1-2 zdaniach]
 
-   ## Implementation Phases:
-   1. [Phase name] - [what it accomplishes]
-   2. [Phase name] - [what it accomplishes]
-   3. [Phase name] - [what it accomplishes]
+   ## Fazy implementacji:
+   1. [Nazwa fazy] - [co osiąga]
+   2. [Nazwa fazy] - [co osiąga]
+   3. [Nazwa fazy] - [co osiąga]
    ```
 
-   Then use AskUserQuestion:
-   - question: "Does this phase breakdown look right?"
-     header: "Phases"
+   Następnie użyj AskUserQuestion:
+   - question: "Czy ten podział na fazy wygląda dobrze?"
+     header: "Fazy"
      options:
-     - label: "Looks good, proceed"
-       description: "Write the detailed plan with these phases."
-     - label: "Needs adjustment"
-       description: "I'll explain what to change before you write the detailed plan."
-     - label: "Too granular"
-       description: "Combine some phases — this is simpler than it looks."
-     - label: "Too coarse"
-       description: "Split some phases — there are hidden complexities."
+     - label: "Wygląda dobrze, kontynuuj"
+       description: "Napisz szczegółowy plan z tymi fazami."
+     - label: "Wymaga dostosowania"
+       description: "Wyjaśnię, co zmienić, zanim napiszesz szczegółowy plan."
+     - label: "Zbyt szczegółowe"
+       description: "Połącz niektóre fazy — to jest prostsze niż się wydaje."
+     - label: "Zbyt ogólne"
+       description: "Podziel niektóre fazy — istnieją ukryte złożoności."
        multiSelect: false
 
-### Step 4: Detailed Plan Writing
+### Krok 4: Pisanie szczegółowego planu
 
-After structure approval:
+Po zatwierdzeniu struktury:
 
-1. **Resolve the change folder, then write the plan** to `context/changes/<change-id>/plan.md`.
-   - If the user invoked `/10x-plan <change-id>` and `context/changes/<change-id>/` already exists, use it.
-   - Otherwise derive a kebab-case `<change-id>` from the topic and create the folder + `change.md` (mirroring `/10x-new` semantics) before writing.
-   - Refuse if the resolved path starts with `context/archive/` — print: "This change is archived. Open a new change with `/10x-new` instead." and STOP.
-   - Update `change.md`: set `status: planned` and `updated: <today>`.
-2. **Use this template structure** (Phase blocks contain plain bullets — `- ` not `- [ ]` — and a single canonical `## Progress` section at the bottom owns the checkbox state, see `references/progress-format.md` for the contract):
+1. **Rozwiąż folder zmian, a następnie zapisz plan** do `context/changes/<change-id>/plan.md`.
+   - Jeśli użytkownik wywołał `/10x-plan <change-id>` i `context/changes/<change-id>/` już istnieje, użyj go.
+   - W przeciwnym razie utwórz kebab-case `<change-id>` z tematu i utwórz folder + `change.md` (odzwierciedlając semantykę `/10x-new`) przed zapisaniem.
+   - Odmów, jeśli rozwiązana ścieżka zaczyna się od `context/archive/` — wydrukuj: "Ta zmiana jest zarchiwizowana. Zamiast tego otwórz nową zmianę za pomocą `/10x-new`." i ZATRZYMAJ.
+   - Zaktualizuj `change.md`: ustaw `status: planned` i `updated: <dzisiaj>`.
+   - **Zsynchronizuj roadmapę** (najlepiej jak potrafisz): jeśli `context/foundation/roadmap.md` zawiera element, którego `Change ID` jest równe `<change-id>`, zmień status tego elementu na `Status: planning`. Zobacz "## Synchronizacja statusu roadmapy" poniżej. Nigdy nie blokuje; większość zmian nie będzie śledzić roadmapy.
+2. **Użyj tej struktury szablonu** (bloki faz zawierają zwykłe punktorzy — `- ` zamiast `- [ ]` — a pojedyncza kanoniczna sekcja `## Postęp` na dole zawiera stan pól wyboru, zobacz `references/progress-format.md` dla umowy):
 
 ````markdown
-# [Feature/Task Name] Implementation Plan
+# Plan implementacji [Nazwa funkcji/zadania]
 
-## Overview
+## Przegląd
 
-[Brief description of what we're implementing and why]
+[Krótki opis tego, co implementujemy i dlaczego]
 
-## Current State Analysis
+## Analiza stanu obecnego
 
-[What exists now, what's missing, key constraints discovered]
+[Co istnieje teraz, czego brakuje, kluczowe odkryte ograniczenia]
 
-## Desired End State
+## Pożądany stan końcowy
 
-[A Specification of the desired end state after this plan is complete, and how to verify it]
+[Specyfikacja pożądanego stanu końcowego po zakończeniu tego planu i sposób jego weryfikacji]
 
-### Key Discoveries:
+### Kluczowe odkrycia:
 
-- [Important finding with file:line reference]
-- [Pattern to follow]
-- [Constraint to work within]
+- [Ważne odkrycie z odniesieniem file:line]
+- [Wzorzec do naśladowania]
+- [Ograniczenie, w ramach którego należy działać]
 
-## What We're NOT Doing
+## Czego NIE robimy
 
-[Explicitly list out-of-scope items to prevent scope creep]
+[Jawnie wymień elementy poza zakresem, aby zapobiec rozszerzaniu zakresu]
 
-## Implementation Approach
+## Podejście do implementacji
 
-[High-level strategy and reasoning]
+[Strategia wysokiego poziomu i uzasadnienie]
 
-## Critical Implementation Details
+## Krytyczne szczegóły implementacji
 
-This section captures **constraints, gotchas, and ordering requirements that the implementer needs to know before they touch the code** — facts the LLM determines during Research & Discovery (Step 2) that aren't visible from the file paths alone.
+Ta sekcja zawiera **ograniczenia, pułapki i wymagania dotyczące kolejności, które implementator musi znać, zanim dotknie kodu** — fakty, które LLM ustala podczas Badań i Odkryć (Krok 2), a które nie są widoczne tylko ze ścieżek plików.
 
-This is NOT a place to pre-decide implementation. Default: **omit** the entire section. Include a heading below ONLY when something genuinely surprising or load-bearing applies — and write 1-3 sentences, not bullet templates.
+To NIE jest miejsce do wcześniejszego decydowania o implementacji. Domyślnie: **pomijaj** całą sekcję. Dołącz nagłówek poniżej TYLKO wtedy, gdy coś naprawdę zaskakującego lub obciążającego ma zastosowanie — i napisz 1-3 zdania, a nie szablony punktorów.
 
-- **Timing & lifecycle** — include only if there's a non-obvious ordering, race, or lifecycle hook the implementer would otherwise miss.
-- **User experience spec** — include only when user-visible behavior has constraints not derivable from the user requirements (e.g. specific focus management, scroll preservation).
-- **Performance constraints** — include only when there's a real performance budget or known hotspot; skip generic "use memoization" advice.
-- **State sequencing** — include only when the order of state changes matters and the obvious order is wrong.
-- **Debug & observability** — include only when there's a specific verification method or instrumentation need beyond standard logging.
+- **Czas i cykl życia** — dołącz tylko wtedy, gdy istnieje nieoczywista kolejność, wyścig lub hak cyklu życia, który implementator mógłby inaczej przeoczyć.
+- **Specyfikacja doświadczenia użytkownika** — dołącz tylko wtedy, gdy zachowanie widoczne dla użytkownika ma ograniczenia, których nie można wywnioskować z wymagań użytkownika (np. specyficzne zarządzanie fokusem, zachowanie przewijania).
+- **Ograniczenia wydajności** — dołącz tylko wtedy, gdy istnieje rzeczywisty budżet wydajności lub znany punkt krytyczny; pomiń ogólne porady typu "użyj memoizacji".
+- **Sekwencjonowanie stanu** — dołącz tylko wtedy, gdy kolejność zmian stanu ma znaczenie, a oczywista kolejność jest błędna.
+- **Debugowanie i obserwowalność** — dołącz tylko wtedy, gdy istnieje specyficzna metoda weryfikacji lub potrzeba instrumentacji wykraczająca poza standardowe logowanie.
 
-If none apply, omit the section entirely. A plan without it is not incomplete; a plan that fills it with templated bullets is bloated.
+Jeśli żadne z powyższych nie ma zastosowania, pomiń całą sekcję. Plan bez niej nie jest niekompletny; plan, który wypełnia ją szablonowymi punktorami, jest nadmierny.
 
-## Phase 1: [Descriptive Name]
+## Faza 1: [Opisowa nazwa]
 
-### Overview
+### Przegląd
 
-[What this phase accomplishes]
+[Co osiąga ta faza]
 
-### Changes Required:
+### Wymagane zmiany:
 
-#### 1. [Component/File Group]
+#### 1. [Komponent/Grupa plików]
 
-**File**: `path/to/file.ext`
+**Plik**: `path/to/file.ext`
 
-**Intent**: [1-2 sentences naming what this change does and why. The implementer will write the actual code.]
+**Cel**: [1-2 zdania określające, co ta zmiana robi i dlaczego. Implementator napisze rzeczywisty kod.]
 
-**Contract**: [The interface, signature, schema field, route, file-structure delta, or invariant the change touches. For pure-prose edits, name the section or heading affected.
+**Kontrakt**: [Interfejs, sygnatura, pole schematu, trasa, delta struktury plików lub niezmiennik, którego dotyczy zmiana. W przypadku edycji czysto tekstowych, nazwij sekcję lub nagłówek, którego dotyczy.
 
-A code snippet appears here ONLY when the change is non-obvious — a tricky regex, an unusual API call, a counterintuitive ordering, a workaround for a known bug, or a signature contract that other parts of the plan depend on. For routine edits (add a field, wire a handler, follow an existing pattern), describe the contract and stop. Default: no snippet.]
+Fragment kodu pojawia się tutaj TYLKO wtedy, gdy zmiana jest nieoczywista — trudne wyrażenie regularne, nietypowe wywołanie API, nieintuicyjna kolejność, obejście znanego błędu lub kontrakt sygnatury, od którego zależą inne części planu. W przypadku rutynowych edycji (dodanie pola, podłączenie obsługi, zastosowanie istniejącego wzorca), opisz kontrakt i zakończ. Domyślnie: brak fragmentu.]
 
-### Success Criteria:
+### Kryteria sukcesu:
 
-#### Automated Verification:
+#### Automatyczna weryfikacja:
 
-- Migration applies cleanly: `make migrate`
-- Unit tests pass: `make test-component`
-- Type checking passes: `npm run typecheck`
-- Linting passes: `make lint`
-- Integration tests pass: `make test-integration`
+- Migracja przebiega czysto: `make migrate`
+- Testy jednostkowe przechodzą: `make test-component`
+- Sprawdzanie typów przechodzi: `npm run typecheck`
+- Linting przechodzi: `make lint`
+- Testy integracyjne przechodzą: `make test-integration`
 
-#### Manual Verification:
+#### Ręczna weryfikacja:
 
-- Feature works as expected when tested via UI
-- Performance is acceptable under load
-- Edge case handling verified manually
-- No regressions in related features
+- Funkcja działa zgodnie z oczekiwaniami po przetestowaniu przez interfejs użytkownika
+- Wydajność jest akceptowalna pod obciążeniem
+- Obsługa przypadków brzegowych zweryfikowana ręcznie
+- Brak regresji w powiązanych funkcjach
 
-**Implementation Note**: After completing this phase and all automated verification passes, pause here for manual confirmation from the human that the manual testing was successful before proceeding to the next phase. Phase blocks use plain bullets — the corresponding `- [ ]` checkboxes for these items live in the `## Progress` section at the bottom of the plan.
-
----
-
-## Phase 2: [Descriptive Name]
-
-[Similar structure with both automated and manual success criteria...]
+**Uwaga implementacyjna**: Po zakończeniu tej fazy i pomyślnym przejściu wszystkich automatycznych weryfikacji, zatrzymaj się tutaj, aby uzyskać ręczne potwierdzenie od człowieka, że testy ręczne zakończyły się sukcesem, zanim przejdziesz do następnej fazy. Bloki faz używają zwykłych punktorów — odpowiadające im pola wyboru `- [ ]` dla tych elementów znajdują się w sekcji `## Postęp` na dole planu.
 
 ---
 
-## Testing Strategy
+## Faza 2: [Opisowa nazwa]
 
-### Unit Tests:
+[Podobna struktura z kryteriami sukcesu zarówno automatycznymi, jak i ręcznymi...]
 
-- [What to test]
-- [Key edge cases]
+---
 
-### Integration Tests:
+## Strategia testowania
 
-- [End-to-end scenarios]
+### Testy jednostkowe:
 
-### Manual Testing Steps:
+- [Co testować]
+- [Kluczowe przypadki brzegowe]
 
-1. [Specific step to verify feature]
-2. [Another verification step]
-3. [Edge case to test manually]
+### Testy integracyjne:
 
-## Performance Considerations
+- [Scenariusze end-to-end]
 
-[Any performance implications or optimizations needed]
+### Kroki testowania ręcznego:
 
-## Migration Notes
+1. [Konkretny krok do weryfikacji funkcji]
+2. [Kolejny krok weryfikacji]
+3. [Przypadek brzegowy do ręcznego przetestowania]
 
-[If applicable, how to handle existing data/systems]
+## Uwagi dotyczące wydajności
 
-## References
+[Wszelkie implikacje wydajnościowe lub potrzebne optymalizacje]
 
-- Related research: `context/changes/<change-id>/research.md`
-- Similar implementation: `[file:line]`
+## Uwagi dotyczące migracji
 
-## Progress
+[Jeśli dotyczy, jak obsługiwać istniejące dane/systemy]
 
-> Convention: `- [ ]` pending, `- [x]` done. Append ` — <commit sha>` when a step lands. Do not rename step titles. See `references/progress-format.md`.
+## Referencje
 
-### Phase 1: <Phase 1 name>
+- Powiązane badania: `context/changes/<change-id>/research.md`
+- Podobna implementacja: `[file:line]`
 
-#### Automated
+## Postęp
 
-- [ ] 1.1 <Automated Verification item 1 from Phase 1>
-- [ ] 1.2 <Automated Verification item 2 from Phase 1>
+> Konwencja: `- [ ]` oczekujące, `- [x]` wykonane. Dodaj ` — <commit sha>` po zakończeniu kroku. Nie zmieniaj nazw tytułów kroków. Zobacz `references/progress-format.md`.
 
-#### Manual
+### Faza 1: <Nazwa fazy 1>
 
-- [ ] 1.3 <Manual Verification item 1 from Phase 1>
+#### Automatyczne
 
-### Phase 2: <Phase 2 name>
+- [ ] 1.1 <Automatyczny element weryfikacji 1 z Fazy 1>
+- [ ] 1.2 <Automatyczny element weryfikacji 2 z Fazy 1>
 
-#### Automated
+#### Ręczne
+
+- [ ] 1.3 <Ręczny element weryfikacji 1 z Fazy 1>
+
+### Faza 2: <Nazwa fazy 2>
+
+#### Automatyczne
 
 - [ ] 2.1 <…>
 ````
 
-The Progress section is mechanical — emit one `### Phase N: <name>` per phase, with `#### Automated` / `#### Manual` subsections enumerating every Success Criteria bullet from that phase as `- [ ] <phase>.<index> <title>`. Omit empty subsections. The Phase blocks themselves carry plain `- ` bullets (no checkboxes); the `## Progress` section is the only place `[ ]` / `[x]` appear.
+Sekcja Postęp jest mechaniczna — emituj jedną `### Faza N: <nazwa>` dla każdej fazy, z podsekcjami `#### Automatyczne` / `#### Ręczne` wyliczającymi każdy punkt Kryteriów Sukcesu z tej fazy jako `- [ ] <faza>.<indeks> <tytuł>`. Pomiń puste podsekcje. Same bloki faz zawierają zwykłe punktorzy `- ` (bez pól wyboru); sekcja `## Postęp` jest jedynym miejscem, gdzie pojawiają się `[ ]` / `[x]`.
 
-### Step 4.5: Plan Brief (Two-Pager)
+### Krok 4.5: Krótki plan (dwustronicowy)
 
-After writing the full plan, generate a concise brief that gives the reader the high-level picture before they dive into 500-1000 lines of detail. The brief is the first thing the user reads — it should take under 2 minutes and leave them with a clear mental model of what the plan does, why, and what the key decisions were.
+Po napisaniu pełnego planu, wygeneruj zwięzły brief, który da czytelnikowi ogólny obraz, zanim zagłębi się w 500-1000 linii szczegółów. Brief jest pierwszą rzeczą, którą użytkownik czyta — powinien zająć mniej niż 2 minuty i pozostawić mu jasny model mentalny tego, co plan robi, dlaczego i jakie były kluczowe decyzje.
 
-1. **Write the brief** to `context/changes/<change-id>/plan-brief.md` (sibling of `plan.md` in the same change folder).
+1. **Napisz brief** do `context/changes/<change-id>/plan-brief.md` (plik siostrzany `plan.md` w tym samym folderze zmian).
 
-2. **Use this template**:
+2. **Użyj tego szablonu**:
 
 ```markdown
-# [Feature/Task Name] — Plan Brief
+# [Nazwa funkcji/zadania] — Krótki plan
 
-> Full plan: `context/changes/<change-id>/plan.md`
-> Frame brief: `context/changes/<change-id>/frame.md` (if present — omit line otherwise)
-> Research: `context/changes/<change-id>/research.md` (if present — omit line otherwise)
+> Pełny plan: `context/changes/<change-id>/plan.md`
+> Krótki opis ram: `context/changes/<change-id>/frame.md` (jeśli istnieje — pomiń wiersz w przeciwnym razie)
+> Badania: `context/changes/<change-id>/research.md` (jeśli istnieje — pomiń wiersz w przeciwnym razie)
 
-## What & Why
+## Co i dlaczego
 
-[2-3 sentences: what we're building/doing and the motivation behind it. If a frame brief was the input, lift the Reframed (or Confirmed) Problem Statement here verbatim — that is the "why" in its sharpest form.]
+[2-3 zdania: co budujemy/robimy i motywacja. Jeśli brief ramowy był danymi wejściowymi, umieść tutaj dosłownie Przeformułowane (lub Potwierdzone) Oświadczenie o Problemie — to jest "dlaczego" w jego najostrzejszej formie.]
 
-## Starting Point
+## Punkt wyjścia
 
-[1-2 sentences: what exists today that this plan builds on or changes. Ground the reader in the current state so they understand the delta. If a frame investigated this, summarize from its Hypothesis Investigation rather than re-stating.]
+[1-2 zdania: co istnieje dzisiaj, na czym ten plan się opiera lub co zmienia. Ugruntuj czytelnika w obecnym stanie, aby zrozumiał różnicę. Jeśli ramka to badała, podsumuj z jej Badania Hipotez, zamiast powtarzać.]
 
-## Desired End State
+## Pożądany stan końcowy
 
-[2-3 sentences: what the world looks like when this plan is done. Describe the concrete, user-visible outcome — not metrics, but the experience or capability that now exists.]
+[2-3 zdania: jak wygląda świat po zakończeniu tego planu. Opisz konkretny, widoczny dla użytkownika wynik — nie metryki, ale doświadczenie lub zdolność, która teraz istnieje.]
 
-## Key Decisions Made
+## Kluczowe podjęte decyzje
 
-When a frame brief or research doc was the input, mark the **Source** column to show where the decision came from. This lets readers see the lineage: what was settled upstream vs decided in this planning session.
+Gdy brief ramowy lub dokument badawczy był danymi wejściowymi, oznacz kolumnę **Źródło**, aby pokazać, skąd pochodzi decyzja. Pozwala to czytelnikom zobaczyć pochodzenie: co zostało ustalone wcześniej, a co zostało zdecydowane podczas tej sesji planowania.
 
-| Decision                       | Choice            | Why (1 sentence)  | Source           |
+| Decyzja                       | Wybór            | Dlaczego (1 zdanie)  | Źródło           |
 | ------------------------------ | ----------------- | ----------------- | ---------------- |
-| [Decision area]                | [What was chosen] | [Core rationale]  | Frame / Research / Plan |
-| [Decision area]                | [Choice]          | [Rationale]       | Frame / Research / Plan |
+| [Obszar decyzji]                | [Co wybrano] | [Główne uzasadnienie]  | Ramka / Badania / Plan |
+| [Obszar decyzji]                | [Wybór]          | [Uzasadnienie]       | Ramka / Badania / Plan |
 | ...                            | ...               | ...               | ...              |
 
-(Omit the `Source` column if no upstream artifacts were provided — every row would be `Plan`.)
+(Pomiń kolumnę `Źródło`, jeśli nie dostarczono żadnych artefaktów nadrzędnych — każdy wiersz byłby `Plan`.)
 
-## Scope
+## Zakres
 
-**In scope:** [Bullet list of what's included]
+**W zakresie:** [Lista punktowana tego, co jest uwzględnione]
 
-**Out of scope:** [Bullet list of what's explicitly excluded]
+**Poza zakresem:** [Lista punktowana tego, co jest jawnie wykluczone]
 
-## Architecture / Approach
+## Architektura / Podejście
 
-[1 short paragraph or a simple diagram describing the high-level approach.
-For software: key components, data flow, integration points.
-For non-software: structure, workflow, key dependencies.]
+[1 krótki akapit lub prosty diagram opisujący podejście wysokiego poziomu.
+Dla oprogramowania: kluczowe komponenty, przepływ danych, punkty integracji.
+Dla zadań poza oprogramowaniem: struktura, przepływ pracy, kluczowe zależności.]
 
-## Phases at a Glance
+## Fazy w skrócie
 
-| Phase     | What it delivers       | Key risk                  |
+| Faza     | Co dostarcza       | Kluczowe ryzyko                  |
 | --------- | ---------------------- | ------------------------- |
-| 1. [Name] | [One-line deliverable] | [Primary risk or concern] |
-| 2. [Name] | [One-line deliverable] | [Primary risk]            |
+| 1. [Nazwa] | [Jednowierszowy rezultat] | [Główne ryzyko lub obawa] |
+| 2. [Nazwa] | [Jednowierszowy rezultat] | [Główne ryzyko]            |
 | ...       | ...                    | ...                       |
 
-**Prerequisites:** [What must be true before starting — dependencies, access, prior work]
-**Estimated effort:** [Rough size: e.g., "~2-3 sessions across 3 phases" or "8 weeks, 2-person team"]
+**Wymagania wstępne:** [Co musi być prawdą przed rozpoczęciem — zależności, dostęp, wcześniejsze prace]
+**Szacowany wysiłek:** [Przybliżony rozmiar: np. "~2-3 sesje w 3 fazach" lub "8 tygodni, zespół 2-osobowy"]
 
-## Open Risks & Assumptions
+## Otwarte ryzyka i założenia
 
-- [Risk or assumption that could change the plan]
-- [Another one]
+- [Ryzyko lub założenie, które może zmienić plan]
+- [Kolejne]
 
-## Success Criteria (Summary)
+## Kryteria sukcesu (podsumowanie)
 
-[2-3 bullet points: how we know the plan succeeded, from the user's perspective]
+[2-3 punkty: jak wiemy, że plan się powiódł, z perspektywy użytkownika]
 ```
 
-3. **Key principles for the brief**:
-   - It must fit on roughly 2 printed pages (~60-80 lines of markdown). If you're going longer, cut.
-   - The "Key Decisions" table is the heart — it surfaces what was decided during questioning so anyone reading the plan later understands the choices without re-reading all the questions.
-   - "Starting Point" grounds the reader in what exists today — without it, someone unfamiliar with the project can't understand the delta.
-   - "Prerequisites & Estimated effort" at the bottom of the Phases table gives the reader a quick feasibility check before committing to read the full plan.
-   - Write for someone who wasn't part of the planning conversation — they should understand the plan's shape and rationale from the brief alone.
-   - Link to the full plan at the top so the reader can dive deeper on any section.
+3. **Kluczowe zasady briefu**:
+   - Musi mieścić się na około 2 wydrukowanych stronach (~60-80 linii markdown). Jeśli jest dłuższy, skróć.
+   - Tabela "Kluczowe decyzje" jest sercem — przedstawia to, co zostało zdecydowane podczas zadawania pytań, aby każdy, kto później czyta plan, zrozumiał wybory bez ponownego czytania wszystkich pytań.
+   - "Punkt wyjścia" ugruntowuje czytelnika w tym, co istnieje dzisiaj — bez tego ktoś niezaznajomiony z projektem nie zrozumie różnicy.
+   - "Wymagania wstępne i szacowany wysiłek" na dole tabeli faz daje czytelnikowi szybką kontrolę wykonalności przed podjęciem decyzji o przeczytaniu pełnego planu.
+   - Pisz dla kogoś, kto nie brał udziału w rozmowie planistycznej — powinien zrozumieć kształt i uzasadnienie planu z samego briefu.
+   - Link do pełnego planu na górze, aby czytelnik mógł zagłębić się w dowolną sekcję.
 
-### Step 5: Sync and Review
+### Krok 5: Synchronizacja i przegląd
 
-1. **Confirm the plan + brief landed in the change folder**:
-   - `ls context/changes/<change-id>/plan.md context/changes/<change-id>/plan-brief.md` should both exist.
+1. **Potwierdź, że plan + brief wylądowały w folderze zmian**:
+   - `ls context/changes/<change-id>/plan.md context/changes/<change-id>/plan-brief.md` powinny oba istnieć.
 
-2. **Copy quick start command to clipboard**:
-   - After writing the plan, copy the implementation command to clipboard:
+2. **Skopiuj polecenie szybkiego startu do schowka**:
+   - Po napisaniu planu, skopiuj polecenie implementacji do schowka:
 
    ```bash
    echo -n "/10x-implement <change-id> phase 1" | pbcopy 2>/dev/null || echo -n "/10x-implement <change-id> phase 1" | clip.exe 2>/dev/null || echo -n "/10x-implement <change-id> phase 1" | xclip -selection clipboard 2>/dev/null || true
@@ -638,194 +639,213 @@ For non-software: structure, workflow, key dependencies.]
    Set-Clipboard "/10x-implement <change-id> phase 1"
    ```
 
-3. **Present both the brief and full plan**:
+3. **Przedstaw zarówno brief, jak i pełny plan**:
 
    ```
-   I've created the implementation plan:
+   Stworzyłem plan implementacji:
 
-   📋 Brief (start here): `context/changes/<change-id>/plan-brief.md`
-   📄 Full plan: `context/changes/<change-id>/plan.md`
+   📋 Brief (zacznij tutaj): `context/changes/<change-id>/plan-brief.md`
+   📄 Pełny plan: `context/changes/<change-id>/plan.md`
 
-   → /10x-implement <change-id> phase 1 (✓ copied)
+   → /10x-implement <change-id> phase 1 (✓ skopiowano)
 
-   Review the brief first, then check the full plan for anything that needs adjustment:
-   - Are the phases properly scoped?
-   - Are the success criteria specific enough?
-   - Any technical details that need adjustment?
-   - Missing edge cases or considerations?
+   Najpierw przejrzyj brief, a następnie sprawdź pełny plan pod kątem wszelkich potrzebnych dostosowań:
+   - Czy fazy są odpowiednio zakresowane?
+   - Czy kryteria sukcesu są wystarczająco szczegółowe?
+   - Czy jakieś szczegóły techniczne wymagają dostosowania?
+   - Brakujące przypadki brzegowe lub uwagi?
    ```
 
-4. **Iterate based on feedback** - be ready to:
-   - Add missing phases
-   - Adjust technical approach
-   - Clarify success criteria (both automated and manual)
-   - Add/remove scope items
+4. **Iteruj na podstawie informacji zwrotnych** - bądź gotowy do:
+   - Dodawania brakujących faz
+   - Dostosowywania podejścia technicznego
+   - Wyjaśniania kryteriów sukcesu (zarówno automatycznych, jak i ręcznych)
+   - Dodawania/usuwania elementów zakresu
 
-5. **Continue refining** until the user is satisfied
+5. **Kontynuuj dopracowywanie**, aż użytkownik będzie zadowolony
 
-## Important Guidelines
+## Synchronizacja statusu roadmapy
 
-1. **Be Skeptical**:
-   - Question vague requirements
-   - Identify potential issues early
-   - Ask "why" and "what about"
-   - Don't assume - verify with code, files, or context
+`context/foundation/roadmap.md` (generowany przez `/10x-roadmap`) indeksuje każdą Fundację/Fragment według stabilnego **Change ID**. Gdy planowanie przekształca element roadmapy w konkretny folder zmian + plan, oznacz ten element jako **`planning`**, aby roadmapa odzwierciedlała, że element opuścił backlog i wszedł w aktywną pracę. `/10x-implement` później przenosi ten sam element do `in-progress`, a `/10x-archive` zamyka go do `done`.
 
-2. **Be Interactive**:
-   - Don't write the full plan in one shot
-   - Get buy-in at each major step
-   - Allow course corrections
-   - Work collaboratively
+Zrób to w Kroku 4 (zaraz po stemplu `change.md` → `planned`). Wyszukiwanie jest **obowiązkowe**; "najlepszy wysiłek" obejmuje tylko *edycje* — brakująca roadmapa lub nieznaleziony cel jest pomijany cicho i nigdy nie blokuje, nie prosi ani nie przerywa działania. Nie pomijaj sprawdzenia, zakładając, że nie ma roadmapy.
 
-3. **Be Thorough**:
-   - Read all context files COMPLETELY before planning
-   - Research patterns using parallel sub-tasks (codebase for software, context files and prior work for non-software)
-   - Include specific references (file:line for code, document paths for content)
-   - Write measurable success criteria with clear automated vs manual distinction
+1. `test -f context/foundation/roadmap.md`. Jeśli brak, pomiń ten krok cicho.
+2. Przeczytaj plik. Poszukaj `<change-id>` użytego jako `Change ID`:
+   - w tabeli `## W skrócie` — wiersz, którego komórka w kolumnie **Change ID** jest dokładnie równa `<change-id>`;
+   - oraz w treści `## Fundacje` / `## Fragmenty` — blok `### <ID>: …`, który zawiera wiersz `- **Change ID:** <change-id>`.
 
-4. **Be Practical**:
-   - Focus on incremental, testable changes
-   - Consider migration and rollback
-   - Think about edge cases
-   - Include "what we're NOT doing"
+   Dopasowanie jest tylko dokładnym ciągiem znaków. **Brak dopasowania** → wydrukuj `ℹ context/foundation/roadmap.md nie zawiera elementu z Change ID "<change-id>" — roadmapa pozostaje niezmieniona.` i zatrzymaj się tutaj.
+3. **Znaleziono dopasowanie** → jeśli status `- **Status:**` elementu jest już `planning`, `in-progress` lub `done`, pozostaw go bez zmian (**tylko do przodu**: nigdy nie cofaj bardziej zaawansowanego statusu) i zatrzymaj się. W przeciwnym razie zastosuj obie edycje za pomocą narzędzia Edit — każda niezależna i najlepiej jak potrafisz; pomiń pod-edycję, której cel nie znajduje się tam, gdzie umieszcza go szablon `/10x-roadmap`, i zanotuj pominięcie. Dotknij tylko pola `Status`:
+   1. **`## W skrócie`** — ustaw komórkę **Status** w dopasowanym wierszu na `planning`.
+   2. **Treść elementu** — przepisz wiersz `- **Status:**` elementu na `- **Status:** planning`.
 
-5. **Track Progress**:
-   - Use TaskCreate to create planning tasks and TaskUpdate to mark them completed as you progress
-   - Tasks appear in the user's status bar for visibility
-   - Mark tasks completed as you finish research areas
+   Następnie zaktualizuj `updated:` w frontmatterze roadmapy na `<dzisiaj>` (pomiń, jeśli nie ma frontmattera).
+4. `/10x-plan` nie zatwierdza swoich własnych artefaktów; pozostaw zmianę w drzewie roboczym. Zostanie ona zatwierdzona później wraz z pierwszą fazą `/10x-implement` zmiany (która ponownie zmienia status tego samego elementu na `in-progress`).
 
-6. **MANDATORY: Complexity-Scaled Deep Questioning via AskUserQuestion**:
-   - **BEFORE** writing any plan, you MUST assess complexity (HIGH/MEDIUM/LOW) and get user confirmation
-   - Ask the full number of questions matching complexity: LOW=4-6, MEDIUM=7-10, HIGH=11-15
-   - Every option must include a `⭐ Recommended` pick with strength/tradeoff analysis
-   - Cover scope, edge cases, architecture, data model, testing, and performance as relevant to complexity
-   - Ask in rounds of 1-4 questions — as many rounds as needed to hit the target count
-   - DO NOT skip or shorten this step — thorough questioning prevents critical bugs and rework
-   - Wait for user answers before proceeding to detailed planning
+## Ważne wytyczne
 
-7. **No Open Questions in Final Plan**:
-   - If you encounter open questions during planning, STOP
-   - Research or ask for clarification immediately
-   - Do NOT write the plan with unresolved questions
-   - The implementation plan must be complete and actionable
-   - Every decision must be made before finalizing the plan
-   - "Critical Implementation Details" subsections are opt-in: include them only when a real constraint, gotcha, or ordering requirement applies. Default to omission. A plan without that section is not incomplete.
+1. **Bądź sceptyczny**:
+   - Kwestionuj niejasne wymagania
+   - Wcześnie identyfikuj potencjalne problemy
+   - Pytaj "dlaczego" i "co z"
+   - Nie zakładaj - weryfikuj za pomocą kodu, plików lub kontekstu
 
-8. **Describe intent, not implementation**:
-   - The plan tells the implementer **what to change and why**, not how to write the code
-   - Each change entry under `### Changes Required:` separates `**Intent**` (what and why) from `**Contract**` (the interface, signature, schema field, route, structure, or invariant the change touches). Code snippets, when needed, live at the tail of `**Contract**`
-   - Default to no code snippets. Include a snippet ONLY when the change is non-obvious (tricky regex, unusual API call, counterintuitive ordering, workaround, signature contract that other phases depend on)
-   - For routine edits — adding a field, wiring a handler, following an existing pattern — describe the `**Intent**` in 1-2 sentences, name the `**Contract**` in one, and stop. The implementer (human or agent) figures out the code from the file path, the surrounding pattern, and the intent
-   - File paths and short Intent/Contract descriptions are usually enough. Resist the urge to pre-write the code
+2. **Bądź interaktywny**:
+   - Nie pisz całego planu za jednym razem
+   - Uzyskaj zgodę na każdym głównym kroku
+   - Pozwól na korekty kursu
+   - Pracuj wspólnie
 
-## Success Criteria Guidelines
+3. **Bądź dokładny**:
+   - PRZECZYTAJ WSZYSTKIE pliki kontekstowe W CAŁOŚCI przed planowaniem
+   - Badaj wzorce za pomocą równoległych podzadań (baza kodu dla oprogramowania, pliki kontekstowe i wcześniejsze prace dla zadań poza oprogramowaniem)
+   - Dołącz konkretne odniesienia (file:line dla kodu, ścieżki dokumentów dla treści)
+   - Napisz mierzalne kryteria sukcesu z wyraźnym rozróżnieniem na automatyczne i ręczne
 
-**Always separate success criteria into two categories:**
+4. **Bądź praktyczny**:
+   - Skup się na przyrostowych, testowalnych zmianach
+   - Rozważ migrację i wycofywanie
+   - Pomyśl o przypadkach brzegowych
+   - Uwzględnij "czego NIE robimy"
 
-1. **Automated Verification** — commands agents can run: `make test`, `npm run lint`, type checks, specific file existence
-2. **Manual Verification** — human testing: UI/UX, real-world performance, edge cases, user acceptance
+5. **Śledź postępy**:
+   - Użyj TaskCreate do tworzenia zadań planistycznych i TaskUpdate do oznaczania ich jako ukończone w miarę postępów
+   - Zadania pojawiają się na pasku stanu użytkownika, co zapewnia widoczność
+   - Oznaczaj zadania jako ukończone po zakończeniu obszarów badawczych
 
-Each phase's success criteria should use `- [ ]` checkboxes under `#### Automated Verification:` and `#### Manual Verification:` headings.
+6. **OBOWIĄZKOWE: Skalowane złożonością głębokie pytania za pomocą AskUserQuestion**:
+   - **PRZED** napisaniem jakiegokolwiek planu, MUSISZ ocenić złożoność (WYSOKA/ŚREDNIA/NISKA) i uzyskać potwierdzenie od użytkownika
+   - Zadaj pełną liczbę pytań odpowiadającą złożoności: NISKA=4-6, ŚREDNIA=7-10, WYSOKA=11-15
+   - Każda opcja musi zawierać wybór `⭐ Recommended` z analizą mocnych stron/kompromisów
+   - Omów zakres, przypadki brzegowe, architekturę, model danych, testowanie i wydajność, odpowiednio do złożoności
+   - Zadawaj pytania w rundach po 1-4 pytania — tyle rund, ile potrzeba, aby osiągnąć docelową liczbę
+   - NIE pomijaj ani nie skracaj tego kroku — dokładne pytania zapobiegają krytycznym błędom i przeróbkom
+   - Poczekaj na odpowiedzi użytkownika przed przejściem do szczegółowego planowania
 
-## Common Patterns
+7. **Brak otwartych pytań w ostatecznym planie**:
+   - Jeśli napotkasz otwarte pytania podczas planowania, ZATRZYMAJ SIĘ
+   - Natychmiast zbadaj lub poproś o wyjaśnienie
+   - NIE pisz planu z nierozwiązanymi pytaniami
+   - Plan implementacji musi być kompletny i wykonalny
+   - Każda decyzja musi zostać podjęta przed sfinalizowaniem planu
+   - Podsekcje "Krytyczne szczegóły implementacji" są opcjonalne: dołącz je tylko wtedy, gdy ma zastosowanie rzeczywiste ograniczenie, pułapka lub wymóg kolejności. Domyślnie pomijaj. Plan bez tej sekcji nie jest niekompletny.
 
-- **Database changes**: schema/migration → store methods → business logic → API → clients
-- **New features**: research patterns → data model → backend → API → UI
-- **Refactoring**: document behavior → incremental changes → backwards compatibility → migration
+8. **Opisz intencję, a nie implementację**:
+   - Plan mówi implementatorowi **co zmienić i dlaczego**, a nie jak napisać kod
+   - Każdy wpis zmiany w sekcji `### Wymagane zmiany:` oddziela `**Cel**` (co i dlaczego) od `**Kontraktu**` (interfejs, sygnatura, pole schematu, trasa, struktura lub niezmiennik, którego dotyczy zmiana). Fragmenty kodu, jeśli są potrzebne, znajdują się na końcu `**Kontraktu**`
+   - Domyślnie brak fragmentów kodu. Dołącz fragment TYLKO wtedy, gdy zmiana jest nieoczywista (trudne wyrażenie regularne, nietypowe wywołanie API, nieintuicyjna kolejność, obejście, kontrakt sygnatury, od którego zależą inne fazy)
+   - W przypadku rutynowych edycji — dodawania pola, podłączania obsługi, stosowania istniejącego wzorca — opisz `**Cel**` w 1-2 zdaniach, nazwij `**Kontrakt**` w jednym i zakończ. Implementator (człowiek lub agent) odczytuje kod ze ścieżki pliku, otaczającego wzorca i intencji
+   - Ścieżki plików i krótkie opisy Celu/Kontraktu są zazwyczaj wystarczające. Oprzyj się pokusie wcześniejszego pisania kodu
 
-## Sub-task Spawning Best Practices
+## Wytyczne dotyczące kryteriów sukcesu
 
-- **Spawn multiple tasks in parallel** in a single message for concurrent execution
-- **Each task should be focused** on a specific area with detailed instructions (directories, what to extract, expected format)
-- **Request specific file:line references** in responses
-- **Wait for all tasks to complete** before synthesizing findings
-- **Verify sub-task results** — if unexpected, spawn follow-ups and cross-check against actual code
+**Zawsze dziel kryteria sukcesu na dwie kategorie:**
 
-## Context Management
+1. **Automatyczna weryfikacja** — polecenia, które agenci mogą uruchomić: `make test`, `npm run lint`, sprawdzanie typów, istnienie konkretnych plików
+2. **Ręczna weryfikacja** — testowanie przez człowieka: UI/UX, rzeczywista wydajność, przypadki brzegowe, akceptacja przez użytkownika
 
-Planning can be context-heavy due to research + iteration. Keep context efficient:
+Kryteria sukcesu każdej fazy powinny używać pól wyboru `- [ ]` pod nagłówkami `#### Automatyczna weryfikacja:` i `#### Ręczna weryfikacja:`.
 
-- **Delegate research to sub-agents** — they return summaries, keeping the main context lean. Don't re-read files that sub-agents already analyzed unless you need to verify specific details.
-- **Synthesize, don't accumulate** — after sub-agents return, synthesize findings into your understanding rather than quoting large blocks verbatim.
-- **If context feels degraded during planning** — if responses become sluggish or repetitive, save the current plan draft to file and offer the user to continue in a fresh context:
+## Typowe wzorce
+
+- **Zmiany w bazie danych**: schemat/migracja → metody przechowywania → logika biznesowa → API → klienci
+- **Nowe funkcje**: wzorce badawcze → model danych → backend → API → UI
+- **Refaktoryzacja**: dokumentowanie zachowania → zmiany przyrostowe → kompatybilność wsteczna → migracja
+
+## Najlepsze praktyki tworzenia podzadań
+
+- **Twórz wiele zadań równolegle** w jednej wiadomości w celu równoczesnego wykonania
+- **Każde zadanie powinno być skoncentrowane** na konkretnym obszarze ze szczegółowymi instrukcjami (katalogi, co wyodrębnić, oczekiwany format)
+- **Żądaj konkretnych odniesień file:line** w odpowiedziach
+- **Poczekaj na zakończenie wszystkich zadań** przed syntezą wyników
+- **Weryfikuj wyniki podzadań** — jeśli są nieoczekiwane, uruchom kolejne i porównaj z rzeczywistym kodem
+
+## Zarządzanie kontekstem
+
+Planowanie może być obciążone kontekstem ze względu na badania + iterację. Utrzymuj efektywny kontekst:
+
+- **Deleguj badania do podagentów** — zwracają oni podsumowania, utrzymując główny kontekst w ryzach. Nie czytaj ponownie plików, które podagenci już przeanalizowali, chyba że musisz zweryfikować konkretne szczegóły.
+- **Syntetyzuj, nie gromadź** — po powrocie podagentów, syntetyzuj wyniki w swoje zrozumienie, zamiast cytować duże bloki dosłownie.
+- **Jeśli kontekst wydaje się pogorszony podczas planowania** — jeśli odpowiedzi stają się powolne lub powtarzalne, zapisz bieżący szkic planu do pliku i zaproponuj użytkownikowi kontynuowanie w nowym kontekście:
   ```
-  The plan draft is saved at: context/changes/<change-id>/plan.md
-  Would you like to continue refining in a fresh window?
-  → /10x-plan <change-id> (✓ copied)
+  Szkic planu został zapisany pod adresem: context/changes/<change-id>/plan.md
+  Czy chcesz kontynuować dopracowywanie w nowym oknie?
+  → /10x-plan <change-id> (✓ skopiowano)
   ```
-  This lets `/10x-plan` reload the draft and continue iterating with full context available.
+  Pozwala to `/10x-plan` na ponowne załadowanie szkicu i kontynuowanie iteracji z dostępnym pełnym kontekstem.
 
-## Example AskUserQuestion Probing by Feature Type
+## Przykład sondowania AskUserQuestion według typu funkcji
 
-### Example 1: Software / UI Feature — MEDIUM complexity (e.g., Pagination)
+### Przykład 1: Oprogramowanie / Funkcja interfejsu użytkownika — złożoność ŚREDNIA (np. Paginacja)
 
-Mixed: `Loading UX` is `[S]` (UI behavior — solution detail); `Scale` is `[D]` (problem boundary — how big is the dataset). With a frame brief, ask only `Loading UX`; the scale should already be in the Reframed (or Confirmed) Problem Statement.
+Mieszane: `Loading UX` to `[S]` (zachowanie interfejsu użytkownika — szczegóły rozwiązania); `Scale` to `[D]` (granica problemu — jak duży jest zestaw danych). Z briefem ramowym, pytaj tylko o `Loading UX`; skala powinna już być w Przeformułowanym (lub Potwierdzonym) Oświadczeniu o Problemie.
 
-AskUserQuestion with questions:
+AskUserQuestion z pytaniami:
 
-- question: "What should the user see while new items load?"
+- question: "Co użytkownik powinien widzieć podczas ładowania nowych elementów?"
   header: "Loading UX"
   options:
-  - label: "Inline spinner"
-    description: "Small spinner below existing content. · Strength: User keeps seeing current items, minimal UI work. · Tradeoff: Feels slower than skeleton — users see a generic spinner instead of content shape."
-  - label: "⭐ Recommended: Skeleton screens"
-    description: "Placeholder shapes matching item layout. · Strength: Perceived performance is 30-40% better — matches existing LoadingSkeleton component pattern. · Tradeoff: Requires a skeleton variant per item type; breaks if layout changes."
-  - label: "Full-page spinner"
-    description: "Replace content with spinner. · Strength: Simplest to implement — one component, no layout concerns. · Tradeoff: Blocks all interaction; feels broken on slow connections."
+  - label: "Wbudowany spinner"
+    description: "Mały spinner pod istniejącą zawartością. · Mocna strona: Użytkownik nadal widzi bieżące elementy, minimalna praca UI. · Kompromis: Wydaje się wolniejszy niż szkielet — użytkownicy widzą ogólny spinner zamiast kształtu zawartości."
+  - label: "⭐ Recommended: Ekrany szkieletowe"
+    description: "Kształty zastępcze pasujące do układu elementów. · Mocna strona: Postrzegana wydajność jest o 30-40% lepsza — pasuje do istniejącego wzorca komponentu LoadingSkeleton. · Kompromis: Wymaga wariantu szkieletu dla każdego typu elementu; psuje się, jeśli układ się zmieni."
+  - label: "Spinner na całą stronę"
+    description: "Zastąp zawartość spinnerem. · Mocna strona: Najprostszy w implementacji — jeden komponent, brak problemów z układem. · Kompromis: Blokuje wszystkie interakcje; wydaje się zepsuty przy wolnych połączeniach."
     multiSelect: false
-- question: "How many items should this handle gracefully?"
-  header: "Scale"
+- question: "Ile elementów powinien obsługiwać ten system bez problemów?"
+  header: "Skala"
   options:
-  - label: "⭐ Recommended: Hundreds"
-    description: "Standard offset pagination. · Strength: Simple, well-understood, works with existing SQL queries. · Tradeoff: Breaks down past ~5k items — acceptable given current data volumes."
-  - label: "Thousands"
-    description: "Cursor-based pagination + virtual scrolling. · Strength: Handles growth without performance cliff. · Tradeoff: 2-3x more implementation work; changes API contract."
-  - label: "Tens of thousands"
-    description: "Server-side filtering + virtual list + search. · Strength: Scales indefinitely. · Tradeoff: Significant complexity; requires search index and new API design."
+  - label: "⭐ Recommended: Setki"
+    description: "Standardowa paginacja z przesunięciem. · Mocna strona: Prosta, dobrze zrozumiała, działa z istniejącymi zapytaniami SQL. · Kompromis: Psuje się powyżej ~5 tys. elementów — akceptowalne, biorąc pod uwagę obecne wolumeny danych."
+  - label: "Tysiące"
+    description: "Paginacja oparta na kursorze + wirtualne przewijanie. · Mocna strona: Obsługuje wzrost bez spadku wydajności. · Kompromis: 2-3 razy więcej pracy implementacyjnej; zmienia kontrakt API."
+  - label: "Dziesiątki tysięcy"
+    description: "Filtrowanie po stronie serwera + wirtualna lista + wyszukiwanie. · Mocna strona: Skaluje się w nieskończoność. · Kompromis: Znacząca złożoność; wymaga indeksu wyszukiwania i nowego projektu API."
     multiSelect: false
 
-### Example 2: Content / Education — HIGH complexity (e.g., Course Module Design)
+### Przykład 2: Treści / Edukacja — złożoność WYSOKA (np. Projekt modułu kursu)
 
-Mixed: `Outcome` is `[D]` (defines what success looks like — pure problem framing); `Levels` is `[S]` (audience-handling strategy — how to structure delivery). With a frame brief, ask only `Levels`; the outcome should be settled.
+Mieszane: `Outcome` to `[D]` (definiuje, jak wygląda sukces — czyste ramy problemu); `Levels` to `[S]` (strategia obsługi odbiorców — jak strukturyzować dostarczanie). Z briefem ramowym, pytaj tylko o `Levels`; wynik powinien być ustalony.
 
-AskUserQuestion with questions:
+AskUserQuestion z pytaniami:
 
-- question: "What should the learner be able to DO after this module — not just know?"
-  header: "Outcome"
+- question: "Co uczeń powinien być w stanie ZROBIĆ po tym module — nie tylko wiedzieć?"
+  header: "Wynik"
   options:
-  - label: "⭐ Recommended: Build a working prototype"
-    description: "Learner produces a functional artifact using the techniques taught. · Strength: Forces genuine skill transfer — the artifact proves competence. Matches the 'Innovate' lesson format from 10xDevs3. · Tradeoff: Requires well-designed starter templates and clear acceptance criteria; takes 2-3x longer to prep."
-  - label: "Complete a guided exercise"
-    description: "Step-by-step walkthrough with expected output. · Strength: Low barrier — everyone finishes, builds confidence. · Tradeoff: May produce 'tutorial zombies' who can follow but not apply independently."
-  - label: "Pass a knowledge check"
-    description: "Quiz or code review proving conceptual understanding. · Strength: Fast to create, easy to grade at scale. · Tradeoff: Tests recognition not production — learner may understand but not be able to execute."
+  - label: "⭐ Recommended: Zbudować działający prototyp"
+    description: "Uczeń tworzy funkcjonalny artefakt, używając nauczonych technik. · Mocna strona: Wymusza prawdziwe przeniesienie umiejętności — artefakt dowodzi kompetencji. Pasuje do formatu lekcji 'Innowacje' z 10xDevs3. · Kompromis: Wymaga dobrze zaprojektowanych szablonów startowych i jasnych kryteriów akceptacji; przygotowanie zajmuje 2-3 razy dłużej."
+  - label: "Ukończyć ćwiczenie z przewodnikiem"
+    description: "Instrukcja krok po kroku z oczekiwanym wynikiem. · Mocna strona: Niska bariera — każdy kończy, buduje pewność siebie. · Kompromis: Może prowadzić do 'tutorialowych zombie', którzy potrafią podążać, ale nie potrafią samodzielnie zastosować."
+  - label: "Zdać test wiedzy"
+    description: "Quiz lub przegląd kodu potwierdzający zrozumienie koncepcyjne. · Mocna strona: Szybki do stworzenia, łatwy do oceniania na dużą skalę. · Kompromis: Testuje rozpoznawanie, a nie produkcję — uczeń może rozumieć, ale nie być w stanie wykonać."
     multiSelect: false
-- question: "How should this module handle different skill levels in the audience?"
-  header: "Levels"
+- question: "Jak ten moduł powinien radzić sobie z różnymi poziomami umiejętności w grupie odbiorców?"
+  header: "Poziomy"
   options:
-  - label: "Single track, advanced"
-    description: "One path targeting experienced devs. · Strength: Deep content, no hand-holding, respects expert time. · Tradeoff: Alienates beginners — they'll drop off or flood support channels."
-  - label: "⭐ Recommended: Layered depth"
-    description: "Core path everyone follows + optional deep-dive sections. · Strength: Everyone gets value; advanced learners self-select into harder material. · Tradeoff: More content to maintain; risk of 'optional' sections being ignored."
-  - label: "Separate beginner/advanced tracks"
-    description: "Two parallel paths diverging early. · Strength: Each audience gets perfectly targeted content. · Tradeoff: 2x production cost; splitting a small cohort may hurt community dynamics."
+  - label: "Jedna ścieżka, zaawansowana"
+    description: "Jedna ścieżka skierowana do doświadczonych programistów. · Mocna strona: Głęboka treść, brak prowadzenia za rękę, szanuje czas ekspertów. · Kompromis: Zniechęca początkujących — odpadną lub zaleją kanały wsparcia."
+  - label: "⭐ Recommended: Warstwowa głębokość"
+    description: "Główna ścieżka, którą wszyscy podążają + opcjonalne sekcje pogłębione. · Mocna strona: Wszyscy otrzymują wartość; zaawansowani uczniowie sami wybierają trudniejszy materiał. · Kompromis: Więcej treści do utrzymania; ryzyko ignorowania 'opcjonalnych' sekcji."
+  - label: "Oddzielne ścieżki dla początkujących/zaawansowanych"
+    description: "Dwie równoległe ścieżki rozchodzące się wcześnie. · Mocna strona: Każda grupa odbiorców otrzymuje idealnie dopasowaną treść. · Kompromis: 2x koszt produkcji; podział małej kohorty może zaszkodzić dynamice społeczności."
     multiSelect: false
 
-### Example 3: Strategy / Process — MEDIUM complexity (e.g., Newsletter Workflow)
+### Przykład 3: Strategia / Proces — złożoność ŚREDNIA (np. Workflow newslettera)
 
-`Bottleneck` is `[D]` — pure problem framing (which problem to solve). This is exactly the kind of question a frame exists to settle. With a frame brief, skip this entirely; the leading hypothesis is the bottleneck.
+`Bottleneck` to `[D]` — czyste ramy problemu (jaki problem rozwiązać). To jest dokładnie ten rodzaj pytania, który ramka ma na celu rozstrzygnąć. Z briefem ramowym, pomiń to całkowicie; wiodąca hipoteza jest wąskim gardłem.
 
-AskUserQuestion with questions:
+AskUserQuestion z pytaniami:
 
-- question: "What's the primary bottleneck in the current newsletter pipeline?"
-  header: "Bottleneck"
+- question: "Jakie jest główne wąskie gardło w obecnym procesie newslettera?"
+  header: "Wąskie gardło"
   options:
-  - label: "⭐ Recommended: Curation takes too long"
-    description: "Finding and evaluating links is the slow step. · Strength: Directly targets time-to-publish — automating curation yields the biggest time savings based on current pipeline timings. · Tradeoff: Automated curation risks losing the personal editorial voice that subscribers value."
-  - label: "Writing the commentary"
-    description: "Links are ready but writing around them is slow. · Strength: AI-assisted drafting can cut this in half. · Tradeoff: Heavy AI drafting can make the newsletter feel generic — needs careful voice calibration."
-  - label: "Distribution and scheduling"
-    description: "Content is ready but publishing is manual. · Strength: Easiest to automate — clear inputs and outputs. · Tradeoff: Lowest impact if curation or writing is still the bottleneck."
+  - label: "⭐ Recommended: Kuracja trwa zbyt długo"
+    description: "Znajdowanie i ocenianie linków jest wolnym krokiem. · Mocna strona: Bezpośrednio wpływa na czas publikacji — automatyzacja kuracji daje największe oszczędności czasu na podstawie obecnych czasów procesu. · Kompromis: Automatyczna kuracja ryzykuje utratę osobistego głosu redakcyjnego, który cenią subskrybenci."
+  - label: "Pisanie komentarzy"
+    description: "Linki są gotowe, ale pisanie wokół nich jest wolne. · Mocna strona: Tworzenie wspomagane AI może skrócić ten czas o połowę. · Kompromis: Intensywne tworzenie AI może sprawić, że newsletter będzie wydawał się generyczny — wymaga starannej kalibracji głosu."
+  - label: "Dystrybucja i harmonogramowanie"
+    description: "Treść jest gotowa, ale publikacja jest ręczna. · Mocna strona: Najłatwiejsze do zautomatyzowania — jasne wejścia i wyjścia. · Kompromis: Najmniejszy wpływ, jeśli kuracja lub pisanie nadal są wąskim gardłem."
     multiSelect: false
 
-**Note**: Questions focus on **WHAT should happen** (requirements, behavior, outcomes) — NOT **HOW to implement it** (code patterns, specific tools). The `⭐ Recommended` pick is grounded in research and context — the user always has the final say.
+**Uwaga**: Pytania koncentrują się na **CO powinno się wydarzyć** (wymagania, zachowanie, wyniki) — NIE na **JAK to zaimplementować** (wzorce kodu, konkretne narzędzia). Wybór `⭐ Recommended` jest oparty na badaniach i kontekście — użytkownik zawsze ma ostatnie słowo.
