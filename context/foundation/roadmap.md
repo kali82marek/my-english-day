@@ -32,7 +32,7 @@ Wedge produktu — jedna cecha, której usunięcie czyni produkt nieodróżnialn
 | ID    | Change ID                     | Outcome (użytkownik może …)                                         | Prerequisites | PRD refs                     | Status   |
 | ----- | ----------------------------- | ------------------------------------------------------------------- | ------------- | ---------------------------- | -------- |
 | F-01  | minimal-auth-app-spine        | (foundation) konto + trwała sesja + uwierzytelniony szkielet aplikacji | —             | FR-001, FR-002, Access Control | done     |
-| S-01  | capture-situation-by-voice    | nagrać głosowo sytuację po polsku i zobaczyć ją zapisaną             | F-01          | US-01, FR-003, FR-004, FR-005 | proposed |
+| S-01  | capture-situation-by-voice    | nagrać głosowo sytuację po polsku i zobaczyć ją zapisaną             | F-01          | US-01, FR-003, FR-004, FR-005 | done     |
 | S-02  | gated-ai-flashcard-generation | dostać fiszki AI z sytuacji i zaakceptować lub odrzucić każdą        | S-01, F-01    | US-01, FR-006, FR-009, FR-010 | proposed |
 | S-03  | same-context-variants         | dostać warianty fiszek w obrębie tego samego kontekstu sytuacji      | S-02          | FR-007                        | proposed |
 | S-04  | duplicate-card-filtering      | mieć pewność, że nowe fiszki nie dublują jego istniejącej bazy       | S-02          | FR-008                        | proposed |
@@ -91,7 +91,7 @@ Fundamenty poniżej zakładają, że to istnieje, i NIE scaffoldują tego ponown
 - **Unknowns:**
   - Jakie są mierzalne progi szybkości („kilka sekund" od naciśnięcia do potwierdzenia)? — Owner: user. Block: no.
 - **Risk:** Sekwencjonowane przed generowaniem, bo bez zapisanych sytuacji nie ma z czego generować fiszek. Główny guardrail PRD (błyskawiczny zapis) żyje tutaj — wolne nagrywanie zabije nawyk. Ryzyko: opóźnienie transkrypcji psujące „kilka sekund".
-- **Status:** proposed
+- **Status:** done
 
 ### S-02: Generowanie fiszek AI z akceptacją (gwiazda przewodnia)
 
@@ -175,3 +175,4 @@ Fundamenty poniżej zakładają, że to istnieje, i NIE scaffoldują tego ponown
 (Pusta przy pierwszej generacji. `/10x-archive` dopisuje wpis tutaj — i przełącza Status elementu na `done` — gdy archiwizowana jest zmiana o pasującym Change ID. NIE wypełniać ręcznie.)
 
 - **F-01: (foundation) konto (email + hasło) zakładane i logowane, sesja trwała do wylogowania, uwierzytelniony szkielet aplikacji (przechowywanie sesji + routing chroniony + uwierzytelniony klient API) gotowy dla wszystkich slice'ów.** — Zarchiwizowano 2026-09-02 → `context/archive/2026-06-02-minimal-auth-app-spine/`. Lekcja: —.
+- **S-01: użytkownik może jednym naciśnięciem nagrać po polsku przeżytą sytuację, system transkrybuje ją bez kroku edycji i zapisuje, a użytkownik widzi listę zapisanych sytuacji dnia.** — Zarchiwizowano 2026-09-02 → `context/archive/2026-06-07-capture-situation-by-voice/`. Lekcja: —.
