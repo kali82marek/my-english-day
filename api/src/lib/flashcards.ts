@@ -12,6 +12,9 @@
 
 const CHAT_COMPLETIONS_URL = 'https://api.openai.com/v1/chat/completions';
 const MODEL = 'gpt-4o';
+// Twardy sufit kart na sytuację (baza + warianty). Strict mode nie wspiera
+// maxItems, więc limit egzekwujemy po stronie kodu.
+const MAX_CARDS = 10;
 
 export type GeneratedCard = {
   type: 'word' | 'phrase' | 'sentence';
@@ -111,9 +114,14 @@ export async function generateFlashcards(
 
   // Structured Outputs gwarantuje kształt — parsujemy bez kodu obronnego.
   const parsed = JSON.parse(content) as { flashcards: GeneratedCard[] };
-  if (!parsed.flashcards || parsed.flashcards.length === 0) {
+  // Strict mode nie wspiera maxItems ani limitów długości — górny limit kart
+  // i odsiew pustych egzekwujemy w kodzie.
+  const cards = (parsed.flashcards ?? [])
+    .filter((card) => card.front_en.trim() !== '' && card.back_pl.trim() !== '')
+    .slice(0, MAX_CARDS);
+  if (cards.length === 0) {
     throw new Error('Model nie wygenerował żadnych fiszek.');
   }
 
-  return parsed.flashcards;
+  return cards;
 }

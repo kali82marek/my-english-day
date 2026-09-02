@@ -89,7 +89,9 @@ async function generateAndStoreFlashcards(
     )
       .bind(situationId)
       .run();
-  } catch {
+  } catch (err) {
+    // Jedyny ślad awarii w produkcji poza statusem — widoczny w `wrangler tail`.
+    console.error(`Generowanie fiszek dla sytuacji ${situationId} nie powiodło się:`, err);
     await env.DB.prepare(
       "UPDATE situations SET flashcards_status = 'failed' WHERE id = ?",
     )
@@ -124,7 +126,8 @@ async function transcribeAndFinalize(
     await generateAndStoreFlashcards(env, situationId, userId, transcript);
     // Dopiero po finalizacji transkryptu (i próbie generowania) kasujemy plik audio.
     await env.AUDIO_BUCKET.delete(audioKey);
-  } catch {
+  } catch (err) {
+    console.error(`Transkrypcja sytuacji ${situationId} nie powiodła się:`, err);
     await env.DB.prepare("UPDATE situations SET status = 'failed' WHERE id = ?")
       .bind(situationId)
       .run();
