@@ -34,7 +34,7 @@ Wedge produktu — jedna cecha, której usunięcie czyni produkt nieodróżnialn
 | F-01  | minimal-auth-app-spine        | (foundation) konto + trwała sesja + uwierzytelniony szkielet aplikacji | —             | FR-001, FR-002, Access Control | done     |
 | S-01  | capture-situation-by-voice    | nagrać głosowo sytuację po polsku i zobaczyć ją zapisaną             | F-01          | US-01, FR-003, FR-004, FR-005 | done     |
 | S-02  | gated-ai-flashcard-generation | dostać fiszki AI z sytuacji i zaakceptować lub odrzucić każdą        | S-01, F-01    | US-01, FR-006, FR-009, FR-010 | done     |
-| S-03  | same-context-variants         | dostać warianty fiszek w obrębie tego samego kontekstu sytuacji      | S-02          | FR-007                        | proposed |
+| S-03  | same-context-variants         | dostać warianty fiszek w obrębie tego samego kontekstu sytuacji      | S-02          | FR-007                        | done     |
 | S-04  | duplicate-card-filtering      | mieć pewność, że nowe fiszki nie dublują jego istniejącej bazy       | S-02          | FR-008                        | proposed |
 | S-05  | srs-review-session            | uczyć się z fiszek w sesji powtórek z 3 przyciskami oceny            | S-02          | US-01, FR-011, FR-012         | proposed |
 
@@ -117,7 +117,7 @@ Fundamenty poniżej zakładają, że to istnieje, i NIE scaffoldują tego ponown
 - **Unknowns:**
   - Ile wariantów na sytuację jest wartościowych zanim koszt wywołań AI przeważy korzyść? — Owner: team. Block: no.
 - **Risk:** Sekwencjonowane po S-02, bo wzbogaca działający pipeline generowania. Warianty to must-have i deklarowana „kluczowa wartość" PRD, więc zostają na ścieżce; przy celu `speed` mogą iść równolegle z S-04/S-05, by nie wydłużać drogi do pełnej pętli. Ryzyko: warianty wychodzą poza kontekst lub zalewają przegląd.
-- **Status:** proposed
+- **Status:** done
 
 ### S-04: Filtrowanie duplikatów względem bazy użytkownika
 
@@ -177,3 +177,4 @@ Fundamenty poniżej zakładają, że to istnieje, i NIE scaffoldują tego ponown
 - **F-01: (foundation) konto (email + hasło) zakładane i logowane, sesja trwała do wylogowania, uwierzytelniony szkielet aplikacji (przechowywanie sesji + routing chroniony + uwierzytelniony klient API) gotowy dla wszystkich slice'ów.** — Zarchiwizowano 2026-09-02 → `context/archive/2026-06-02-minimal-auth-app-spine/`. Lekcja: —.
 - **S-01: użytkownik może jednym naciśnięciem nagrać po polsku przeżytą sytuację, system transkrybuje ją bez kroku edycji i zapisuje, a użytkownik widzi listę zapisanych sytuacji dnia.** — Zarchiwizowano 2026-09-02 → `context/archive/2026-06-07-capture-situation-by-voice/`. Lekcja: —.
 - **S-02: użytkownik może wieczorem zobaczyć fiszki angielskie wygenerowane przez AI z sytuacji dnia (AI dobiera typy: słówka / zwroty / zdania) i każdą zaakceptować lub odrzucić; zaakceptowane od razu trafiają do bazy nauki.** — Zarchiwizowano 2026-09-02 → `context/archive/2026-06-07-gated-ai-flashcard-generation/`. Lekcja: —.
+- **S-03: użytkownik może dostać warianty fiszek — rozszerzenia ściśle w obrębie tej samej sytuacji (ten sam sklep/rozmowa, inne detale: inny produkt, inna kwota, inne pytanie) — ucząc się elastyczności językowej, nie papugowania jednej frazy.** — Zarchiwizowano 2026-09-02 → `context/archive/2026-06-09-same-context-variants/`. Lekcja: —.
