@@ -182,8 +182,8 @@ Rozszerzenie pojedynczego wywołania generowania o warianty: typ, schemat Struct
 
 #### Automated
 
-- [x] 2.1 Typecheck przechodzi (`api && npm run typecheck`)
-- [x] 2.2 Testy przechodzą (`api && npm test`)
+- [x] 2.1 Typecheck przechodzi (`api && npm run typecheck`) — e56b110
+- [x] 2.2 Testy przechodzą (`api && npm test`) — e56b110
 
 #### Manual
 
