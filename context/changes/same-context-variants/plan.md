@@ -175,8 +175,8 @@ Rozszerzenie pojedynczego wywołania generowania o warianty: typ, schemat Struct
 
 #### Manual
 
-- [ ] 1.3 Kolumna `is_variant` istnieje w `flashcards` z domyślną `0`
-- [ ] 1.4 Istniejące wiersze mają `is_variant = 0`
+- [x] 1.3 Kolumna `is_variant` istnieje w `flashcards` z domyślną `0` — f29082b
+- [x] 1.4 Istniejące wiersze mają `is_variant = 0` — f29082b
 
 ### Phase 2: Generowanie wariantów (LLM + zapis)
 
@@ -187,6 +187,6 @@ Rozszerzenie pojedynczego wywołania generowania o warianty: typ, schemat Struct
 
 #### Manual
 
-- [ ] 2.3 Po transkrypcji w `flashcards` istnieją wiersze `is_variant=1` (~2-3) obok bazowych `is_variant=0`
-- [ ] 2.4 Warianty trzymają się kontekstu (podmienione detale), nie powielają dosłownie fiszek bazowych
-- [ ] 2.5 Regresja: `GET /flashcards/proposals` bez pola `is_variant`; ekran „Fiszki" i akceptuj/odrzuć działają
+- [x] 2.3 Po transkrypcji w `flashcards` istnieją wiersze `is_variant=1` (~2-3) obok bazowych `is_variant=0` — e56b110
+- [x] 2.4 Warianty trzymają się kontekstu (podmienione detale), nie powielają dosłownie fiszek bazowych — e56b110
+- [x] 2.5 Regresja: `GET /flashcards/proposals` bez pola `is_variant`; ekran „Fiszki" i akceptuj/odrzuć działają — e56b110
