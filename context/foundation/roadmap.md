@@ -3,7 +3,7 @@ project: "My English Day"
 version: 1
 status: draft
 created: 2026-05-31
-updated: 2026-05-31
+updated: 2026-09-02
 prd_version: 1
 main_goal: speed
 top_blocker: capacity
@@ -31,7 +31,7 @@ Wedge produktu — jedna cecha, której usunięcie czyni produkt nieodróżnialn
 
 | ID    | Change ID                     | Outcome (użytkownik może …)                                         | Prerequisites | PRD refs                     | Status   |
 | ----- | ----------------------------- | ------------------------------------------------------------------- | ------------- | ---------------------------- | -------- |
-| F-01  | minimal-auth-app-spine        | (foundation) konto + trwała sesja + uwierzytelniony szkielet aplikacji | —             | FR-001, FR-002, Access Control | ready    |
+| F-01  | minimal-auth-app-spine        | (foundation) konto + trwała sesja + uwierzytelniony szkielet aplikacji | —             | FR-001, FR-002, Access Control | done     |
 | S-01  | capture-situation-by-voice    | nagrać głosowo sytuację po polsku i zobaczyć ją zapisaną             | F-01          | US-01, FR-003, FR-004, FR-005 | proposed |
 | S-02  | gated-ai-flashcard-generation | dostać fiszki AI z sytuacji i zaakceptować lub odrzucić każdą        | S-01, F-01    | US-01, FR-006, FR-009, FR-010 | proposed |
 | S-03  | same-context-variants         | dostać warianty fiszek w obrębie tego samego kontekstu sytuacji      | S-02          | FR-007                        | proposed |
@@ -76,7 +76,7 @@ Fundamenty poniżej zakładają, że to istnieje, i NIE scaffoldują tego ponown
 - **Unknowns:**
   - Co dokładnie widzi niezalogowany użytkownik trafiający na chroniony ekran? — Owner: user. Block: no.
 - **Risk:** Sekwencjonowane jako pierwsze, bo każdy slice produktowy potrzebuje tożsamości użytkownika i uwierzytelnionych wywołań API. Ryzyko: rozrost do pełnego systemu auth — trzymać minimum (rejestracja, logowanie, trwała sesja, middleware), resztę odłożyć. To enabler, nie ścieżka walidacji.
-- **Status:** ready
+- **Status:** done
 
 ## Slices
 
@@ -173,3 +173,5 @@ Fundamenty poniżej zakładają, że to istnieje, i NIE scaffoldują tego ponown
 ## Done
 
 (Pusta przy pierwszej generacji. `/10x-archive` dopisuje wpis tutaj — i przełącza Status elementu na `done` — gdy archiwizowana jest zmiana o pasującym Change ID. NIE wypełniać ręcznie.)
+
+- **F-01: (foundation) konto (email + hasło) zakładane i logowane, sesja trwała do wylogowania, uwierzytelniony szkielet aplikacji (przechowywanie sesji + routing chroniony + uwierzytelniony klient API) gotowy dla wszystkich slice'ów.** — Zarchiwizowano 2026-09-02 → `context/archive/2026-06-02-minimal-auth-app-spine/`. Lekcja: —.
