@@ -6,14 +6,19 @@
  *   2. trigger `RAISE(ABORT)` przerywa zapis D1 w miniflare (wstrzykiwanie błędów D1
  *      bez mockowania bindingu);
  *   3. `waitOnExecutionContext` obejmuje `c.executionCtx.waitUntil` z Hono i odrzucona
- *      obietnica tła obala test (nic w `waitUntil` nie ginie po cichu).
+ *      obietnica tła obala test (nic w `waitUntil` nie ginie po cichu). Aplikacja pod
+ *      testem z założenia NIE zostawia odrzuconej obietnicy (ryzyko #2, T2.3 w
+ *      `src/routes/situations.integration.test.ts`), więc tę właściwość dowodzi
+ *      minimalna trasa Hono z tym samym wzorcem `waitUntil`, co `POST /situations`.
  *
  * Deliberate-break guarda `fetch`: usuń `mockOpenAI` z testu 1 → test pada z
  * `Unmocked fetch: https://api.openai.com/v1/audio/transcriptions` (nie z 401 OpenAI).
  */
-import { waitOnExecutionContext } from 'cloudflare:test';
+import { createExecutionContext, waitOnExecutionContext } from 'cloudflare:test';
 import { env } from 'cloudflare:workers';
+import { Hono } from 'hono';
 import { afterEach, describe, expect, it } from 'vitest';
+import type { AppEnv } from '../src/types';
 import { raiseAbort, readFlashcards, readSituation, resetDb, seedUser, withTrigger } from './db';
 import { chatResponse, mockOpenAI, whisperResponse } from './openai-mock';
 import { postSituation } from './request';
@@ -103,25 +108,29 @@ describe('Harness workerd: właściwości', () => {
     expect(await readFlashcards(env, situationId)).toHaveLength(1);
   });
 
-  it('odrzucona obietnica w waitUntil obala waitOnExecutionContext; wiersz zostaje pending', async () => {
-    const { token } = await seedUser(env);
-    // Whisper pada → `catch` próbuje `UPDATE status='failed'` → trigger przerywa UPDATE
-    // → `transcribeAndFinalize` rzuca → obietnica w `waitUntil` odrzucona.
-    await withTrigger(
-      env,
-      'test_abort_status_failed',
-      `BEFORE UPDATE OF status ON situations WHEN NEW.status = 'failed' ${raiseAbort('wstrzyknięty błąd D1')}`,
-    );
-    mockOpenAI({ transcription: whisperResponse('upstream error', 500) });
+  it('odrzucona obietnica w waitUntil (przez Hono) obala waitOnExecutionContext', async () => {
+    // Trasa-sonda: ten sam wzorzec `c.executionCtx.waitUntil(...)` co `POST /situations`,
+    // ale z obietnicą tła sterowaną z testu — odrzucamy ją dopiero PO wywołaniu
+    // `waitOnExecutionContext` (plugin podpina `allSettled` synchronicznie), żeby test
+    // nie zależał od kolejności mikrotasków ani nie wywołał „unhandled rejection".
+    let failBackground!: (err: Error) => void;
+    const probe = new Hono<AppEnv>().get('/probe', (c) => {
+      c.executionCtx.waitUntil(
+        new Promise<void>((_, reject) => {
+          failBackground = reject;
+        }),
+      );
+      return c.text('ok');
+    });
+    const ctx = createExecutionContext();
 
-    const { res, ctx } = await postSituation(env, token);
-    expect(res.status).toBe(201);
-    const { id } = (await res.json()) as { id: number };
+    const res = await probe.fetch(new Request('http://test.local/probe'), env, ctx);
+    expect(res.status).toBe(200);
+    expect(failBackground).toBeTypeOf('function');
 
-    await expect(waitOnExecutionContext(ctx)).rejects.toThrow(/wstrzyknięty błąd D1/);
+    const waiting = waitOnExecutionContext(ctx);
+    failBackground(new Error('wstrzyknięte odrzucenie w tle'));
 
-    const row = await readSituation(env, id);
-    expect(row?.status).toBe('pending');
-    expect(row?.transcript).toBeNull();
+    await expect(waiting).rejects.toThrow(/wstrzyknięte odrzucenie w tle/);
   });
 });

@@ -14,9 +14,9 @@
 import { waitOnExecutionContext } from 'cloudflare:test';
 import { env } from 'cloudflare:workers';
 import { afterEach, describe, expect, it } from 'vitest';
-import { raiseAbort, readSituation, resetDb, seedUser, withTrigger } from '../../test/db';
-import { mockOpenAI, whisperResponse } from '../../test/openai-mock';
-import { getSituations, postSituation } from '../../test/request';
+import { raiseAbort, readFlashcards, readSituation, resetDb, seedUser, withTrigger } from '../../test/db';
+import { chatResponse, mockOpenAI, whisperResponse } from '../../test/openai-mock';
+import { getProposals, getSituations, postSituation } from '../../test/request';
 
 type SituationDTO = {
   id: number;
@@ -131,5 +131,143 @@ describe('Ryzyko #1: nagranie nie przepada', () => {
     const listed = (await listSituations(token)).find((s) => s.id === id);
     expect(listed).toBeDefined();
     expect(listed?.status).toBe('pending');
+  });
+});
+
+const TRANSCRIPT = 'Dziś byłem w banku i pytałem o fakturę.';
+
+type ProposalsBody = { proposals: { id: number }[]; generatingCount: number };
+
+/** `n` poprawnych kart w kształcie odpowiedzi modelu (co druga to wariant). */
+function makeCards(n: number) {
+  const types = ['word', 'phrase', 'sentence'] as const;
+  return Array.from({ length: n }, (_, i) => ({
+    type: types[i % types.length],
+    front_en: `card ${i + 1}`,
+    back_pl: `karta ${i + 1}`,
+    example_en: `Example ${i + 1}.`,
+    is_variant: i % 2 === 1,
+  }));
+}
+
+/** POST z udaną transkrypcją i zadaną odpowiedzią chatu; czeka na zadanie tła. */
+async function postAndFinish(token: string, chat: Response): Promise<number> {
+  mockOpenAI({ transcription: whisperResponse(TRANSCRIPT), chat });
+  const { res, ctx } = await postSituation(env, token);
+  expect(res.status).toBe(201);
+  const { id } = (await res.json()) as { id: number };
+  // Po `done` zadanie tła NIGDY nie może zostawić odrzuconej obietnicy w `waitUntil`.
+  await expect(waitOnExecutionContext(ctx)).resolves.toBeUndefined();
+  return id;
+}
+
+async function readProposals(token: string): Promise<ProposalsBody> {
+  const res = await getProposals(env, token);
+  expect(res.status).toBe(200);
+  return (await res.json()) as ProposalsBody;
+}
+
+describe('Ryzyko #2: fiszki wszystko-albo-nic', () => {
+  // Deliberate-break: zamień kolejność w `transcribeAndFinalize` (generowanie PRZED
+  // `UPDATE ... status = 'done'`) → transkrypt `null` → czerwony.
+  it('T2.1 model odpowiada non-2xx → `done` z transkryptem, `flashcards_status=failed`, zero kart, pusty bucket', async () => {
+    const { token } = await seedUser(env);
+
+    const id = await postAndFinish(token, chatResponse(null, 500));
+
+    const row = await readSituation(env, id);
+    expect(row?.status).toBe('done');
+    expect(row?.transcript).toBe(TRANSCRIPT);
+    expect(row?.flashcards_status).toBe('failed');
+    expect(await readFlashcards(env, id)).toHaveLength(0);
+
+    const proposals = await readProposals(token);
+    expect(proposals.proposals).toEqual([]);
+    expect(proposals.generatingCount).toBe(0);
+
+    const { objects } = await env.AUDIO_BUCKET.list();
+    expect(objects).toHaveLength(0);
+  });
+
+  // Czerwony przed poprawką (pętla `.run()` po karcie: 2 karty + `failed`).
+  // Deliberate-break po poprawce: wróć z `DB.batch` do pętli `.run()` → 2 karty → czerwony.
+  it('T2.2 błąd D1 przy trzeciej karcie → ZERO kart i `failed`; transkrypt i `done` zachowane', async () => {
+    const { token } = await seedUser(env);
+    // Trigger liczy wiersze całego pliku testowego — `resetDb` w `afterEach` gwarantuje
+    // pustą tabelę `flashcards` na starcie, więc „= 2" to dokładnie trzecia karta.
+    await withTrigger(
+      env,
+      'test_abort_third_flashcard',
+      `BEFORE INSERT ON flashcards WHEN (SELECT COUNT(*) FROM flashcards) = 2 ${raiseAbort('wstrzyknięty błąd D1')}`,
+    );
+
+    const id = await postAndFinish(token, chatResponse(makeCards(3)));
+
+    expect(await readFlashcards(env, id)).toHaveLength(0);
+    const row = await readSituation(env, id);
+    expect(row?.flashcards_status).toBe('failed');
+    expect(row?.status).toBe('done');
+    expect(row?.transcript).toBe(TRANSCRIPT);
+  });
+
+  // Czerwony przed poprawką (zewnętrzny `catch` nadpisuje `status='failed'`).
+  // Deliberate-break po poprawce: usuń wewnętrzny `try/catch` wokół
+  // `UPDATE flashcards_status = 'failed'` → odrzucenie albo `status='failed'` → czerwony.
+  it('T2.3 zapis stanu `failed` sam pada → `done` z transkryptem zostaje, `flashcards_status` zostaje `pending`, brak odrzucenia', async () => {
+    const { token } = await seedUser(env);
+    await withTrigger(
+      env,
+      'test_abort_flashcards_failed',
+      `BEFORE UPDATE OF flashcards_status ON situations WHEN NEW.flashcards_status = 'failed' ${raiseAbort('wstrzyknięty błąd D1')}`,
+    );
+
+    const id = await postAndFinish(token, chatResponse(null, 500));
+
+    const row = await readSituation(env, id);
+    expect(row?.status).toBe('done');
+    expect(row?.transcript).toBe(TRANSCRIPT);
+    // Nic lepszego nie da się zrobić — ale `done` i transkrypt NIE mogą zostać nadpisane.
+    expect(row?.flashcards_status).toBe('pending');
+    expect(await readFlashcards(env, id)).toHaveLength(0);
+
+    // Awaria po `done` nie blokuje sprzątania audio (jak w T2.1).
+    const { objects } = await env.AUDIO_BUCKET.list();
+    expect(objects).toHaveLength(0);
+  });
+
+  // Niezmiennik warstwy zapisu: nigdy `done` bez kart. Zielony dziś tylko dlatego, że
+  // generator rzuca na pustą listę. Deliberate-break: tymczasowo usuń rzut na pustą
+  // listę w `src/lib/flashcards.ts` → `done` z 0 kart → czerwony (przywróć; guard w
+  // generatorze należy do Fazy 3 wdrożenia).
+  it('T2.4 model zwraca pustą listę → zero kart i `failed`, nigdy `done` bez kart', async () => {
+    const { token } = await seedUser(env);
+
+    const id = await postAndFinish(token, chatResponse([]));
+
+    expect(await readFlashcards(env, id)).toHaveLength(0);
+    const row = await readSituation(env, id);
+    expect(row?.flashcards_status).toBe('failed');
+    expect(row?.status).toBe('done');
+  });
+
+  // Górna granica batcha: 10 kart (`MAX_CARDS`) + UPDATE = 11 zapytań w jednym `batch`,
+  // poniżej limitu 50 zapytań na wywołanie z `infrastructure.md`.
+  it('T2.5 sukces po pełnej ścieżce → 10 kart `proposed`, `flashcards_status=done`, `generatingCount: 0`', async () => {
+    const { token } = await seedUser(env);
+
+    const id = await postAndFinish(token, chatResponse(makeCards(10)));
+
+    const cards = await readFlashcards(env, id);
+    expect(cards).toHaveLength(10);
+    expect(cards.every((card) => card.status === 'proposed')).toBe(true);
+    expect(cards.map((card) => card.front_en)).toEqual(makeCards(10).map((card) => card.front_en));
+
+    const row = await readSituation(env, id);
+    expect(row?.status).toBe('done');
+    expect(row?.flashcards_status).toBe('done');
+
+    const proposals = await readProposals(token);
+    expect(proposals.proposals).toHaveLength(10);
+    expect(proposals.generatingCount).toBe(0);
   });
 });

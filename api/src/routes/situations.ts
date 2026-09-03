@@ -7,8 +7,13 @@
  *   `c.executionCtx.waitUntil`, leci transkrypcja — odpowiedź już wyszła.
  *
  * Cykl życia pliku R2: kasowany dopiero PO potwierdzonym UPDATE transkryptu
- * (kolejność: transkrypcja → UPDATE → delete), żeby awaria zapisu do D1 nie
- * utraciła jedynej kopii audio. Przy błędzie transkrypcji plik R2 zostaje.
+ * (kolejność: transkrypcja → UPDATE → generowanie fiszek → delete), żeby awaria zapisu
+ * do D1 nie utraciła jedynej kopii audio. Przy błędzie transkrypcji plik R2 zostaje.
+ *
+ * Zadanie tła (`transcribeAndFinalize`) to trzy niezależne kroki: po zapisaniu
+ * `status='done'` awaria generowania, zapisu stanu generowania ani kasowania R2 nie
+ * nadpisuje `status` i nie zostawia odrzuconej obietnicy w `waitUntil`. Karty zapisywane
+ * atomowo przez `DB.batch` — wszystkie albo żadna (ryzyko #2 z test-plan.md).
  *
  * Awaria zapisu w POST (`R2.put` lub `INSERT`): czytelny JSON 500 `{ error }` i
  * best-effort kasowanie pliku R2 — nieudany zapis nie zostawia wiersza-widma ani
@@ -69,9 +74,16 @@ function extFromName(name: string): string {
 
 /**
  * Generowanie fiszek w tle — odpalane PO udanej transkrypcji, w tym samym
- * `waitUntil`. Owinięte własnym try/catch: błąd LLM ustawia `flashcards_status='failed'`,
- * ale NIE wywraca finalizacji transkrypcji ani kasowania R2 (transkrypt zostaje `done`).
- * `userId` brany z handlera POST — kontekst tła nie ma `c.get('userId')`.
+ * `waitUntil`. `userId` brany z handlera POST — kontekst tła nie ma `c.get('userId')`.
+ *
+ * Gwarancje (ryzyko #2 z `context/foundation/test-plan.md`, follow-up S-03 `DB.batch`):
+ * - Atomowość: INSERTy wszystkich kart i `UPDATE flashcards_status='done'` idą w JEDNYM
+ *   `DB.batch` (jedna transakcja D1). Błąd przy którejkolwiek karcie cofa całość —
+ *   nigdy „część kart + failed", nigdy `done` bez kart.
+ * - Nigdy nie rzuca: błąd LLM lub batcha ustawia `flashcards_status='failed'`; jeśli sam
+ *   ten UPDATE padnie, jest tylko logowany (kolumna zostaje `pending`). Dzięki temu
+ *   `transcribeAndFinalize` może po tej funkcji bezpiecznie sprzątać R2, a `status='done'`
+ *   sytuacji nigdy nie jest nadpisywany przez awarię generowania.
  */
 async function generateAndStoreFlashcards(
   env: Bindings,
@@ -81,37 +93,44 @@ async function generateAndStoreFlashcards(
 ): Promise<void> {
   try {
     const cards = await generateFlashcards(transcript, env.OPENAI_API_KEY);
-    for (const card of cards) {
-      await env.DB.prepare(
-        'INSERT INTO flashcards (situation_id, user_id, type, front_en, back_pl, example_en, is_variant) VALUES (?, ?, ?, ?, ?, ?, ?)',
-      )
+    const insertCard = env.DB.prepare(
+      'INSERT INTO flashcards (situation_id, user_id, type, front_en, back_pl, example_en, is_variant) VALUES (?, ?, ?, ?, ?, ?, ?)',
+    );
+    await env.DB.batch([
+      ...cards.map((card) =>
         // SQLite boolean = INTEGER: wariant → 1, fiszka bazowa → 0.
-        .bind(situationId, userId, card.type, card.front_en, card.back_pl, card.example_en, card.is_variant ? 1 : 0)
-        .run();
-    }
-    await env.DB.prepare(
-      "UPDATE situations SET flashcards_status = 'done' WHERE id = ?",
-    )
-      .bind(situationId)
-      .run();
+        insertCard.bind(situationId, userId, card.type, card.front_en, card.back_pl, card.example_en, card.is_variant ? 1 : 0),
+      ),
+      env.DB.prepare("UPDATE situations SET flashcards_status = 'done' WHERE id = ?").bind(situationId),
+    ]);
   } catch (err) {
     // Jedyny ślad awarii w produkcji poza statusem — widoczny w `wrangler tail`.
     console.error(`Generowanie fiszek dla sytuacji ${situationId} nie powiodło się:`, err);
-    await env.DB.prepare(
-      "UPDATE situations SET flashcards_status = 'failed' WHERE id = ?",
-    )
-      .bind(situationId)
-      .run();
+    try {
+      await env.DB.prepare(
+        "UPDATE situations SET flashcards_status = 'failed' WHERE id = ?",
+      )
+        .bind(situationId)
+        .run();
+    } catch (updateErr) {
+      // Nic lepszego nie da się zrobić bez wywracania finalizacji transkryptu.
+      console.error(`Nie udało się oznaczyć generowania dla sytuacji ${situationId} jako failed:`, updateErr);
+    }
   }
 }
 
 /**
- * Praca w tle: transkrypcja → finalizacja wiersza → generowanie fiszek. Bufor
- * `data` jest tą samą kopią, którą zapisano do R2 (czytany raz z multipart) —
+ * Praca w tle: transkrypcja → finalizacja wiersza → generowanie fiszek → sprzątanie R2.
+ * Bufor `data` jest tą samą kopią, którą zapisano do R2 (czytany raz z multipart) —
  * nie odczytujemy z R2.
- * Sukces: UPDATE transkryptu + status='done', generowanie fiszek, POTEM delete R2.
- * Błąd transkrypcji: UPDATE status='failed' (plik R2 zostaje — hak na retry,
- * generowanie się nie odpala).
+ *
+ * Trzy NIEZALEŻNE kroki — po zapisaniu `status='done'` żadna późniejsza awaria nie może
+ * nadpisać `status` ani zostawić odrzuconej obietnicy w `waitUntil` (przegląd S-03 F1):
+ *   1. transkrypcja + `UPDATE transcript, status='done'`; błąd → `status='failed'`
+ *      (best-effort, logowany) i KONIEC: plik R2 zostaje (hak na retry), generowanie się
+ *      nie odpala. To JEDYNA gałąź pisząca `status='failed'`.
+ *   2. generowanie fiszek — `generateAndStoreFlashcards` nigdy nie rzuca.
+ *   3. kasowanie pliku R2 — best-effort, błąd tylko logowany.
  */
 async function transcribeAndFinalize(
   env: Bindings,
@@ -120,22 +139,35 @@ async function transcribeAndFinalize(
   audioKey: string,
   audio: { data: ArrayBuffer; name: string; type: string },
 ): Promise<void> {
+  let transcript: string;
   try {
-    const transcript = await transcribeAudio(audio, env.OPENAI_API_KEY);
+    transcript = await transcribeAudio(audio, env.OPENAI_API_KEY);
     await env.DB.prepare(
       "UPDATE situations SET transcript = ?, status = 'done' WHERE id = ?",
     )
       .bind(transcript, situationId)
       .run();
-    // Generowanie fiszek po potwierdzonej transkrypcji; własny try/catch w środku.
-    await generateAndStoreFlashcards(env, situationId, userId, transcript);
-    // Dopiero po finalizacji transkryptu (i próbie generowania) kasujemy plik audio.
-    await env.AUDIO_BUCKET.delete(audioKey);
   } catch (err) {
     console.error(`Transkrypcja sytuacji ${situationId} nie powiodła się:`, err);
-    await env.DB.prepare("UPDATE situations SET status = 'failed' WHERE id = ?")
-      .bind(situationId)
-      .run();
+    try {
+      await env.DB.prepare("UPDATE situations SET status = 'failed' WHERE id = ?")
+        .bind(situationId)
+        .run();
+    } catch (updateErr) {
+      // Wiersz zostaje `pending`; serwerową regułę wieku opisuje follow-up
+      // `stale-pending-server-rule.md` w folderze zmiany.
+      console.error(`Nie udało się oznaczyć sytuacji ${situationId} jako failed:`, updateErr);
+    }
+    return;
+  }
+
+  await generateAndStoreFlashcards(env, situationId, userId, transcript);
+
+  // Dopiero po finalizacji transkryptu (i próbie generowania) kasujemy plik audio.
+  try {
+    await env.AUDIO_BUCKET.delete(audioKey);
+  } catch (err) {
+    console.error(`Nie udało się usunąć pliku ${audioKey} po finalizacji sytuacji ${situationId}:`, err);
   }
 }
 

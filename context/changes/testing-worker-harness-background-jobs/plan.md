@@ -659,28 +659,28 @@ w `## Notes` dopisek: „Faza zamknięta; follow-up: `follow-ups/stale-pending-s
 
 #### Automatyczne
 
-- [x] 2.1 Przed poprawką POST: T1.2 czerwony, T1.1/T1.3/T1.4 zielone
-- [x] 2.2 Po poprawce: `npm test` w całości zielone
-- [x] 2.3 `npm run typecheck` zielone
-- [x] 2.4 `follow-ups/stale-pending-server-rule.md` istnieje
+- [x] 2.1 Przed poprawką POST: T1.2 czerwony, T1.1/T1.3/T1.4 zielone — 9d0f856
+- [x] 2.2 Po poprawce: `npm test` w całości zielone — 9d0f856
+- [x] 2.3 `npm run typecheck` zielone — 9d0f856
+- [x] 2.4 `follow-ups/stale-pending-server-rule.md` istnieje — 9d0f856
 
 #### Ręczne
 
-- [x] 2.5 Deliberate-break T1.1 i T1.2 wykonane, kod przywrócony
-- [x] 2.6 Smoke przez `wrangler dev` (3030): 401 bez tokenu, `201` poniżej sekundy z tokenem
+- [x] 2.5 Deliberate-break T1.1 i T1.2 wykonane, kod przywrócony — 9d0f856
+- [x] 2.6 Smoke przez `wrangler dev` (3030): 401 bez tokenu, `201` poniżej sekundy z tokenem — 9d0f856
 
 ### Faza 3: Ryzyko #2 — fiszki wszystko-albo-nic
 
 #### Automatyczne
 
-- [ ] 3.1 Przed poprawkami: T2.2 i T2.3 czerwone, T2.1/T2.4/T2.5 zielone
-- [ ] 3.2 Po poprawkach: `npm test` w całości zielone
-- [ ] 3.3 `npm run typecheck` zielone
+- [x] 3.1 Przed poprawkami: T2.2 i T2.3 czerwone, T2.1/T2.4/T2.5 zielone
+- [x] 3.2 Po poprawkach: `npm test` w całości zielone
+- [x] 3.3 `npm run typecheck` zielone
 
 #### Ręczne
 
-- [ ] 3.4 Deliberate-break T2.1–T2.4 wykonane, kod przywrócony
-- [ ] 3.5 Smoke z prawdziwym kluczem przez `wrangler dev` (3030): nagranie → transkrypt → propozycje
+- [x] 3.4 Deliberate-break T2.1–T2.4 wykonane, kod przywrócony
+- [x] 3.5 Smoke z prawdziwym kluczem przez `wrangler dev` (3030): nagranie → transkrypt → propozycje
 
 ### Faza 4: Ryzyko #4 domknięte + książka kucharska
 
