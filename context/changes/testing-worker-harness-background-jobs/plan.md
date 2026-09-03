@@ -673,24 +673,24 @@ w `## Notes` dopisek: „Faza zamknięta; follow-up: `follow-ups/stale-pending-s
 
 #### Automatyczne
 
-- [x] 3.1 Przed poprawkami: T2.2 i T2.3 czerwone, T2.1/T2.4/T2.5 zielone
-- [x] 3.2 Po poprawkach: `npm test` w całości zielone
-- [x] 3.3 `npm run typecheck` zielone
+- [x] 3.1 Przed poprawkami: T2.2 i T2.3 czerwone, T2.1/T2.4/T2.5 zielone — b3cc73f
+- [x] 3.2 Po poprawkach: `npm test` w całości zielone — b3cc73f
+- [x] 3.3 `npm run typecheck` zielone — b3cc73f
 
 #### Ręczne
 
-- [x] 3.4 Deliberate-break T2.1–T2.4 wykonane, kod przywrócony
-- [x] 3.5 Smoke z prawdziwym kluczem przez `wrangler dev` (3030): nagranie → transkrypt → propozycje
+- [x] 3.4 Deliberate-break T2.1–T2.4 wykonane, kod przywrócony — b3cc73f
+- [x] 3.5 Smoke z prawdziwym kluczem przez `wrangler dev` (3030): nagranie → transkrypt → propozycje — b3cc73f
 
 ### Faza 4: Ryzyko #4 domknięte + książka kucharska
 
 #### Automatyczne
 
-- [ ] 4.1 `npm test` zielone po przywróceniu migracji 0004
-- [ ] 4.2 Brak `TBD — see §3 Phase 1` w `test-plan.md`
-- [ ] 4.3 Wiersz 1 tabeli §3 = `complete`
+- [x] 4.1 `npm test` zielone po przywróceniu migracji 0004
+- [x] 4.2 Brak `TBD — see §3 Phase 1` w `test-plan.md`
+- [x] 4.3 Wiersz 1 tabeli §3 = `complete`
 
 #### Ręczne
 
-- [ ] 4.4 Deliberate-break 0004 wykonany, opisany w §6.7, plik przywrócony
-- [ ] 4.5 §6.2 przeczytane na świeżo: wystarcza do dodania testu nowej trasy
+- [x] 4.4 Deliberate-break 0004 wykonany, opisany w §6.7, plik przywrócony
+- [x] 4.5 §6.2 przeczytane na świeżo: wystarcza do dodania testu nowej trasy
