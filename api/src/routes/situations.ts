@@ -10,6 +10,11 @@
  * (kolejność: transkrypcja → UPDATE → delete), żeby awaria zapisu do D1 nie
  * utraciła jedynej kopii audio. Przy błędzie transkrypcji plik R2 zostaje.
  *
+ * Awaria zapisu w POST (`R2.put` lub `INSERT`): czytelny JSON 500 `{ error }` i
+ * best-effort kasowanie pliku R2 — nieudany zapis nie zostawia wiersza-widma ani
+ * osieroconego audio (przegląd S-01 F2). Ścieżka szczęśliwa bez zmian: 201 wychodzi
+ * przed transkrypcją.
+ *
  * Wzorzec raw-SQL + `RETURNING` + komunikaty po polsku — jak `routes/auth.ts`.
  */
 
@@ -164,19 +169,32 @@ situationsRouter.post('/', async (c) => {
   const data = await audio.arrayBuffer();
   const audioKey = `situations/${userId}/${crypto.randomUUID()}.${extFromName(audio.name)}`;
 
-  await c.env.AUDIO_BUCKET.put(audioKey, data, {
-    httpMetadata: { contentType: audio.type || 'application/octet-stream' },
-  });
-
-  const row = await c.env.DB.prepare(
-    "INSERT INTO situations (user_id, status, audio_key, duration_ms) VALUES (?, 'pending', ?, ?) RETURNING *",
-  )
-    .bind(userId, audioKey, durationMs)
-    .first<SituationRow>();
-
-  if (!row) {
-    // Wiersz nie powstał — sprzątamy osierocony plik R2, żeby nie zostawić śmiecia.
-    await c.env.AUDIO_BUCKET.delete(audioKey);
+  // Upload + INSERT w jednym `try`: awaria któregokolwiek daje czytelny JSON 500
+  // (konwencja `{ error }` jak w `routes/auth.ts`) i sprząta plik R2, żeby nieudany
+  // zapis nie zostawił osieroconego audio (S-01 F2). `.first()` na `INSERT ... RETURNING`
+  // RZUCA przy błędzie D1 — `null` to ścieżka teoretyczna, obsługiwana tym samym `catch`.
+  let row: SituationRow;
+  try {
+    await c.env.AUDIO_BUCKET.put(audioKey, data, {
+      httpMetadata: { contentType: audio.type || 'application/octet-stream' },
+    });
+    const inserted = await c.env.DB.prepare(
+      "INSERT INTO situations (user_id, status, audio_key, duration_ms) VALUES (?, 'pending', ?, ?) RETURNING *",
+    )
+      .bind(userId, audioKey, durationMs)
+      .first<SituationRow>();
+    if (!inserted) {
+      throw new Error('INSERT nie zwrócił wiersza.');
+    }
+    row = inserted;
+  } catch (err) {
+    console.error('Zapis sytuacji nie powiódł się:', err);
+    // Best-effort: błąd sprzątania nie zmienia odpowiedzi — wiersza i tak nie ma.
+    try {
+      await c.env.AUDIO_BUCKET.delete(audioKey);
+    } catch (cleanupErr) {
+      console.error(`Nie udało się usunąć osieroconego pliku ${audioKey}:`, cleanupErr);
+    }
     return c.json({ error: 'Nie udało się zapisać sytuacji.' }, 500);
   }
 

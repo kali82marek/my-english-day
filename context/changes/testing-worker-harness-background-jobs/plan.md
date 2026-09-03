@@ -644,30 +644,30 @@ w `## Notes` dopisek: „Faza zamknięta; follow-up: `follow-ups/stale-pending-s
 
 #### Automatyczne
 
-- [x] 1.1 `npm install` w `api/` bez błędów; vitest 4.1.x i @cloudflare/vitest-plugin 1.x zainstalowane
-- [x] 1.2 `npm test` zielone: 20 testów `lib/` + 3 testy `test/harness.test.ts`
-- [x] 1.3 `npm run typecheck` zielone z `test/**/*.ts`
-- [x] 1.4 `git status` bez zmian w `api/.wrangler/`
+- [x] 1.1 `npm install` w `api/` bez błędów; vitest 4.1.x i @cloudflare/vitest-plugin 1.x zainstalowane — f939d8e
+- [x] 1.2 `npm test` zielone: 20 testów `lib/` + 3 testy `test/harness.test.ts` — f939d8e
+- [x] 1.3 `npm run typecheck` zielone z `test/**/*.ts` — f939d8e
+- [x] 1.4 `git status` bez zmian w `api/.wrangler/` — f939d8e
 
 #### Ręczne
 
-- [x] 1.5 Deliberate-break guarda `fetch`: błąd `Unmocked fetch: ...`, mock przywrócony
-- [x] 1.6 Suite identyczne z tymczasowo przeniesionym `api/.dev.vars`; plik przywrócony
-- [x] 1.7 Suite kończy się na Windows 11 bez wiszącego procesu
+- [x] 1.5 Deliberate-break guarda `fetch`: błąd `Unmocked fetch: ...`, mock przywrócony — f939d8e
+- [x] 1.6 Suite identyczne z tymczasowo przeniesionym `api/.dev.vars`; plik przywrócony — f939d8e
+- [x] 1.7 Suite kończy się na Windows 11 bez wiszącego procesu — f939d8e
 
 ### Faza 2: Ryzyko #1 — nagranie nie przepada
 
 #### Automatyczne
 
-- [ ] 2.1 Przed poprawką POST: T1.2 czerwony, T1.1/T1.3/T1.4 zielone
-- [ ] 2.2 Po poprawce: `npm test` w całości zielone
-- [ ] 2.3 `npm run typecheck` zielone
-- [ ] 2.4 `follow-ups/stale-pending-server-rule.md` istnieje
+- [x] 2.1 Przed poprawką POST: T1.2 czerwony, T1.1/T1.3/T1.4 zielone
+- [x] 2.2 Po poprawce: `npm test` w całości zielone
+- [x] 2.3 `npm run typecheck` zielone
+- [x] 2.4 `follow-ups/stale-pending-server-rule.md` istnieje
 
 #### Ręczne
 
-- [ ] 2.5 Deliberate-break T1.1 i T1.2 wykonane, kod przywrócony
-- [ ] 2.6 Smoke przez `wrangler dev` (3030): 401 bez tokenu, `201` poniżej sekundy z tokenem
+- [x] 2.5 Deliberate-break T1.1 i T1.2 wykonane, kod przywrócony
+- [x] 2.6 Smoke przez `wrangler dev` (3030): 401 bez tokenu, `201` poniżej sekundy z tokenem
 
 ### Faza 3: Ryzyko #2 — fiszki wszystko-albo-nic
 
