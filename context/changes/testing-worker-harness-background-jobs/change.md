@@ -1,7 +1,7 @@
 ---
 change_id: testing-worker-harness-background-jobs
 title: Faza 1 wdrożenia testów: harness Workerów i zadania w tle
-status: implementing
+status: implemented
 created: 2026-09-03
 updated: 2026-09-03
 archived_at: null

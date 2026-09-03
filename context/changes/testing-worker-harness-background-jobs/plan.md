@@ -686,11 +686,11 @@ w `## Notes` dopisek: „Faza zamknięta; follow-up: `follow-ups/stale-pending-s
 
 #### Automatyczne
 
-- [x] 4.1 `npm test` zielone po przywróceniu migracji 0004
-- [x] 4.2 Brak `TBD — see §3 Phase 1` w `test-plan.md`
-- [x] 4.3 Wiersz 1 tabeli §3 = `complete`
+- [x] 4.1 `npm test` zielone po przywróceniu migracji 0004 — 91c41f1
+- [x] 4.2 Brak `TBD — see §3 Phase 1` w `test-plan.md` — 91c41f1
+- [x] 4.3 Wiersz 1 tabeli §3 = `complete` — 91c41f1
 
 #### Ręczne
 
-- [x] 4.4 Deliberate-break 0004 wykonany, opisany w §6.7, plik przywrócony
-- [x] 4.5 §6.2 przeczytane na świeżo: wystarcza do dodania testu nowej trasy
+- [x] 4.4 Deliberate-break 0004 wykonany, opisany w §6.7, plik przywrócony — 91c41f1
+- [x] 4.5 §6.2 przeczytane na świeżo: wystarcza do dodania testu nowej trasy — 91c41f1
