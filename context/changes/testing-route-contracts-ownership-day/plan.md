@@ -797,26 +797,26 @@ chronionych (nie 8)”.
 
 #### Automatyczne
 
-- [x] 4.1 `npx vitest run -t "Ryzyko #6"`: 4 expected-fail (T6.1) + 4 zielone (T6.2)
-- [x] 4.2 `npm test` w całości zielone
-- [x] 4.3 `npm run typecheck` zielone
-- [x] 4.4 `follow-ups/local-day-boundary.md` istnieje
-- [x] 4.5 Zero zmian w `api/src` poza `*.test.ts`
+- [x] 4.1 `npx vitest run -t "Ryzyko #6"`: 4 expected-fail (T6.1) + 4 zielone (T6.2) — bf293e8
+- [x] 4.2 `npm test` w całości zielone — bf293e8
+- [x] 4.3 `npm run typecheck` zielone — bf293e8
+- [x] 4.4 `follow-ups/local-day-boundary.md` istnieje — bf293e8
+- [x] 4.5 Zero zmian w `api/src` poza `*.test.ts` — bf293e8
 
 #### Ręczne
 
-- [x] 4.6 Deliberate-break T6.2 (filtr dnia usunięty) → 4 czerwone, kod przywrócony
-- [x] 4.7 Plik `situations` osobno vs cały suite — ten sam wynik (brak przecieku zegara)
+- [x] 4.6 Deliberate-break T6.2 (filtr dnia usunięty) → 4 czerwone, kod przywrócony — bf293e8
+- [x] 4.7 Plik `situations` osobno vs cały suite — ten sam wynik (brak przecieku zegara) — bf293e8
 
 ### Faza 5: Książka kucharska §6.3 i §6.4 + notatka §6.7
 
 #### Automatyczne
 
-- [ ] 5.1 Brak `TBD — see §3 Phase 2` w `test-plan.md`
-- [ ] 5.2 Diff `test-plan.md` tylko w §6 i linii `Last updated`
-- [ ] 5.3 `npm test` zielone
+- [x] 5.1 Brak `TBD — see §3 Phase 2` w `test-plan.md`
+- [x] 5.2 Diff `test-plan.md` tylko w §6 i linii `Last updated`
+- [x] 5.3 `npm test` zielone
 
 #### Ręczne
 
-- [ ] 5.4 §6.3 przeczytane na świeżo: wystarcza do testu hipotetycznej trasy S-05
-- [ ] 5.5 §6.4 przeczytane na świeżo: wiadomo, czemu `setSystemTime` nie wystarcza
+- [x] 5.4 §6.3 przeczytane na świeżo: wystarcza do testu hipotetycznej trasy S-05
+- [x] 5.5 §6.4 przeczytane na świeżo: wiadomo, czemu `setSystemTime` nie wystarcza
