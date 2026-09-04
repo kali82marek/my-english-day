@@ -14,10 +14,19 @@
 import { waitOnExecutionContext } from 'cloudflare:test';
 import { env } from 'cloudflare:workers';
 import { afterEach, describe, expect, it } from 'vitest';
-import { raiseAbort, readFlashcards, readSituation, resetDb, seedSituation, seedUser, withTrigger } from '../../test/db';
-import type { SituationDTO } from '../../test/dto';
+import {
+  raiseAbort,
+  readFlashcards,
+  readSituation,
+  resetDb,
+  seedFlashcard,
+  seedSituation,
+  seedUser,
+  withTrigger,
+} from '../../test/db';
+import { keysOf, SITUATION_DTO_KEYS, type SituationDTO } from '../../test/dto';
 import { chatResponse, mockOpenAI, whisperResponse } from '../../test/openai-mock';
-import { getProposals, getSituations, postSituation } from '../../test/request';
+import { deleteSituation, getProposals, getSituations, postSituation } from '../../test/request';
 
 async function listSituations(token: string): Promise<SituationDTO[]> {
   const res = await getSituations(env, token);
@@ -251,5 +260,65 @@ describe('Ryzyko #2: fiszki wszystko-albo-nic', () => {
     const proposals = await readProposals(token);
     expect(proposals.proposals).toHaveLength(10);
     expect(proposals.generatingCount).toBe(0);
+  });
+});
+
+/**
+ * Własność i kształt DTO per trasa (bramę 401 dowodzi macierz w
+ * `src/middleware/auth.integration.test.ts`). Każdy test: dwóch użytkowników, ramię
+ * „cudze" (404 / brak na liście / nietknięty wiersz ofiary) ORAZ ramię kontrolne „własne"
+ * (2xx / wiersz zmieniony) — bez ramienia kontrolnego trasa zwracająca 404 na wszystko
+ * byłaby zielona. DTO zawsze jako dokładny zbiór kluczy z `test/dto.ts`.
+ */
+describe('Ryzyko #3: cudze dane (IDOR)', () => {
+  // Deliberate-breaks (każdy osobno → czerwony; kod przywrócony, suite zielone):
+  //   (a) usuń `.map(toDTO)` z `GET /` (`situations.ts`) → klucze wiersza ≠
+  //       `SITUATION_DTO_KEYS` (`user_id`, `audio_key` w odpowiedzi);
+  //   (b) usuń `user_id = ? AND` (i `.bind(userId)`) z zapytania listy → wiersz Boba na liście.
+  it('T3.4 GET /situations → lista Alice zawiera wyłącznie sytuacje Alice, każda o kluczach DTO', async () => {
+    const alice = await seedUser(env, 'alice');
+    const bob = await seedUser(env, 'bob');
+    // Obie sytuacje z DEFAULT `created_at` (dziś UTC) kwalifikują się do listy dnia —
+    // jedyne, co je rozróżnia, to właściciel.
+    const aliceSituationId = await seedSituation(env, alice.id, { status: 'done', transcript: TRANSCRIPT });
+    await seedSituation(env, bob.id, { status: 'done', transcript: TRANSCRIPT });
+
+    const situations = await listSituations(alice.token);
+
+    expect(situations.map((s) => s.id)).toEqual([aliceSituationId]);
+    for (const row of situations) {
+      expect(keysOf(row)).toEqual(SITUATION_DTO_KEYS);
+    }
+  });
+
+  // Deliberate-break: usuń `AND user_id = ?` (i drugi argument `.bind`) ze wstępnego
+  // `SELECT` w `DELETE /:id` (`situations.ts`) → cudzy id daje 204 zamiast 404.
+  it('T3.5 DELETE /situations/:id cudzy id → 404, wiersz i fiszki ofiary zostają; własny → 204 i wiersz znika', async () => {
+    const alice = await seedUser(env, 'alice');
+    const bob = await seedUser(env, 'bob');
+    const bobSituationId = await seedSituation(env, bob.id, { status: 'done', transcript: TRANSCRIPT });
+    await seedFlashcard(env, { situationId: bobSituationId, userId: bob.id });
+    const aliceSituationId = await seedSituation(env, alice.id, { status: 'done', transcript: TRANSCRIPT });
+    const bobBefore = await readSituation(env, bobSituationId);
+    expect(bobBefore).not.toBeNull();
+
+    // Ramię „cudze": 404 w konwencji `{ error }`; ofiara i jej fiszki nietknięte.
+    const foreign = await deleteSituation(env, alice.token, bobSituationId);
+    expect(foreign.status).toBe(404);
+    expect(foreign.headers.get('content-type')).toContain('application/json');
+    const body = (await foreign.json()) as { error?: unknown };
+    expect(typeof body.error).toBe('string');
+    expect((body.error as string).length).toBeGreaterThan(0);
+    expect(await readSituation(env, bobSituationId)).toEqual(bobBefore);
+    expect(await readFlashcards(env, bobSituationId)).toHaveLength(1);
+
+    // Ramię kontrolne „własne".
+    const own = await deleteSituation(env, alice.token, aliceSituationId);
+    expect(own.status).toBe(204);
+    expect(await own.text()).toBe('');
+    expect(await readSituation(env, aliceSituationId)).toBeNull();
+    // Własne kasowanie Alice nie zahacza o Boba.
+    expect(await readSituation(env, bobSituationId)).toEqual(bobBefore);
+    expect(await readFlashcards(env, bobSituationId)).toHaveLength(1);
   });
 });

@@ -770,28 +770,28 @@ chronionych (nie 8)”.
 
 #### Automatyczne
 
-- [x] 2.1 `npx vitest run src/middleware/auth.integration.test.ts` zielone: 14 przypadków + kompletność
-- [x] 2.2 `npm test` w całości zielone
-- [x] 2.3 `npm run typecheck` zielone
-- [x] 2.4 Zero zmian w `api/src` poza `*.test.ts`
+- [x] 2.1 `npx vitest run src/middleware/auth.integration.test.ts` zielone: 14 przypadków + kompletność — 734a034
+- [x] 2.2 `npm test` w całości zielone — 734a034
+- [x] 2.3 `npm run typecheck` zielone — 734a034
+- [x] 2.4 Zero zmian w `api/src` poza `*.test.ts` — 734a034
 
 #### Ręczne
 
-- [x] 2.5 Deliberate-breaks DB-A, DB-B, DB-C, DB-D wykonane, kod przywrócony
+- [x] 2.5 Deliberate-breaks DB-A, DB-B, DB-C, DB-D wykonane, kod przywrócony — 734a034
 
 ### Faza 3: Ryzyko #3 — własność i kształt DTO per trasa
 
 #### Automatyczne
 
-- [ ] 3.1 `npx vitest run -t "Ryzyko #3"` zielone: T3.1–T3.9
-- [ ] 3.2 `npm test` w całości zielone
-- [ ] 3.3 `npm run typecheck` zielone
-- [ ] 3.4 Zero zmian w `api/src` poza `*.test.ts`
+- [x] 3.1 `npx vitest run -t "Ryzyko #3"` zielone: T3.1–T3.9
+- [x] 3.2 `npm test` w całości zielone
+- [x] 3.3 `npm run typecheck` zielone
+- [x] 3.4 Zero zmian w `api/src` poza `*.test.ts`
 
 #### Ręczne
 
-- [ ] 3.5 Deliberate-breaks T3.4–T3.9 wykonane, kod przywrócony
-- [ ] 3.6 Smoke dwóch kont przez `wrangler dev` (3030): cudzy `DELETE` → 404
+- [x] 3.5 Deliberate-breaks T3.4–T3.9 wykonane, kod przywrócony
+- [x] 3.6 Smoke dwóch kont przez `wrangler dev` (3030): cudzy `DELETE` → 404
 
 ### Faza 4: Ryzyko #6 — dzień lokalny jako wyrocznia PRD (`it.fails`) + follow-up
 
