@@ -757,27 +757,27 @@ chronionych (nie 8)”.
 
 #### Automatyczne
 
-- [x] 1.1 `npm run typecheck` zielone z `test/dto.ts`
-- [x] 1.2 `npm test` zielone: 31 + 2 testy właściwości, T1.3 expected-fail
-- [x] 1.3 Brak `datetime('now'` w helperach i plikach testowych; `seedPending` nie istnieje
-- [x] 1.4 Zero zmian w `api/src` poza `*.test.ts`
+- [x] 1.1 `npm run typecheck` zielone z `test/dto.ts` — 7f75214
+- [x] 1.2 `npm test` zielone: 31 + 2 testy właściwości, T1.3 expected-fail — 7f75214
+- [x] 1.3 Brak `datetime('now'` w helperach i plikach testowych; `seedPending` nie istnieje — 7f75214
+- [x] 1.4 Zero zmian w `api/src` poza `*.test.ts` — 7f75214
 
 #### Ręczne
 
-- [x] 1.5 Nagłówki `request.ts`/`db.ts`/`dto.ts` mówią, gdzie żyje kształt żądania i lustro DTO
+- [x] 1.5 Nagłówki `request.ts`/`db.ts`/`dto.ts` mówią, gdzie żyje kształt żądania i lustro DTO — 7f75214
 
 ### Faza 2: Ryzyko #3 — brama 401 na każdej chronionej trasie
 
 #### Automatyczne
 
-- [ ] 2.1 `npx vitest run src/middleware/auth.integration.test.ts` zielone: 14 przypadków + kompletność
-- [ ] 2.2 `npm test` w całości zielone
-- [ ] 2.3 `npm run typecheck` zielone
-- [ ] 2.4 Zero zmian w `api/src` poza `*.test.ts`
+- [x] 2.1 `npx vitest run src/middleware/auth.integration.test.ts` zielone: 14 przypadków + kompletność
+- [x] 2.2 `npm test` w całości zielone
+- [x] 2.3 `npm run typecheck` zielone
+- [x] 2.4 Zero zmian w `api/src` poza `*.test.ts`
 
 #### Ręczne
 
-- [ ] 2.5 Deliberate-breaks DB-A, DB-B, DB-C, DB-D wykonane, kod przywrócony
+- [x] 2.5 Deliberate-breaks DB-A, DB-B, DB-C, DB-D wykonane, kod przywrócony
 
 ### Faza 3: Ryzyko #3 — własność i kształt DTO per trasa
 
