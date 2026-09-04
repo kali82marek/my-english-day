@@ -14,35 +14,16 @@
 import { waitOnExecutionContext } from 'cloudflare:test';
 import { env } from 'cloudflare:workers';
 import { afterEach, describe, expect, it } from 'vitest';
-import { raiseAbort, readFlashcards, readSituation, resetDb, seedUser, withTrigger } from '../../test/db';
+import { raiseAbort, readFlashcards, readSituation, resetDb, seedSituation, seedUser, withTrigger } from '../../test/db';
+import type { SituationDTO } from '../../test/dto';
 import { chatResponse, mockOpenAI, whisperResponse } from '../../test/openai-mock';
 import { getProposals, getSituations, postSituation } from '../../test/request';
-
-type SituationDTO = {
-  id: number;
-  status: 'pending' | 'done' | 'failed';
-  transcript: string | null;
-  duration_ms: number | null;
-  flashcards_status: 'pending' | 'done' | 'failed';
-  created_at: string;
-};
 
 async function listSituations(token: string): Promise<SituationDTO[]> {
   const res = await getSituations(env, token);
   expect(res.status).toBe(200);
   const body = (await res.json()) as { situations: SituationDTO[] };
   return body.situations;
-}
-
-/** Wiersz `pending` zasiany bezpośrednio, z `created_at` przesuniętym o `ageSeconds` wstecz. */
-async function seedPending(userId: number, ageSeconds: number): Promise<number> {
-  const row = await env.DB.prepare(
-    "INSERT INTO situations (user_id, status, audio_key, created_at) VALUES (?, 'pending', ?, datetime('now', ?)) RETURNING id",
-  )
-    .bind(userId, `situations/${userId}/seeded.m4a`, `-${ageSeconds} seconds`)
-    .first<{ id: number }>();
-  if (!row) throw new Error('seedPending: INSERT nie zwrócił wiersza.');
-  return row.id;
 }
 
 afterEach(() => resetDb(env));
@@ -113,10 +94,11 @@ describe('Ryzyko #1: nagranie nie przepada', () => {
   // (próg 2 minuty). Gdy follow-up wejdzie, ten test zacznie przechodzić, `it.fails`
   // zgłosi błąd i wymusi zmianę na zwykłe `it`.
   // Okno północy UTC: przez ~2,5 min po północy wiersz sprzed 150 s wypada z listy dnia
-  // (ryzyko #6, Faza 2 wdrożenia).
+  // (ryzyko #6; wyrocznia dnia lokalnego i opcje poprawki w follow-upie
+  // `context/changes/testing-route-contracts-ownership-day/follow-ups/local-day-boundary.md`).
   it.fails('T1.3 stary `pending` (150 s) jest z listy widoczny jako `failed`', async () => {
     const { id: userId, token } = await seedUser(env);
-    const id = await seedPending(userId, 150);
+    const id = await seedSituation(env, userId, { createdAt: new Date(Date.now() - 150 * 1000) });
 
     const listed = (await listSituations(token)).find((s) => s.id === id);
     expect(listed).toBeDefined();
@@ -126,7 +108,7 @@ describe('Ryzyko #1: nagranie nie przepada', () => {
   // Chroni przed nadgorliwą przyszłą poprawką progu: świeży `pending` zostaje `pending`.
   it('T1.4 świeży `pending` (30 s) zostaje `pending` na liście', async () => {
     const { id: userId, token } = await seedUser(env);
-    const id = await seedPending(userId, 30);
+    const id = await seedSituation(env, userId, { createdAt: new Date(Date.now() - 30 * 1000) });
 
     const listed = (await listSituations(token)).find((s) => s.id === id);
     expect(listed).toBeDefined();

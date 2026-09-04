@@ -1,15 +1,20 @@
 /**
  * Spike harnessu — testy WŁAŚCIWOŚCI harnessu, nie ryzyk. Potwierdzają w tym repo
- * trzy założenia, na których stoją testy ryzyk #1 i #2:
+ * założenia, na których stoją testy ryzyk #1, #2 (Faza 1) oraz #3, #6 (Faza 2):
  *   1. cały łańcuch POST → zadanie tła → D1/R2 biegnie w workerd na schemacie z migracji,
- *      z OpenAI zamockowanym na krawędzi sieci;
+ *      z OpenAI zamockowanym na krawędzi sieci; DTO `201` to dokładnie klucze z `dto.ts`;
  *   2. trigger `RAISE(ABORT)` przerywa zapis D1 w miniflare (wstrzykiwanie błędów D1
  *      bez mockowania bindingu);
  *   3. `waitOnExecutionContext` obejmuje `c.executionCtx.waitUntil` z Hono i odrzucona
  *      obietnica tła obala test (nic w `waitUntil` nie ginie po cichu). Aplikacja pod
  *      testem z założenia NIE zostawia odrzuconej obietnicy (ryzyko #2, T2.3 w
  *      `src/routes/situations.integration.test.ts`), więc tę właściwość dowodzi
- *      minimalna trasa Hono z tym samym wzorcem `waitUntil`, co `POST /situations`.
+ *      minimalna trasa Hono z tym samym wzorcem `waitUntil`, co `POST /situations`;
+ *   4. zasiew z jawnym `created_at` (`seedSituation`/`seedFlashcard`) zapisuje 1:1 w
+ *      formacie DEFAULT kolumny, a bez `createdAt` kolumna dostaje DEFAULT — bez tego
+ *      `it.fails` w ryzyku #6 byłby ślepy na zepsuty zasiew;
+ *   5. `withWriteTripwire` naprawdę zamienia zapis do tabel danych w błąd i `resetDb`
+ *      go zdejmuje — bez tego macierz 401 (ryzyko #3) nie dowodziłaby „D1 nietknięte".
  *
  * Deliberate-break guarda `fetch`: usuń `mockOpenAI` z testu 1 → test pada z
  * `Unmocked fetch: https://api.openai.com/v1/audio/transcriptions` (nie z 401 OpenAI).
@@ -19,7 +24,19 @@ import { env } from 'cloudflare:workers';
 import { Hono } from 'hono';
 import { afterEach, describe, expect, it } from 'vitest';
 import type { AppEnv } from '../src/types';
-import { raiseAbort, readFlashcards, readSituation, resetDb, seedUser, withTrigger } from './db';
+import {
+  raiseAbort,
+  readFlashcard,
+  readFlashcards,
+  readSituation,
+  resetDb,
+  seedFlashcard,
+  seedSituation,
+  seedUser,
+  withTrigger,
+  withWriteTripwire,
+} from './db';
+import { keysOf, SITUATION_DTO_KEYS } from './dto';
 import { chatResponse, mockOpenAI, whisperResponse } from './openai-mock';
 import { postSituation } from './request';
 
@@ -43,8 +60,8 @@ describe('Harness workerd: właściwości', () => {
 
     expect(res.status).toBe(201);
     const body = (await res.json()) as Record<string, unknown>;
-    expect(body).not.toHaveProperty('audio_key');
-    expect(body).not.toHaveProperty('user_id');
+    // Dokładny zbiór kluczy z kontraktu frontu — nie lista „czego nie ma".
+    expect(keysOf(body)).toEqual(SITUATION_DTO_KEYS);
     expect(body.status).toBe('pending');
     expect(body.flashcards_status).toBe('pending');
     expect(body.transcript).toBeNull();
@@ -77,13 +94,7 @@ describe('Harness workerd: właściwości', () => {
 
   it('trigger RAISE(ABORT) przerywa INSERT w D1; po DROP ten sam INSERT przechodzi', async () => {
     const { id: userId } = await seedUser(env);
-    const situation = await env.DB.prepare(
-      "INSERT INTO situations (user_id, status) VALUES (?, 'pending') RETURNING id",
-    )
-      .bind(userId)
-      .first<{ id: number }>();
-    expect(situation).not.toBeNull();
-    const situationId = situation!.id;
+    const situationId = await seedSituation(env, userId);
 
     await withTrigger(
       env,
@@ -132,5 +143,42 @@ describe('Harness workerd: właściwości', () => {
     failBackground(new Error('wstrzyknięte odrzucenie w tle'));
 
     await expect(waiting).rejects.toThrow(/wstrzyknięte odrzucenie w tle/);
+  });
+
+  it('zasiew z jawnym czasem zapisuje 1:1 (format DEFAULT, UTC); bez `createdAt` kolumna dostaje DEFAULT', async () => {
+    const { id: userId } = await seedUser(env);
+
+    const datedId = await seedSituation(env, userId, { createdAt: new Date('2026-03-27T23:59:30Z') });
+    expect((await readSituation(env, datedId))?.created_at).toBe('2026-03-27 23:59:30');
+
+    const variantId = await seedFlashcard(env, { situationId: datedId, userId, isVariant: true });
+    expect((await readFlashcard(env, variantId))?.is_variant).toBe(1);
+
+    const defaultId = await seedSituation(env, userId);
+    expect((await readSituation(env, defaultId))?.created_at).toMatch(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/);
+  });
+
+  it('tripwire jest uzbrojony: DELETE na `flashcards` pada z `tripwire`, wiersz zostaje; po `resetDb` ten sam DELETE przechodzi', async () => {
+    const { id: userId } = await seedUser(env);
+    const situationId = await seedSituation(env, userId);
+    const cardId = await seedFlashcard(env, { situationId, userId });
+
+    // Tripwire PO zasiewie — zasiew też jest zapisem.
+    await withWriteTripwire(env);
+
+    const deleteCard = (id: number) => env.DB.prepare('DELETE FROM flashcards WHERE id = ?').bind(id).run();
+    await expect(deleteCard(cardId)).rejects.toThrow(/tripwire/);
+    expect(await readFlashcard(env, cardId)).not.toBeNull();
+
+    await resetDb(env);
+
+    // Po sprzątaniu triggera nie ma: ta sama instrukcja przechodzi (tabela pusta →
+    // 0 zmian), a świeżo zasiana karta daje się skasować naprawdę.
+    await expect(deleteCard(cardId)).resolves.toBeDefined();
+    const fresh = await seedUser(env);
+    const freshSituationId = await seedSituation(env, fresh.id);
+    const freshCardId = await seedFlashcard(env, { situationId: freshSituationId, userId: fresh.id });
+    expect((await deleteCard(freshCardId)).meta.changes).toBe(1);
+    expect(await readFlashcard(env, freshCardId)).toBeNull();
   });
 });
