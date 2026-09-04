@@ -812,11 +812,11 @@ chronionych (nie 8)”.
 
 #### Automatyczne
 
-- [x] 5.1 Brak `TBD — see §3 Phase 2` w `test-plan.md`
-- [x] 5.2 Diff `test-plan.md` tylko w §6 i linii `Last updated`
-- [x] 5.3 `npm test` zielone
+- [x] 5.1 Brak `TBD — see §3 Phase 2` w `test-plan.md` — f4f28fb
+- [x] 5.2 Diff `test-plan.md` tylko w §6 i linii `Last updated` — f4f28fb
+- [x] 5.3 `npm test` zielone — f4f28fb
 
 #### Ręczne
 
-- [x] 5.4 §6.3 przeczytane na świeżo: wystarcza do testu hipotetycznej trasy S-05
-- [x] 5.5 §6.4 przeczytane na świeżo: wiadomo, czemu `setSystemTime` nie wystarcza
+- [x] 5.4 §6.3 przeczytane na świeżo: wystarcza do testu hipotetycznej trasy S-05 — f4f28fb
+- [x] 5.5 §6.4 przeczytane na świeżo: wiadomo, czemu `setSystemTime` nie wystarcza — f4f28fb

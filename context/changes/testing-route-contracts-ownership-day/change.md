@@ -1,7 +1,7 @@
 ---
 change_id: testing-route-contracts-ownership-day
 title: Faza 2 testów: kontrakty tras (własność, izolacja, dzień lokalny)
-status: implementing
+status: implemented
 created: 2026-09-04
 updated: 2026-09-04
 archived_at: null
