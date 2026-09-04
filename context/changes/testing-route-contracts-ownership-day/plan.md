@@ -783,30 +783,30 @@ chronionych (nie 8)”.
 
 #### Automatyczne
 
-- [x] 3.1 `npx vitest run -t "Ryzyko #3"` zielone: T3.1–T3.9
-- [x] 3.2 `npm test` w całości zielone
-- [x] 3.3 `npm run typecheck` zielone
-- [x] 3.4 Zero zmian w `api/src` poza `*.test.ts`
+- [x] 3.1 `npx vitest run -t "Ryzyko #3"` zielone: T3.1–T3.9 — 98ce07b
+- [x] 3.2 `npm test` w całości zielone — 98ce07b
+- [x] 3.3 `npm run typecheck` zielone — 98ce07b
+- [x] 3.4 Zero zmian w `api/src` poza `*.test.ts` — 98ce07b
 
 #### Ręczne
 
-- [x] 3.5 Deliberate-breaks T3.4–T3.9 wykonane, kod przywrócony
-- [x] 3.6 Smoke dwóch kont przez `wrangler dev` (3030): cudzy `DELETE` → 404
+- [x] 3.5 Deliberate-breaks T3.4–T3.9 wykonane, kod przywrócony — 98ce07b
+- [x] 3.6 Smoke dwóch kont przez `wrangler dev` (3030): cudzy `DELETE` → 404 — 98ce07b
 
 ### Faza 4: Ryzyko #6 — dzień lokalny jako wyrocznia PRD (`it.fails`) + follow-up
 
 #### Automatyczne
 
-- [ ] 4.1 `npx vitest run -t "Ryzyko #6"`: 4 expected-fail (T6.1) + 4 zielone (T6.2)
-- [ ] 4.2 `npm test` w całości zielone
-- [ ] 4.3 `npm run typecheck` zielone
-- [ ] 4.4 `follow-ups/local-day-boundary.md` istnieje
-- [ ] 4.5 Zero zmian w `api/src` poza `*.test.ts`
+- [x] 4.1 `npx vitest run -t "Ryzyko #6"`: 4 expected-fail (T6.1) + 4 zielone (T6.2)
+- [x] 4.2 `npm test` w całości zielone
+- [x] 4.3 `npm run typecheck` zielone
+- [x] 4.4 `follow-ups/local-day-boundary.md` istnieje
+- [x] 4.5 Zero zmian w `api/src` poza `*.test.ts`
 
 #### Ręczne
 
-- [ ] 4.6 Deliberate-break T6.2 (filtr dnia usunięty) → 4 czerwone, kod przywrócony
-- [ ] 4.7 Plik `situations` osobno vs cały suite — ten sam wynik (brak przecieku zegara)
+- [x] 4.6 Deliberate-break T6.2 (filtr dnia usunięty) → 4 czerwone, kod przywrócony
+- [x] 4.7 Plik `situations` osobno vs cały suite — ten sam wynik (brak przecieku zegara)
 
 ### Faza 5: Książka kucharska §6.3 i §6.4 + notatka §6.7
 

@@ -13,7 +13,7 @@
  */
 import { waitOnExecutionContext } from 'cloudflare:test';
 import { env } from 'cloudflare:workers';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   raiseAbort,
   readFlashcards,
@@ -321,4 +321,129 @@ describe('Ryzyko #3: cudze dane (IDOR)', () => {
     expect(await readSituation(env, bobSituationId)).toEqual(bobBefore);
     expect(await readFlashcards(env, bobSituationId)).toHaveLength(1);
   });
+});
+
+/**
+ * Tabela wyroczni ryzyka #6 — jawne pary „czas lokalny Warszawy ↔ chwila UTC" po obu
+ * stronach obu przejść DST. Każdy wiersz: `createdAt` to chwila nagrania (UTC, format
+ * DEFAULT kolumny — zasiew po stronie SQL), `now` to chwila odczytu listy i licznika
+ * (ISO `Z` — `vi.setSystemTime` po stronie JS). Chwile policzone przez ICU dla
+ * `Europe/Warsaw`; przejścia: 2026-03-29 01:00Z (CET→CEST), 2025-10-26 01:00Z (CEST→CET).
+ * Jesień 2026 (2026-10-25) pominięta CELOWO: to przyszłość względem realnego zegara,
+ * a zasiana data, którą realny `date('now')` dopiero osiągnie, przekręciłaby `it.fails`
+ * w konkretny dzień roku. Wszystkie daty tabeli muszą pozostać w przeszłości.
+ *
+ * Kierunek A: nagranie tuż po lokalnej północy, odczyt 60 s później — między nimi
+ * północ UTC (ten sam dzień lokalny, inny dzień UTC). Wiek 60 s jest celowo poniżej
+ * progu reguły wieku `pending` (2 min, follow-up Fazy 1), żeby po jej wejściu wiersz
+ * nadal liczył się jako generujący.
+ * Kierunek B: nagranie 23:30 lokalnie, odczyt 00:30 następnego dnia lokalnego — ten sam
+ * dzień UTC. Nagranie należy do wczoraj (lokalnie), więc nie jest „dziś".
+ */
+type DayCase = {
+  /** Lokalny „dziś" (data odczytu w Europe/Warsaw) i strona przejścia DST. */
+  label: string;
+  /** A = inkluzja (ten sam dzień lokalny), B = ekskluzja (po lokalnej północy). */
+  direction: 'A' | 'B';
+  /** Chwila nagrania: `created_at` w UTC (`YYYY-MM-DD HH:MM:SS`). */
+  createdAt: string;
+  /** Chwila odczytu: ISO `Z` dla `vi.setSystemTime`. */
+  now: string;
+};
+
+const DAY_CASES: readonly DayCase[] = [
+  // A: 00:59:30 CET 03-28 → 01:00:30 CET 03-28 (UTC+1; dzień przed przejściem 03-29)
+  { label: '2026-03-28 CET (dzień przed 03-29)', direction: 'A', createdAt: '2026-03-27 23:59:30', now: '2026-03-28T00:00:30Z' },
+  // A: 01:59:30 CEST 03-30 → 02:00:30 CEST 03-30 (UTC+2; dzień po przejściu 03-29)
+  { label: '2026-03-30 CEST (dzień po 03-29)', direction: 'A', createdAt: '2026-03-29 23:59:30', now: '2026-03-30T00:00:30Z' },
+  // A: 01:59:30 CEST 10-25 → 02:00:30 CEST 10-25 (UTC+2; dzień przed przejściem 10-26)
+  { label: '2025-10-25 CEST (dzień przed 10-26)', direction: 'A', createdAt: '2025-10-24 23:59:30', now: '2025-10-25T00:00:30Z' },
+  // A: 00:59:30 CET 10-27 → 01:00:30 CET 10-27 (UTC+1; dzień po przejściu 10-26)
+  { label: '2025-10-27 CET (dzień po 10-26)', direction: 'A', createdAt: '2025-10-26 23:59:30', now: '2025-10-27T00:00:30Z' },
+  // B: 23:30 CET 03-27 → 00:30 CET 03-28 (UTC+1; dzień przed przejściem 03-29)
+  { label: '2026-03-28 CET (dzień przed 03-29)', direction: 'B', createdAt: '2026-03-27 22:30:00', now: '2026-03-27T23:30:00Z' },
+  // B: 23:30 CEST 03-29 → 00:30 CEST 03-30 (UTC+2; dzień po przejściu 03-29)
+  { label: '2026-03-30 CEST (dzień po 03-29)', direction: 'B', createdAt: '2026-03-29 21:30:00', now: '2026-03-29T22:30:00Z' },
+  // B: 23:30 CEST 10-24 → 00:30 CEST 10-25 (UTC+2; dzień przed przejściem 10-26)
+  { label: '2025-10-25 CEST (dzień przed 10-26)', direction: 'B', createdAt: '2025-10-24 21:30:00', now: '2025-10-24T22:30:00Z' },
+  // B: 23:30 CET 10-26 → 00:30 CET 10-27 (UTC+1; dzień po przejściu 10-26)
+  { label: '2025-10-27 CET (dzień po 10-26)', direction: 'B', createdAt: '2025-10-26 22:30:00', now: '2025-10-26T23:30:00Z' },
+];
+
+/**
+ * Wyrocznia z PRD (US-01 „wieczorem widzi fiszki z sytuacji dnia", FR-006, FR-009;
+ * `test-plan.md` §2 ryzyko #6): sytuacja należy do dnia UŻYTKOWNIKA (Europe/Warsaw), nie
+ * do dnia UTC — w liście dnia `GET /situations` i w liczniku `generatingCount` z
+ * `GET /flashcards/proposals`, niezależnie od DST. Test koduje to zachowanie, NIE wybraną
+ * poprawkę (decyzje S-01 F1 i S-02 F4 są `PENDING`; obie opcje bez wyboru w
+ * `context/changes/testing-route-contracts-ownership-day/follow-ups/local-day-boundary.md`).
+ *
+ * Dlaczego dwa modyfikatory: dziś dzień liczy SQL `date('now')` (realny UTC, poza zasięgiem
+ * `vi.setSystemTime`), więc wiersz z tabeli nigdy nie jest „dziś". Asercje INKLUZJI
+ * (kierunek A) padają → `it.fails` (czerwone z definicji do poprawki). Asercje EKSKLUZJI
+ * (kierunek B) przechodzą trywialnie — nie przez regułę, tylko przez odległą datę — więc
+ * `it.fails` zgłosiłby na nich błąd; są zwykłym `it` ze strażnikiem filtru dnia.
+ *
+ * Przenośność: asercje wyłącznie na UTC lub jawnym `timeZone` — izolat na Windows ma
+ * strefę hosta (Warszawa), w CI UTC; nigdy `getHours()`/`toLocale*` bez strefy.
+ * `vi.setSystemTime` przecieka między testami w pliku, a `vi.restoreAllMocks()`
+ * z `test/setup.ts` go nie cofa — stąd własne `afterEach(() => vi.useRealTimers())`.
+ */
+describe('Ryzyko #6: dzień liczony w UTC', () => {
+  afterEach(() => vi.useRealTimers());
+
+  const inclusion = DAY_CASES.filter((c) => c.direction === 'A');
+  const exclusion = DAY_CASES.filter((c) => c.direction === 'B');
+
+  /**
+   * Zasiew wiersza, który jest JEDNOCZEŚNIE „na liście dnia" i „generujący"
+   * (`done` + `flashcards_status: 'pending'` + transkrypt) — jeden wiersz dowodzi obu
+   * powierzchni. Zasiew (SQL) idzie PRZED `vi.setSystemTime` — dziś bez znaczenia, ale po
+   * Fix A helper żądania będzie liczył granice dnia z `Date.now()`.
+   */
+  async function seedGenerating(createdAt: string): Promise<{ token: string; id: number }> {
+    const { id: userId, token } = await seedUser(env);
+    const id = await seedSituation(env, userId, {
+      status: 'done',
+      flashcardsStatus: 'pending',
+      transcript: TRANSCRIPT,
+      createdAt,
+    });
+    return { token, id };
+  }
+
+  // Dziś CZERWONY Z DEFINICJI (SQL `date('now')` = realny dzień). Po Fix A/B zacznie
+  // przechodzić, `it.fails` zgłosi „expected test to fail" i wymusi zmianę na `it` — bez
+  // przepisywania asercji (Fix A: `request.ts` dołoży granice dnia z `Date.now()`;
+  // Fix B: nic poza `setSystemTime`). Jeśli któryś wiersz PRZECHODZI dziś bez poprawki,
+  // zepsuty jest zasiew lub odczyt (zob. test właściwości „zasiew z jawnym czasem
+  // zapisuje 1:1" w `test/harness.test.ts`) — nie zmieniaj modyfikatora.
+  it.fails.each(inclusion)(
+    'T6.1 $label: nagranie po lokalnej północy, przed północą UTC, jest na liście „dziś" i liczy się jako generujące',
+    async ({ createdAt, now }) => {
+      const { token, id } = await seedGenerating(createdAt);
+      // Zegar JS ustawiany tuż przed wywołaniem trasy (przygotowanie pod obie poprawki).
+      vi.setSystemTime(new Date(now));
+
+      const listed = await listSituations(token);
+      expect(listed.map((s) => s.id)).toContain(id);
+      expect((await readProposals(token)).generatingCount).toBe(1);
+    },
+  );
+
+  // Dziś zielony trywialnie (data zasiewu nie jest realnym „dziś"), pełny sygnał po
+  // poprawce (łapie np. stały offset +1 latem). Deliberate-break: usuń
+  // `AND date(created_at) = date('now')` z listy dnia (`GET /` w `situations.ts`) ORAZ
+  // z licznika `generatingCount` (`GET /proposals` w `flashcards.ts`) → 4 wiersze czerwone.
+  it.each(exclusion)(
+    'T6.2 $label: nagranie 23:30 czasu Warszawy po lokalnej północy nie jest na liście „dziś" i nie liczy się',
+    async ({ createdAt, now }) => {
+      const { token, id } = await seedGenerating(createdAt);
+      vi.setSystemTime(new Date(now));
+
+      const listed = await listSituations(token);
+      expect(listed.map((s) => s.id)).not.toContain(id);
+      expect((await readProposals(token)).generatingCount).toBe(0);
+    },
+  );
 });
