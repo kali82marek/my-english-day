@@ -897,25 +897,25 @@ Fazie 3: 9 plików, 86 testów (81 + 5 `it.fails`). `Last updated` = data zamkni
 
 #### Automatyczne
 
-- [x] 4.1 `npx vitest run -t "Ryzyko #5"` zielone: 23 przypadki (20 + T5.11 ×2 + T5.12)
-- [x] 4.2 `npm test` zielone: 86 testów (81 + 5 expected-fail)
-- [x] 4.3 `npm run typecheck` zielone
-- [x] 4.4 `git diff --name-only HEAD -- api/src | grep -v '\.test\.ts$'` = dokładnie `api/src/lib/flashcards.ts`
+- [x] 4.1 `npx vitest run -t "Ryzyko #5"` zielone: 23 przypadki (20 + T5.11 ×2 + T5.12) — 0340ccf
+- [x] 4.2 `npm test` zielone: 86 testów (81 + 5 expected-fail) — 0340ccf
+- [x] 4.3 `npm run typecheck` zielone — 0340ccf
+- [x] 4.4 `git diff --name-only HEAD -- api/src | grep -v '\.test\.ts$'` = dokładnie `api/src/lib/flashcards.ts` — 0340ccf
 
 #### Ręczne
 
-- [x] 4.5 Deliberate-breaks T5.11 (walidator bez `type`) i T5.12 (a, b) wykonane, kod przywrócony, suite zielone
-- [x] 4.6 Smoke z prawdziwym kluczem przez `wrangler dev` (3030): propozycje z poprawnymi typami; obserwacja `refusal`/`finish_reason` zanotowana
+- [x] 4.5 Deliberate-breaks T5.11 (walidator bez `type`) i T5.12 (a, b) wykonane, kod przywrócony, suite zielone — 0340ccf
+- [x] 4.6 Smoke z prawdziwym kluczem przez `wrangler dev` (3030): propozycje z poprawnymi typami; obserwacja `refusal`/`finish_reason` zanotowana — 0340ccf
 
 ### Faza 5: Follow-up S-02 F2 + książka kucharska §6.5 + notatka §6.7 + zamknięcie
 
 #### Automatyczne
 
-- [ ] 5.1 Brak `TBD — see §3 Phase 3` w `test-plan.md`
-- [ ] 5.2 Hunki diffu `test-plan.md` wyłącznie w §6 (+ `Last updated`)
-- [ ] 5.3 `follow-ups/enum-check-migration.md` istnieje
-- [ ] 5.4 `npm test` zielone (bez zmian względem Fazy 4)
+- [x] 5.1 Brak `TBD — see §3 Phase 3` w `test-plan.md`
+- [x] 5.2 Hunki diffu `test-plan.md` wyłącznie w §6 (+ `Last updated`)
+- [x] 5.3 `follow-ups/enum-check-migration.md` istnieje
+- [x] 5.4 `npm test` zielone (bez zmian względem Fazy 4)
 
 #### Ręczne
 
-- [ ] 5.5 §6.5 przeczytane na świeżo: wystarcza do dodania testu nowego pola karty po obu stronach
+- [x] 5.5 §6.5 przeczytane na świeżo: wystarcza do dodania testu nowego pola karty po obu stronach
