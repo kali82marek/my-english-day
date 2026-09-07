@@ -911,11 +911,11 @@ Fazie 3: 9 plików, 86 testów (81 + 5 `it.fails`). `Last updated` = data zamkni
 
 #### Automatyczne
 
-- [x] 5.1 Brak `TBD — see §3 Phase 3` w `test-plan.md`
-- [x] 5.2 Hunki diffu `test-plan.md` wyłącznie w §6 (+ `Last updated`)
-- [x] 5.3 `follow-ups/enum-check-migration.md` istnieje
-- [x] 5.4 `npm test` zielone (bez zmian względem Fazy 4)
+- [x] 5.1 Brak `TBD — see §3 Phase 3` w `test-plan.md` — 940cf7a
+- [x] 5.2 Hunki diffu `test-plan.md` wyłącznie w §6 (+ `Last updated`) — 940cf7a
+- [x] 5.3 `follow-ups/enum-check-migration.md` istnieje — 940cf7a
+- [x] 5.4 `npm test` zielone (bez zmian względem Fazy 4) — 940cf7a
 
 #### Ręczne
 
-- [x] 5.5 §6.5 przeczytane na świeżo: wystarcza do dodania testu nowego pola karty po obu stronach
+- [x] 5.5 §6.5 przeczytane na świeżo: wystarcza do dodania testu nowego pola karty po obu stronach — 940cf7a

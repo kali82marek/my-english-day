@@ -1,7 +1,7 @@
 ---
 change_id: testing-llm-generator-contract
 title: "Faza 3 testów: kontrakt generatora LLM (zdegenerowana odpowiedź modelu nie przecieka do bazy ani UI)"
-status: implementing
+status: implemented
 created: 2026-09-07
 updated: 2026-09-07
 archived_at: null
