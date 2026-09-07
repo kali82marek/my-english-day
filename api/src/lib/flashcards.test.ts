@@ -1,17 +1,10 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { generateFlashcards } from './flashcards';
+import { chatResponse, chatResponseRaw } from '../../test/openai-mock';
 
 afterEach(() => {
   vi.restoreAllMocks();
 });
-
-/** Buduje odpowiedź Chat Completions z `flashcards` zaszytymi w `message.content`. */
-function chatResponse(flashcards: unknown, status = 200): Response {
-  const body = JSON.stringify({
-    choices: [{ message: { content: JSON.stringify({ flashcards }) } }],
-  });
-  return new Response(body, { status, headers: { 'Content-Type': 'application/json' } });
-}
 
 const CARDS = [
   { type: 'word', front_en: 'invoice', back_pl: 'faktura', example_en: 'Send me the invoice.', is_variant: false },
@@ -78,10 +71,7 @@ describe('generateFlashcards', () => {
   });
 
   it('odpowiedź bez treści → wyjątek', async () => {
-    const body = JSON.stringify({ choices: [{ message: {} }] });
-    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
-      new Response(body, { status: 200, headers: { 'Content-Type': 'application/json' } }),
-    );
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(chatResponseRaw({ content: null }));
     await expect(generateFlashcards('x', 'sk-test')).rejects.toThrow(/treści/i);
   });
 });

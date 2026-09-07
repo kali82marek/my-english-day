@@ -5,8 +5,18 @@
  *
  * Routing po URL: `mockOpenAI({ transcription, chat })` — brak wpisu albo inny adres
  * → `Unmocked fetch: <url>` (test nigdy nie wychodzi do sieci). Odpowiedzi budują
- * `whisperResponse` (Whisper zwraca `text/plain`) i `chatResponse` (kształt Chat
- * Completions jak w `src/lib/flashcards.test.ts`).
+ * `whisperResponse` (Whisper zwraca `text/plain`) oraz para builderów Chat Completions.
+ *
+ * Kształt odpowiedzi Chat Completions żyje TYLKO tutaj (dawniej kopia w
+ * `src/lib/flashcards.test.ts`). Dwa buildery, dwa zastosowania:
+ * - `chatResponse(flashcards)` — poprawna lista kart (ścieżka szczęśliwa, limit,
+ *   odsiew pustych); `content` to `JSON.stringify({ flashcards })`.
+ * - `chatResponseRaw({ content, refusal?, finish_reason? })` — odpowiedź zdegenerowana:
+ *   odmowa modelu (`content: null` + `refusal`), ucięcie (`finish_reason: 'length'`),
+ *   nie-JSON-owy `content`, `content: null`. Testy kontraktu generatora (ryzyko #5)
+ *   sięgają po niego, gdy sam JSON kart nie wystarcza do opisania odpowiedzi.
+ * Oba wpisują `refusal: null` domyślnie — realna odpowiedź OpenAI niesie to pole
+ * w KAŻDEJ wiadomości, nie tylko przy odmowie.
  */
 import { vi } from 'vitest';
 
@@ -27,12 +37,37 @@ export function whisperResponse(text: string, status = 200): Response {
   return new Response(text, { status, headers: { 'Content-Type': 'text/plain' } });
 }
 
-/** Odpowiedź Chat Completions z `flashcards` zaszytymi w `message.content`. */
-export function chatResponse(flashcards: unknown, status = 200): Response {
+/** Surowy kształt wiadomości asystenta w `choices[0]` — jak w realnej odpowiedzi OpenAI. */
+export type ChatMessageRaw = {
+  content: string | null;
+  refusal?: string | null;
+  finish_reason?: 'stop' | 'length' | 'content_filter';
+};
+
+/**
+ * Odpowiedź Chat Completions w dowolnym kształcie (odmowa, ucięcie, nie-JSON).
+ * `refusal: null` i `finish_reason: 'stop'` domyślnie — jak w żywej odpowiedzi.
+ */
+export function chatResponseRaw(message: ChatMessageRaw, status = 200): Response {
   const body = JSON.stringify({
-    choices: [{ message: { content: JSON.stringify({ flashcards }) } }],
+    choices: [
+      {
+        index: 0,
+        finish_reason: message.finish_reason ?? 'stop',
+        message: {
+          role: 'assistant',
+          content: message.content,
+          refusal: message.refusal ?? null,
+        },
+      },
+    ],
   });
   return new Response(body, { status, headers: { 'Content-Type': 'application/json' } });
+}
+
+/** Odpowiedź Chat Completions z poprawną listą `flashcards` zaszytą w `message.content`. */
+export function chatResponse(flashcards: unknown, status = 200): Response {
+  return chatResponseRaw({ content: JSON.stringify({ flashcards }) }, status);
 }
 
 export type OpenAIMocks = {
