@@ -882,30 +882,30 @@ Fazie 3: 9 plików, 86 testów (81 + 5 `it.fails`). `Last updated` = data zamkni
 
 #### Automatyczne
 
-- [x] 3.1 Przed poprawką: T5.5–T5.10 = 14 czerwonych, T5.1–T5.4 zielone; lista z klasą błędu zapisana
-- [x] 3.2 Po poprawce: `npx vitest run -t "Ryzyko #5"` zielone: 20 przypadków
-- [x] 3.3 `npm test` zielone: 83 testy (78 + 5 expected-fail)
-- [x] 3.4 `npm run typecheck` zielone
-- [x] 3.5 `git diff --name-only HEAD -- api/src | grep -v '\.test\.ts$'` = dokładnie `api/src/lib/flashcards.ts`; brak `zod`
+- [x] 3.1 Przed poprawką: T5.5–T5.10 = 14 czerwonych, T5.1–T5.4 zielone; lista z klasą błędu zapisana — 48eccb3
+- [x] 3.2 Po poprawce: `npx vitest run -t "Ryzyko #5"` zielone: 20 przypadków — 48eccb3
+- [x] 3.3 `npm test` zielone: 83 testy (78 + 5 expected-fail) — 48eccb3
+- [x] 3.4 `npm run typecheck` zielone — 48eccb3
+- [x] 3.5 `git diff --name-only HEAD -- api/src | grep -v '\.test\.ts$'` = dokładnie `api/src/lib/flashcards.ts`; brak `zod` — 48eccb3
 
 #### Ręczne
 
-- [x] 3.6 Deliberate-breaks T5.5, T5.6, T5.7 (2), T5.8, T5.9, T5.10 wykonane, kod przywrócony, suite zielone
-- [x] 3.7 Komunikat odmowy widoczny w logu testu z tekstem odmowy
+- [x] 3.6 Deliberate-breaks T5.5, T5.6, T5.7 (2), T5.8, T5.9, T5.10 wykonane, kod przywrócony, suite zielone — 48eccb3
+- [x] 3.7 Komunikat odmowy widoczny w logu testu z tekstem odmowy — 48eccb3
 
 ### Faza 4: Ryzyko #5 — dowód integracyjny
 
 #### Automatyczne
 
-- [ ] 4.1 `npx vitest run -t "Ryzyko #5"` zielone: 23 przypadki (20 + T5.11 ×2 + T5.12)
-- [ ] 4.2 `npm test` zielone: 86 testów (81 + 5 expected-fail)
-- [ ] 4.3 `npm run typecheck` zielone
-- [ ] 4.4 `git diff --name-only HEAD -- api/src | grep -v '\.test\.ts$'` = dokładnie `api/src/lib/flashcards.ts`
+- [x] 4.1 `npx vitest run -t "Ryzyko #5"` zielone: 23 przypadki (20 + T5.11 ×2 + T5.12)
+- [x] 4.2 `npm test` zielone: 86 testów (81 + 5 expected-fail)
+- [x] 4.3 `npm run typecheck` zielone
+- [x] 4.4 `git diff --name-only HEAD -- api/src | grep -v '\.test\.ts$'` = dokładnie `api/src/lib/flashcards.ts`
 
 #### Ręczne
 
-- [ ] 4.5 Deliberate-breaks T5.11 (walidator bez `type`) i T5.12 (a, b) wykonane, kod przywrócony, suite zielone
-- [ ] 4.6 Smoke z prawdziwym kluczem przez `wrangler dev` (3030): propozycje z poprawnymi typami; obserwacja `refusal`/`finish_reason` zanotowana
+- [x] 4.5 Deliberate-breaks T5.11 (walidator bez `type`) i T5.12 (a, b) wykonane, kod przywrócony, suite zielone
+- [x] 4.6 Smoke z prawdziwym kluczem przez `wrangler dev` (3030): propozycje z poprawnymi typami; obserwacja `refusal`/`finish_reason` zanotowana
 
 ### Faza 5: Follow-up S-02 F2 + książka kucharska §6.5 + notatka §6.7 + zamknięcie
 

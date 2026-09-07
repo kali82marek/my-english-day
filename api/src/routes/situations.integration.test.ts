@@ -25,7 +25,7 @@ import {
   withTrigger,
 } from '../../test/db';
 import { keysOf, SITUATION_DTO_KEYS, type SituationDTO } from '../../test/dto';
-import { chatResponse, mockOpenAI, whisperResponse } from '../../test/openai-mock';
+import { chatResponse, chatResponseRaw, mockOpenAI, whisperResponse } from '../../test/openai-mock';
 import { deleteSituation, getProposals, getSituations, postSituation } from '../../test/request';
 
 async function listSituations(token: string): Promise<SituationDTO[]> {
@@ -127,7 +127,7 @@ describe('Ryzyko #1: nagranie nie przepada', () => {
 
 const TRANSCRIPT = 'Dziś byłem w banku i pytałem o fakturę.';
 
-type ProposalsBody = { proposals: { id: number }[]; generatingCount: number };
+type ProposalsBody = { proposals: { id: number; type: string; front_en: string }[]; generatingCount: number };
 
 /** `n` poprawnych kart w kształcie odpowiedzi modelu (co druga to wariant). */
 function makeCards(n: number) {
@@ -260,6 +260,99 @@ describe('Ryzyko #2: fiszki wszystko-albo-nic', () => {
     const proposals = await readProposals(token);
     expect(proposals.proposals).toHaveLength(10);
     expect(proposals.generatingCount).toBe(0);
+  });
+});
+
+/**
+ * Ryzyko #5 — ta warstwa dowodzi „nie przecieka do bazy ani do propozycji" NIEZALEŻNIE od
+ * miejsca poprawki (dziś walidator w parserze `src/lib/flashcards.ts`; w przyszłości
+ * ewentualny `CHECK` w D1 — `follow-ups/enum-check-migration.md`). T5.11 bez T5.12 byłby
+ * zielony dla walidatora odrzucającego WSZYSTKO — T5.12 jest ramieniem kontrolnym z
+ * wartościami zapisanych kolumn (`type`, `is_variant`), których żaden T2.x nie asertuje
+ * (T2.5 patrzy tylko na `front_en` i `status`). Kontrakt żądania i klasy odrzucenia parsera
+ * dowodzi `src/lib/flashcards.test.ts` (T5.1–T5.10).
+ */
+describe('Ryzyko #5: kontrakt generatora', () => {
+  const REFUSAL = 'I cannot generate flashcards for this input.';
+
+  // Wyrocznia z PRD (Business Logic `prd.md:99`): trzy zamknięte typy fiszek — stała
+  // lokalna, celowo NIE importowana z implementacji (`CARD_TYPES` w `lib/flashcards.ts`).
+  const CARD_TYPES = ['word', 'phrase', 'sentence'];
+
+  /** Trzy poprawne karty z wadliwym `type` w ŚRODKU (nie pierwsza, nie ostatnia). */
+  function cardsWithIdiomInMiddle() {
+    const [first, second, third] = makeCards(3);
+    return [first, { ...second, type: 'idiom' }, third];
+  }
+
+  // Wadliwa karta w środku poprawnych — dowód, że odrzucana jest CAŁA odpowiedź (nigdy
+  // „2 karty + failed", spójnie z ryzykiem #2), a nie sama wadliwa karta.
+  // Deliberate-break: usuń sprawdzenie `type` z `assertGeneratedCard`
+  // (`src/lib/flashcards.ts`) → wiersz „typ spoza kontraktu": 3 wiersze (jeden z `'idiom'`)
+  // i `done` → czerwony. Wiersz „odmowa" NIE ma własnego deliberate-break na tej warstwie:
+  // bez czytania `refusal` odpowiedź i tak pada na `content: null` → `failed`. Dowód, że
+  // odmowa jest CZYTANA (tekst odmowy w błędzie), żyje w T5.9 w `src/lib/flashcards.test.ts`.
+  it.each([
+    { label: 'kartę o typie spoza kontraktu', chat: () => chatResponse(cardsWithIdiomInMiddle()) },
+    { label: 'odmowę (refusal, content null)', chat: () => chatResponseRaw({ content: null, refusal: REFUSAL }) },
+  ])(
+    'T5.11 model zwraca $label → `flashcards_status=failed`, zero kart, propozycje puste; `done` z transkryptem zachowane, brak odrzucenia w tle',
+    async ({ chat }) => {
+      const { token } = await seedUser(env);
+
+      const id = await postAndFinish(token, chat());
+
+      expect(await readFlashcards(env, id)).toHaveLength(0);
+      const row = await readSituation(env, id);
+      expect(row?.flashcards_status).toBe('failed');
+      expect(row?.status).toBe('done');
+      expect(row?.transcript).toBe(TRANSCRIPT);
+
+      const proposals = await readProposals(token);
+      expect(proposals.proposals).toEqual([]);
+      expect(proposals.generatingCount).toBe(0);
+    },
+  );
+
+  // Jawny fixture (nie `makeCards`) — wartości mają być czytelne w asercji. Karta `sentence`
+  // z pustym `example_en` jest LEGALNA (prompt dopuszcza pusty dla zdania; T5.3) i musi
+  // zostać zapisana jako `''`, nie `NULL`. Wariant jako ostatnia karta — 6 < 10, więc nic
+  // nie jest ucinane. `front_en` unikalne, bo DTO propozycji mapujemy po `front_en`.
+  const EMPTY_EXAMPLE_FRONT = 'Could I get an invoice, please?';
+  const MIXED_CARDS = [
+    { type: 'word', front_en: 'invoice', back_pl: 'faktura', example_en: 'I need an invoice.', is_variant: false },
+    { type: 'phrase', front_en: 'ask for a refund', back_pl: 'poprosić o zwrot', example_en: 'I asked for a refund.', is_variant: true },
+    { type: 'sentence', front_en: EMPTY_EXAMPLE_FRONT, back_pl: 'Czy mogę prosić o fakturę?', example_en: '', is_variant: false },
+    { type: 'word', front_en: 'receipt', back_pl: 'paragon', example_en: 'Keep the receipt.', is_variant: true },
+    { type: 'sentence', front_en: 'Is there a fee for this transfer?', back_pl: 'Czy jest opłata za ten przelew?', example_en: 'Is there a fee for this transfer?', is_variant: true },
+    { type: 'phrase', front_en: 'bank statement', back_pl: 'wyciąg bankowy', example_en: 'Print my bank statement.', is_variant: false },
+  ];
+
+  // Deliberate-breaks (każdy osobno → czerwony; kod przywrócony, suite zielone):
+  //   (a) w `generateAndStoreFlashcards` (`situations.ts`) binduj `'word'` zamiast
+  //       `card.type` → projekcja `type` ≠ fixture;
+  //   (b) binduj `0` zamiast `card.is_variant ? 1 : 0` → projekcja `is_variant` ≠ fixture.
+  it('T5.12 mieszanka typów i wariantów → każda karta zapisana z własnym `type` i `is_variant` w kolejności tablicy; DTO propozycji niesie `type` z trójki', async () => {
+    const { token } = await seedUser(env);
+
+    const id = await postAndFinish(token, chatResponse(MIXED_CARDS));
+
+    // `readFlashcards` sortuje po `id`, a `DB.batch` wstawia w kolejności tablicy —
+    // projekcja bez `id`/`created_at` porównywana 1:1 z fixture'em (`is_variant` = INTEGER).
+    const cards = await readFlashcards(env, id);
+    expect(cards.map(({ front_en, type, is_variant }) => ({ front_en, type, is_variant }))).toEqual(
+      MIXED_CARDS.map((card) => ({ front_en: card.front_en, type: card.type, is_variant: card.is_variant ? 1 : 0 })),
+    );
+    expect(cards.find((card) => card.front_en === EMPTY_EXAMPLE_FRONT)?.example_en).toBe('');
+    expect((await readSituation(env, id))?.flashcards_status).toBe('done');
+
+    const { proposals } = await readProposals(token);
+    expect(proposals).toHaveLength(6);
+    for (const proposal of proposals) {
+      expect(CARD_TYPES).toContain(proposal.type);
+    }
+    const typeByFront = Object.fromEntries(proposals.map((p) => [p.front_en, p.type]));
+    expect(typeByFront).toEqual(Object.fromEntries(MIXED_CARDS.map((card) => [card.front_en, card.type])));
   });
 });
 
