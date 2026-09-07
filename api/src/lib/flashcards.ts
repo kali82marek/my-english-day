@@ -3,9 +3,16 @@
  *
  * Bierze polski transkrypt sytuacji i zwraca zestaw angielskich fiszek (~3-5),
  * z typami dobranymi przez model do treści. `response_format` z `json_schema`
- * (`strict: true`) wymusza kształt odpowiedzi — bez kodu obronnego na parsowanie.
- * Każda odpowiedź non-2xx lub pusta lista → wyjątek, który wywołujący zamienia
- * na `flashcards_status='failed'` (transkrypt sytuacji zostaje nietknięty).
+ * (`strict: true`) wymusza kształt odpowiedzi po stronie dostawcy; walidator w
+ * parserze (`parseGeneratedCards`) jest drugą linią obrony — naruszenie kontraktu
+ * (zmiana modelu, schematu, odmowa, ucięcie, karta spoza schematu) odrzuca CAŁĄ
+ * odpowiedź → wyjątek → `flashcards_status='failed'`, nigdy częściowy zapis kart
+ * spoza kontraktu (ryzyko #5, `context/foundation/test-plan.md` §2).
+ * Puste `front_en`/`back_pl` to treść, nie kontrakt — odsiew, nie odrzucenie.
+ * Guard «pusta lista → rzut» zostaje tutaj celowo (S-04: zero kart po deduplikacji
+ * będzie odrębnym wynikiem warstwy zapisu). Każdy wyjątek stąd jest zamierzony
+ * (`new Error`, nigdy przepuszczony `SyntaxError`/`TypeError`) i czytelny w logu;
+ * wywołujący zamienia go na `failed` (transkrypt sytuacji zostaje nietknięty).
  *
  * Wzorzec „fetch-and-forward" + komunikaty PL — jak `lib/transcription.ts`.
  */
@@ -16,8 +23,12 @@ const MODEL = 'gpt-4o';
 // maxItems, więc limit egzekwujemy po stronie kodu.
 const MAX_CARDS = 10;
 
+// Trzy zamknięte typy fiszek (PRD Business Logic) — jedno źródło dla schematu
+// żądania i walidatora odpowiedzi.
+const CARD_TYPES = ['word', 'phrase', 'sentence'] as const;
+
 export type GeneratedCard = {
-  type: 'word' | 'phrase' | 'sentence';
+  type: (typeof CARD_TYPES)[number];
   front_en: string;
   back_pl: string;
   example_en: string;
@@ -66,7 +77,7 @@ const RESPONSE_FORMAT = {
             additionalProperties: false,
             required: ['type', 'front_en', 'back_pl', 'example_en', 'is_variant'],
             properties: {
-              type: { type: 'string', enum: ['word', 'phrase', 'sentence'] },
+              type: { type: 'string', enum: [...CARD_TYPES] },
               front_en: { type: 'string' },
               back_pl: { type: 'string' },
               example_en: { type: 'string' },
@@ -104,19 +115,56 @@ export async function generateFlashcards(
     throw new Error(`OpenAI zwrócił ${res.status}: ${detail.slice(0, 500)}`);
   }
 
-  const body = (await res.json()) as {
-    choices?: { message?: { content?: string } }[];
-  };
-  const content = body.choices?.[0]?.message?.content;
+  const body = (await res.json()) as ChatCompletionBody;
+  const choice = body.choices?.[0];
+  return parseGeneratedCards(choice?.message, choice?.finish_reason);
+}
+
+// Kształt Chat Completions w zakresie, który czytamy. Realna odpowiedź niesie
+// `refusal: null` w KAŻDEJ wiadomości (nie tylko przy odmowie) — obecność pola
+// nie jest sygnałem; sygnałem jest niepusty string.
+type ChatMessage = { content?: string | null; refusal?: string | null };
+type ChatCompletionBody = {
+  choices?: { finish_reason?: string; message?: ChatMessage }[];
+};
+
+/**
+ * Parser + walidator odpowiedzi modelu. Kolejność: odmowa → brak treści → JSON →
+ * `flashcards` tablicą → każda karta w kontrakcie (pierwsza wadliwa odrzuca całość)
+ * → odsiew pustych → limit → pusto = rzut. `refusal` PRZED `content`, bo przy odmowie
+ * `content` jest `null` i „bez treści" byłoby mylącym komunikatem w logu.
+ */
+function parseGeneratedCards(
+  message: ChatMessage | undefined,
+  finishReason: string | undefined,
+): GeneratedCard[] {
+  if (typeof message?.refusal === 'string' && message.refusal !== '') {
+    throw new Error(`Model odmówił wygenerowania fiszek: ${message.refusal}`);
+  }
+  const content = message?.content;
   if (!content) {
     throw new Error('OpenAI zwrócił odpowiedź bez treści.');
   }
 
-  // Structured Outputs gwarantuje kształt — parsujemy bez kodu obronnego.
-  const parsed = JSON.parse(content) as { flashcards: GeneratedCard[] };
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(content);
+  } catch {
+    throw new Error(
+      `Odpowiedź modelu nie jest poprawnym JSON (finish_reason: ${finishReason ?? 'brak'}).`,
+    );
+  }
+
+  const flashcards = (parsed as { flashcards?: unknown } | null)?.flashcards;
+  if (!Array.isArray(flashcards)) {
+    throw new Error('Odpowiedź modelu spoza kontraktu: `flashcards` nie jest tablicą.');
+  }
+  const validated = flashcards.map(assertGeneratedCard);
+
   // Strict mode nie wspiera maxItems ani limitów długości — górny limit kart
-  // i odsiew pustych egzekwujemy w kodzie.
-  const cards = (parsed.flashcards ?? [])
+  // i odsiew pustych egzekwujemy w kodzie. Pusty string jest zgodny ze schematem
+  // (treść, nie kontrakt), więc odsiew, nie odrzucenie — i dopiero PO walidacji.
+  const cards = validated
     .filter((card) => card.front_en.trim() !== '' && card.back_pl.trim() !== '')
     .slice(0, MAX_CARDS);
   if (cards.length === 0) {
@@ -124,4 +172,36 @@ export async function generateFlashcards(
   }
 
   return cards;
+}
+
+const CARD_TEXT_FIELDS = ['front_en', 'back_pl', 'example_en'] as const;
+
+/** Jedna karta w kontrakcie: `type` z trójki, trzy stringi, `is_variant` boolean. */
+function assertGeneratedCard(card: unknown, index: number): GeneratedCard {
+  const label = `Karta ${index + 1} spoza kontraktu`;
+  if (typeof card !== 'object' || card === null || Array.isArray(card)) {
+    throw new Error(`${label}: nie jest obiektem.`);
+  }
+  const raw = card as Record<string, unknown>;
+
+  const type = raw.type;
+  if (typeof type !== 'string' || !(CARD_TYPES as readonly string[]).includes(type)) {
+    throw new Error(`${label}: type=${JSON.stringify(type)}`);
+  }
+  for (const field of CARD_TEXT_FIELDS) {
+    if (typeof raw[field] !== 'string') {
+      throw new Error(`${label}: ${field}=${JSON.stringify(raw[field])}`);
+    }
+  }
+  if (typeof raw.is_variant !== 'boolean') {
+    throw new Error(`${label}: is_variant=${JSON.stringify(raw.is_variant)}`);
+  }
+
+  return {
+    type: type as GeneratedCard['type'],
+    front_en: raw.front_en as string,
+    back_pl: raw.back_pl as string,
+    example_en: raw.example_en as string,
+    is_variant: raw.is_variant,
+  };
 }

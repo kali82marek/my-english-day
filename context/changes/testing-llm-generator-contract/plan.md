@@ -868,30 +868,30 @@ Fazie 3: 9 plików, 86 testów (81 + 5 `it.fails`). `Last updated` = data zamkni
 
 #### Automatyczne
 
-- [x] 2.1 `npx vitest run -t "Ryzyko #5"` zielone: 6 przypadków (T5.1–T5.4)
-- [x] 2.2 `npm test` zielone: 69 testów (64 + 5 expected-fail)
-- [x] 2.3 `npm run typecheck` zielone
-- [x] 2.4 Brak importu/odwołania do `MAX_CARDS`/`RESPONSE_FORMAT` w `flashcards.test.ts`
-- [x] 2.5 `git diff --name-only HEAD -- api/src | grep -v '\.test\.ts$'` puste
+- [x] 2.1 `npx vitest run -t "Ryzyko #5"` zielone: 6 przypadków (T5.1–T5.4) — 150d044
+- [x] 2.2 `npm test` zielone: 69 testów (64 + 5 expected-fail) — 150d044
+- [x] 2.3 `npm run typecheck` zielone — 150d044
+- [x] 2.4 Brak importu/odwołania do `MAX_CARDS`/`RESPONSE_FORMAT` w `flashcards.test.ts` — 150d044
+- [x] 2.5 `git diff --name-only HEAD -- api/src | grep -v '\.test\.ts$'` puste — 150d044
 
 #### Ręczne
 
-- [x] 2.6 Deliberate-breaks T5.1 (a–d), T5.2 (2), T5.3 (2), T5.4 (1) wykonane, kod przywrócony, suite zielone
+- [x] 2.6 Deliberate-breaks T5.1 (a–d), T5.2 (2), T5.3 (2), T5.4 (1) wykonane, kod przywrócony, suite zielone — 150d044
 
 ### Faza 3: Ryzyko #5 — odrzucenie odpowiedzi spoza kontraktu + walidator w generatorze
 
 #### Automatyczne
 
-- [ ] 3.1 Przed poprawką: T5.5–T5.10 = 14 czerwonych, T5.1–T5.4 zielone; lista z klasą błędu zapisana
-- [ ] 3.2 Po poprawce: `npx vitest run -t "Ryzyko #5"` zielone: 20 przypadków
-- [ ] 3.3 `npm test` zielone: 83 testy (78 + 5 expected-fail)
-- [ ] 3.4 `npm run typecheck` zielone
-- [ ] 3.5 `git diff --name-only HEAD -- api/src | grep -v '\.test\.ts$'` = dokładnie `api/src/lib/flashcards.ts`; brak `zod`
+- [x] 3.1 Przed poprawką: T5.5–T5.10 = 14 czerwonych, T5.1–T5.4 zielone; lista z klasą błędu zapisana
+- [x] 3.2 Po poprawce: `npx vitest run -t "Ryzyko #5"` zielone: 20 przypadków
+- [x] 3.3 `npm test` zielone: 83 testy (78 + 5 expected-fail)
+- [x] 3.4 `npm run typecheck` zielone
+- [x] 3.5 `git diff --name-only HEAD -- api/src | grep -v '\.test\.ts$'` = dokładnie `api/src/lib/flashcards.ts`; brak `zod`
 
 #### Ręczne
 
-- [ ] 3.6 Deliberate-breaks T5.5, T5.6, T5.7 (2), T5.8, T5.9, T5.10 wykonane, kod przywrócony, suite zielone
-- [ ] 3.7 Komunikat odmowy widoczny w logu testu z tekstem odmowy
+- [x] 3.6 Deliberate-breaks T5.5, T5.6, T5.7 (2), T5.8, T5.9, T5.10 wykonane, kod przywrócony, suite zielone
+- [x] 3.7 Komunikat odmowy widoczny w logu testu z tekstem odmowy
 
 ### Faza 4: Ryzyko #5 — dowód integracyjny
 

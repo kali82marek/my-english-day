@@ -205,4 +205,109 @@ describe('Ryzyko #5: kontrakt generatora', () => {
 
     await expect(generateFlashcards(TRANSCRIPT, 'sk-test')).rejects.toThrow();
   });
+
+  // -------------------------------------------------------------------------
+  // T5.5–T5.10: naruszenie kontraktu strukturalnego → CAŁA odpowiedź odrzucona,
+  // zamierzonym rzutem domenowym. Dwa rodzaje odrzucenia (badanie, Architecture
+  // Insights): jawny rzut domenowy vs przypadkowy `SyntaxError`/`TypeError` z gołego
+  // `JSON.parse`/`.trim()`/`.filter`. Test ślepy na klasę błędu jest zielony także
+  // dla „naprawy” `TypeError` przez `?.`, która przepuści kartę bez pola do INSERT.
+  // Jedyny tekst asertowany to tekst odmowy z fixture'a (T5.9) — dowód, że `refusal`
+  // jest czytany, nie lustro komunikatu.
+  // -------------------------------------------------------------------------
+
+  /** Odrzucenie domenowe: `Error`, ale nie `SyntaxError` ani nie `TypeError`. */
+  async function expectContractRejection(promise: Promise<unknown>): Promise<Error> {
+    const err = await promise.catch((e: unknown) => e);
+    expect(err).toBeInstanceOf(Error);
+    expect(err).not.toBeInstanceOf(SyntaxError);
+    expect(err).not.toBeInstanceOf(TypeError);
+    return err as Error;
+  }
+
+  /**
+   * Trzy poprawne karty z wadliwą w ŚRODKU (dowód „cała odpowiedź”, nie „wadliwa
+   * karta odsiana”). Pole ustawione na `undefined` znika z JSON (`JSON.stringify`
+   * pomija je) — tak fixture wyraża „brak pola”.
+   */
+  function withMiddleCard(patch: Record<string, unknown>) {
+    const [a, b, c] = cards(3);
+    return [a, { ...b, ...patch }, c];
+  }
+
+  // Deliberate-break (po poprawce): usuń sprawdzenie `type` z walidatora → resolves → czerwony.
+  it("T5.5 karta o type spoza trójki ('idiom') → cała odpowiedź odrzucona", async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(chatResponse(withMiddleCard({ type: 'idiom' })));
+
+    await expectContractRejection(generateFlashcards(TRANSCRIPT, 'sk-test'));
+  });
+
+  // Wartości „prawdopodobne”, które koercja `? 1 : 0` u wywołującego zamieniłaby w wariant
+  // — cicha zmiana znaczenia, nie awaria. Bez asercji, że karta bez flagi „staje się bazowa”.
+  // Deliberate-break: usuń `typeof is_variant === 'boolean'` z walidatora → 3 wiersze czerwone.
+  it.each([
+    ['brak pola', { is_variant: undefined }],
+    ["string 'true'", { is_variant: 'true' }],
+    ['liczba 1', { is_variant: 1 }],
+  ])('T5.6 is_variant: %s → cała odpowiedź odrzucona', async (_label, patch) => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(chatResponse(withMiddleCard(patch)));
+
+    await expectContractRejection(generateFlashcards(TRANSCRIPT, 'sk-test'));
+  });
+
+  // `example_en` to jedyne pole nullable w D1: pusty string legalny (T5.3), `null` i brak
+  // nielegalne (front robi `example_en.trim()`). Bez asercji, że pole „dostaje domyślne ''”.
+  // Deliberate-breaks: usuń `typeof example_en === 'string'` → wiersze example_en czerwone;
+  // osobno zamień walidację front_en na `?.trim()` → wiersz 42 / „brak front_en” czerwony.
+  it.each([
+    ['brak front_en', { front_en: undefined }],
+    ['brak back_pl', { back_pl: undefined }],
+    ['brak example_en', { example_en: undefined }],
+    ['example_en: null', { example_en: null }],
+    ['front_en: 42', { front_en: 42 }],
+  ])('T5.7 %s → cała odpowiedź odrzucona', async (_label, patch) => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(chatResponse(withMiddleCard(patch)));
+
+    await expectContractRejection(generateFlashcards(TRANSCRIPT, 'sk-test'));
+  });
+
+  // `finish_reason: 'length'` — jedyny realny scenariusz ucięcia (brak `max_tokens` w
+  // żądaniu = limit modelu). Walidator może dołączyć `finish_reason` do komunikatu, test
+  // tego nie asertuje. Nigdy `rejects.toThrow(SyntaxError)` — utrwaliłoby przypadek.
+  // Deliberate-break: usuń `try/catch` wokół `JSON.parse` → SyntaxError → 2 wiersze czerwone.
+  it.each([
+    ['zwykły tekst', chatResponseRaw({ content: 'Oto fiszki: invoice — faktura, ...' })],
+    [
+      "ucięty JSON (finish_reason: 'length')",
+      chatResponseRaw({ content: '{"flashcards":[{"type":"word","front_en":"inv', finish_reason: 'length' }),
+    ],
+  ])('T5.8 content: %s → odrzucenie domenowe, nie SyntaxError', async (_label, response) => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(response);
+
+    await expectContractRejection(generateFlashcards(TRANSCRIPT, 'sk-test'));
+  });
+
+  // Na ścieżce szczęśliwej `refusal` jest obecne jako `null` (builder to odzwierciedla) —
+  // walidator nie może odrzucać na samej obecności pola. Tekst odmowy pochodzi z fixture'a.
+  // Deliberate-break: przestań czytać `refusal` → komunikat „bez treści” bez tekstu odmowy → czerwony.
+  it('T5.9 odmowa modelu (refusal, content: null) → odrzucenie z tekstem odmowy w błędzie', async () => {
+    const refusal = 'I cannot generate flashcards for this input.';
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(chatResponseRaw({ content: null, refusal }));
+
+    const err = await expectContractRejection(generateFlashcards(TRANSCRIPT, 'sk-test'));
+
+    expect(err.message).toContain(refusal);
+  });
+
+  // `flashcards: null` pokrywa dziś `?? []` → pusta → rzut; po poprawce `null` też jest
+  // „nie-tablicą” (walidator nie musi go wyróżniać).
+  // Deliberate-break: usuń `Array.isArray` z walidatora → TypeError z `.filter` → 2 wiersze czerwone.
+  it.each([
+    ['obiekt zamiast tablicy', { flashcards: cards(1)[0] }],
+    ['string', { flashcards: 'word: invoice' }],
+  ])('T5.10 flashcards: %s → odrzucenie domenowe, nie TypeError', async (_label, body) => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(chatResponseRaw({ content: JSON.stringify(body) }));
+
+    await expectContractRejection(generateFlashcards(TRANSCRIPT, 'sk-test'));
+  });
 });
