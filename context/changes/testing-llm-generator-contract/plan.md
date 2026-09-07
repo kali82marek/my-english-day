@@ -855,28 +855,28 @@ Fazie 3: 9 plików, 86 testów (81 + 5 `it.fails`). `Last updated` = data zamkni
 
 #### Automatyczne
 
-- [x] 1.1 `npm test` zielone: 9 plików, 63 testy (58 + 5 expected-fail), liczba bez zmian
-- [x] 1.2 `npm run typecheck` zielone
-- [x] 1.3 `grep -rn "function chatResponse" api/` = 1 definicja (`api/test/openai-mock.ts`)
-- [x] 1.4 `git diff --name-only HEAD -- api/src | grep -v '\.test\.ts$'` puste
+- [x] 1.1 `npm test` zielone: 9 plików, 63 testy (58 + 5 expected-fail), liczba bez zmian — 7c087d7
+- [x] 1.2 `npm run typecheck` zielone — 7c087d7
+- [x] 1.3 `grep -rn "function chatResponse" api/` = 1 definicja (`api/test/openai-mock.ts`) — 7c087d7
+- [x] 1.4 `git diff --name-only HEAD -- api/src | grep -v '\.test\.ts$'` puste — 7c087d7
 
 #### Ręczne
 
-- [x] 1.5 Nagłówek `openai-mock.ts` przeczytany: wiadomo, kiedy `chatResponse`, a kiedy `chatResponseRaw`
+- [x] 1.5 Nagłówek `openai-mock.ts` przeczytany: wiadomo, kiedy `chatResponse`, a kiedy `chatResponseRaw` — 7c087d7
 
 ### Faza 2: Ryzyko #5 — kontrakt żądania i deterministyczne przycięcie
 
 #### Automatyczne
 
-- [ ] 2.1 `npx vitest run -t "Ryzyko #5"` zielone: 6 przypadków (T5.1–T5.4)
-- [ ] 2.2 `npm test` zielone: 69 testów (64 + 5 expected-fail)
-- [ ] 2.3 `npm run typecheck` zielone
-- [ ] 2.4 Brak importu/odwołania do `MAX_CARDS`/`RESPONSE_FORMAT` w `flashcards.test.ts`
-- [ ] 2.5 `git diff --name-only HEAD -- api/src | grep -v '\.test\.ts$'` puste
+- [x] 2.1 `npx vitest run -t "Ryzyko #5"` zielone: 6 przypadków (T5.1–T5.4)
+- [x] 2.2 `npm test` zielone: 69 testów (64 + 5 expected-fail)
+- [x] 2.3 `npm run typecheck` zielone
+- [x] 2.4 Brak importu/odwołania do `MAX_CARDS`/`RESPONSE_FORMAT` w `flashcards.test.ts`
+- [x] 2.5 `git diff --name-only HEAD -- api/src | grep -v '\.test\.ts$'` puste
 
 #### Ręczne
 
-- [ ] 2.6 Deliberate-breaks T5.1 (a–d), T5.2 (2), T5.3 (2), T5.4 (1) wykonane, kod przywrócony, suite zielone
+- [x] 2.6 Deliberate-breaks T5.1 (a–d), T5.2 (2), T5.3 (2), T5.4 (1) wykonane, kod przywrócony, suite zielone
 
 ### Faza 3: Ryzyko #5 — odrzucenie odpowiedzi spoza kontraktu + walidator w generatorze
 
