@@ -3,7 +3,7 @@ project: "My English Day"
 version: 1
 status: draft
 created: 2026-05-31
-updated: 2026-09-02
+updated: 2026-09-04
 prd_version: 1
 main_goal: speed
 top_blocker: capacity
@@ -149,12 +149,12 @@ Fundamenty poniżej zakładają, że to istnieje, i NIE scaffoldują tego ponown
 
 | Roadmap ID | Change ID                     | Suggested issue title                                   | Ready for `/10x-plan` | Notes                                  |
 | ---------- | ----------------------------- | ------------------------------------------------------- | --------------------- | -------------------------------------- |
-| F-01       | minimal-auth-app-spine        | Minimalny auth + uwierzytelniony szkielet aplikacji     | yes                   | Odblokowuje gwiazdę przewodnią S-02    |
-| S-01       | capture-situation-by-voice    | Nagrywanie i zapis sytuacji głosem                      | no                    | Wymaga F-01                            |
-| S-02       | gated-ai-flashcard-generation | Generowanie fiszek AI z akceptacją (gwiazda przewodnia) | no                    | Wymaga S-01, F-01                      |
-| S-03       | same-context-variants         | Warianty fiszek w tym samym kontekście                  | no                    | Wymaga S-02                            |
-| S-04       | duplicate-card-filtering      | Filtrowanie duplikatów fiszek                           | no                    | Wymaga S-02                            |
-| S-05       | srs-review-session            | Sesja powtórek z 3 przyciskami oceny                    | no                    | Wymaga S-02                            |
+| F-01       | minimal-auth-app-spine        | Minimalny auth + uwierzytelniony szkielet aplikacji     | done                  | Zarchiwizowano 2026-09-02              |
+| S-01       | capture-situation-by-voice    | Nagrywanie i zapis sytuacji głosem                      | done                  | Zarchiwizowano 2026-09-02              |
+| S-02       | gated-ai-flashcard-generation | Generowanie fiszek AI z akceptacją (gwiazda przewodnia) | done                  | Zarchiwizowano 2026-09-02              |
+| S-03       | same-context-variants         | Warianty fiszek w tym samym kontekście                  | done                  | Zarchiwizowano 2026-09-02              |
+| S-04       | duplicate-card-filtering      | Filtrowanie duplikatów fiszek                           | yes                   | S-02 done; równoległy z S-05           |
+| S-05       | srs-review-session            | Sesja powtórek z 3 przyciskami oceny                    | yes                   | S-02 done; równoległy z S-04           |
 
 ## Open Roadmap Questions
 
