@@ -1,10 +1,10 @@
 ---
 change_id: srs-review-session
 title: Sesja powtórek (spaced repetition) z 3 przyciskami oceny
-status: impl_reviewed
+status: archived
 created: 2026-09-09
 updated: 2026-09-09
-archived_at: null
+archived_at: 2026-09-09T12:26:00Z
 ---
 
 ## Notes

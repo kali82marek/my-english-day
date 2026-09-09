@@ -36,7 +36,7 @@ Wedge produktu — jedna cecha, której usunięcie czyni produkt nieodróżnialn
 | S-02  | gated-ai-flashcard-generation | dostać fiszki AI z sytuacji i zaakceptować lub odrzucić każdą        | S-01, F-01    | US-01, FR-006, FR-009, FR-010 | done     |
 | S-03  | same-context-variants         | dostać warianty fiszek w obrębie tego samego kontekstu sytuacji      | S-02          | FR-007                        | done     |
 | S-04  | duplicate-card-filtering      | mieć pewność, że nowe fiszki nie dublują jego istniejącej bazy       | S-02          | FR-008                        | done |
-| S-05  | srs-review-session            | uczyć się z fiszek w sesji powtórek z 3 przyciskami oceny            | S-02          | US-01, FR-011, FR-012         | in-progress |
+| S-05  | srs-review-session            | uczyć się z fiszek w sesji powtórek z 3 przyciskami oceny            | S-02          | US-01, FR-011, FR-012         | done |
 
 ## Streams
 
@@ -143,7 +143,7 @@ Fundamenty poniżej zakładają, że to istnieje, i NIE scaffoldują tego ponown
 - **Unknowns:**
   - Jaki model odstępów odwzorować na 3 przyciski oceny? — Owner: team. Block: no.
 - **Risk:** Sekwencjonowane po S-02, bo wymaga zaakceptowanych fiszek w bazie. Domyka pętlę US-01 i drugorzędne Kryterium sukcesu („uczy się codziennie z fiszek"). Ryzyko: model powtórek źle dobrany do 3 przycisków obniży retencję.
-- **Status:** in-progress
+- **Status:** done
 
 ## Backlog Handoff
 
@@ -179,3 +179,4 @@ Fundamenty poniżej zakładają, że to istnieje, i NIE scaffoldują tego ponown
 - **S-02: użytkownik może wieczorem zobaczyć fiszki angielskie wygenerowane przez AI z sytuacji dnia (AI dobiera typy: słówka / zwroty / zdania) i każdą zaakceptować lub odrzucić; zaakceptowane od razu trafiają do bazy nauki.** — Zarchiwizowano 2026-09-02 → `context/archive/2026-06-07-gated-ai-flashcard-generation/`. Lekcja: —.
 - **S-03: użytkownik może dostać warianty fiszek — rozszerzenia ściśle w obrębie tej samej sytuacji (ten sam sklep/rozmowa, inne detale: inny produkt, inna kwota, inne pytanie) — ucząc się elastyczności językowej, nie papugowania jednej frazy.** — Zarchiwizowano 2026-09-02 → `context/archive/2026-06-09-same-context-variants/`. Lekcja: —.
 - **S-04: użytkownik ma pewność, że nowe propozycje fiszek nie dublują jego istniejącej bazy — duplikat to dokładnie to samo słowo/zwrot; synonimy i warianty zostają jako osobne fiszki.** — Zarchiwizowano 2026-09-09 → `context/archive/2026-09-09-duplicate-card-filtering/`. Lekcja: —.
+- **S-05: użytkownik może rozpocząć sesję nauki z fiszkami z bazy, prezentowanymi według algorytmu powtórek, oceniając każdą trzema przyciskami: Nie umiem / Prawie / Umiem.** — Zarchiwizowano 2026-09-09 → `context/archive/2026-09-09-srs-review-session/`. Lekcja: —.
