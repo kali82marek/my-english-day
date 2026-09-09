@@ -209,7 +209,10 @@ export const flashcardsApi = {
   },
 };
 
-/** Ocena w sesji powtórek (S-05): `again` = Nie umiem, `hard` = Prawie, `good` = Umiem. */
+/**
+ * Ocena w sesji powtórek (S-05): `again` = Nie umiem, `hard` = Prawie, `good` = Umiem.
+ * = `GRADES` w `api/src/lib/srs.ts` — osobne tsconfigi, zmieniaj oba naraz.
+ */
 export type ReviewGrade = 'again' | 'hard' | 'good';
 
 /**

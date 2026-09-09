@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { GRADES, isGrade, scheduleReview, type ReviewState } from './srs';
+import { GRADES, isGrade, scheduleReview, toSqlDatetime, type ReviewState } from './srs';
 
 // ---------------------------------------------------------------------------
 // Wyrocznie (PRD FR-012 `context/foundation/prd.md` + plan S-05
@@ -16,6 +16,9 @@ const FIRST_GOOD_DAYS = 1;
 const SECOND_GOOD_DAYS = 3;
 // Plan S-05: ease nigdy poniżej 1.3 (podłoga SM-2).
 const EASE_FLOOR = 1.3;
+// Przegląd S-05 W1: pułap odstępu 365 dni (jak domyślnie w Anki) — nie importowany
+// z implementacji: podniesienie pułapu w kodzie MA zaczerwienić R1.5.
+const MAX_INTERVAL_DAYS = 365;
 
 const DAY_MS = 86_400_000;
 const NOW = new Date('2026-09-09T12:00:00Z');
@@ -125,5 +128,24 @@ describe('FR-012: trzy oceny → odstępy powtórek', () => {
     for (const bad of ['easy', '', 1, undefined, null, 'GOOD', ['good']]) {
       expect(isGrade(bad)).toBe(false);
     }
+  });
+
+  // Wyrocznia: decyzja przeglądu S-05 W1 (`reviews/impl-review.md`), NIE PRD — trasa
+  // `grade` nie wymaga, by fiszka była należna, więc seria `good` przez surowe API rosłaby
+  // wykładniczo (17× → rok 10207 i zepsuty format `due_at`, 21× → `RangeError`, 500).
+  // Deliberate-break: usuń `Math.min(MAX_INTERVAL_DAYS, …)` → „ostatni = 365" i format czerwone.
+  it('R1.5 seria 30 „Umiem": odstęp nigdy nie przekracza 365 dni, ostatni to dokładnie 365, a `due_at` zachowuje format kolumny', () => {
+    let state: ReviewState & { due_at: Date } = { ...freshState(), due_at: NOW };
+    for (let i = 0; i < 30; i++) {
+      state = scheduleReview(state, 'good', state.due_at);
+      expect(state.interval_days).toBeLessThanOrEqual(MAX_INTERVAL_DAYS);
+    }
+    expect(state.interval_days).toBe(MAX_INTERVAL_DAYS);
+    expect(state.repetitions).toBe(30);
+
+    const last = scheduleReview(state, 'good', NOW);
+    expect(last.interval_days).toBe(MAX_INTERVAL_DAYS);
+    expect(last.due_at.getTime()).toBe(NOW.getTime() + MAX_INTERVAL_DAYS * DAY_MS);
+    expect(toSqlDatetime(last.due_at)).toMatch(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/);
   });
 });

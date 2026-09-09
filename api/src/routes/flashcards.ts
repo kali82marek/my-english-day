@@ -29,7 +29,10 @@ import { isGrade, scheduleReview, toSqlDatetime, type ReviewState } from '../lib
 // Rozmiar jednej porcji sesji — klient ocenia po jednej, kolejne pobranie po fokusie.
 const REVIEW_BATCH_LIMIT = 20;
 
-/** Kształt fiszki zwracanej klientowi — bez `status` (z definicji `proposed`) i `user_id`. */
+/**
+ * Kształt fiszki zwracanej klientowi — bez `status` (propozycje = `proposed`, sesja
+ * powtórek = `accepted`; status wynika z trasy) i `user_id`; kolumny SRS nieeksponowane.
+ */
 type FlashcardDTO = {
   id: number;
   situation_id: number;

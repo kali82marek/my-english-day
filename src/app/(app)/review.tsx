@@ -7,15 +7,19 @@
  * kolejki (wraca jeszcze w tej sesji), „Prawie"/„Umiem" zdejmują ją. Oceny są
  * optymistyczne — przy błędzie sieci karta wraca na początek kolejki.
  *
- * Odsłonięcie jest resetowane JAWNIE po każdej ocenie: przy jednej karcie „Nie umiem"
- * zostawia ten sam `queue[0]`, więc zmiana `key` nie zresetowałaby stanu.
+ * Odsłonięcie jest resetowane JAWNIE po każdej ocenie (i po rollbacku): `ReviewCard` jest
+ * bezstanowa, a przy jednej karcie „Nie umiem" zostawia ten sam `queue[0]` — zmiana `key`
+ * niczego by nie zresetowała.
+ *
+ * Strażnik `pendingRef` (jak `decidedRef` w `flashcards.tsx`): ocena w locie + refokus
+ * (`load` podmienia kolejkę listą z serwera) nie może przywrócić karty do drugiej oceny.
  *
  * Pusta kolejka ma dwa znaczenia rozróżniane przez `acceptedCount`: pusta baza nauki
  * (zachęta do akceptacji propozycji) albo „na dziś wszystko powtórzone".
  */
 
 import { useFocusEffect } from 'expo-router';
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -35,11 +39,14 @@ export default function ReviewScreen() {
   const [loading, setLoading] = useState(true);
   // Liczba fiszek ocenionych „Prawie"/„Umiem" w tej sesji (zdjętych z kolejki).
   const [sessionDone, setSessionDone] = useState(0);
+  // Id-ki fiszek z oceną w locie — refokus w trakcie żądania nie może przywrócić karty
+  // z serwera do podwójnej oceny (dwa „Umiem" = 3 dni zamiast 1).
+  const pendingRef = useRef<Set<number>>(new Set());
 
   const load = useCallback(async () => {
     try {
       const { cards, dueCount: due, acceptedCount: accepted } = await reviewApi.listDue();
-      setQueue(cards);
+      setQueue(cards.filter((c) => !pendingRef.current.has(c.id)));
       setMoreDue(due > cards.length);
       setAcceptedCount(accepted);
       setRevealed(false);
@@ -69,12 +76,20 @@ export default function ReviewScreen() {
       setSessionDone((n) => n + 1);
     }
 
-    reviewApi.grade(card.id, g).catch(() => {
-      setQueue((prev) => (prev.some((c) => c.id === card.id) ? prev : [card, ...prev]));
-      if (removed) {
-        setSessionDone((n) => Math.max(0, n - 1));
-      }
-    });
+    pendingRef.current.add(card.id);
+    reviewApi
+      .grade(card.id, g)
+      .catch(() => {
+        // Karta wraca na początek nieodsłonięta — użytkownik mógł już odsłonić następną.
+        setRevealed(false);
+        setQueue((prev) => (prev.some((c) => c.id === card.id) ? prev : [card, ...prev]));
+        if (removed) {
+          setSessionDone((n) => Math.max(0, n - 1));
+        }
+      })
+      .finally(() => {
+        pendingRef.current.delete(card.id);
+      });
   }, []);
 
   const current = queue[0];
@@ -95,7 +110,6 @@ export default function ReviewScreen() {
           </View>
         ) : current ? (
           <ReviewCard
-            key={current.id}
             card={current}
             revealed={revealed}
             onReveal={() => setRevealed(true)}

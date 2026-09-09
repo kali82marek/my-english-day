@@ -364,4 +364,32 @@ describe('S-05 / FR-011, FR-012: sesja powtórek', () => {
     expect(listAfterAgain.cards.map((card) => card.id)).toEqual([id]);
     expect(listAfterAgain.dueCount).toBe(1);
   });
+
+  // Porcja sesji to 20 kart (plan S-05), ale liczniki mają być BEZ limitu — front na
+  // `dueCount > cards.length` opiera podpowiedź „pobierz kolejną porcję". R2.1 tego nie
+  // dowodzi (2 karty nigdy nie trafiają w limit).
+  // Deliberate-breaks (każdy osobno → czerwony; kod przywrócony, suite zielone):
+  //   (a) `dueCount: results.length` zamiast osobnego zliczenia → `dueCount` 20;
+  //   (b) usuń `LIMIT ?` (i bind) z zapytania listy → 21 kart.
+  it('R2.5 21 należnych fiszek → lista ma 20 kart o kluczach DTO, a `dueCount` i `acceptedCount` liczą wszystkie 21', async () => {
+    const { alice, aliceSituationId } = await seedAliceAndBobSituations();
+    for (let i = 1; i <= 21; i++) {
+      await seedFlashcard(env, {
+        situationId: aliceSituationId,
+        userId: alice.id,
+        status: 'accepted',
+        frontEn: `card ${i}`,
+        backPl: `karta ${i}`,
+      });
+    }
+
+    const body = await readReview(alice.token);
+
+    expect(body.cards).toHaveLength(20);
+    for (const card of body.cards) {
+      expect(keysOf(card)).toEqual(FLASHCARD_DTO_KEYS);
+    }
+    expect(body.dueCount).toBe(21);
+    expect(body.acceptedCount).toBe(21);
+  });
 });
