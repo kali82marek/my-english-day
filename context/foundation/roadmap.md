@@ -153,8 +153,8 @@ Fundamenty poniżej zakładają, że to istnieje, i NIE scaffoldują tego ponown
 | S-01       | capture-situation-by-voice    | Nagrywanie i zapis sytuacji głosem                      | done                  | Zarchiwizowano 2026-09-02              |
 | S-02       | gated-ai-flashcard-generation | Generowanie fiszek AI z akceptacją (gwiazda przewodnia) | done                  | Zarchiwizowano 2026-09-02              |
 | S-03       | same-context-variants         | Warianty fiszek w tym samym kontekście                  | done                  | Zarchiwizowano 2026-09-02              |
-| S-04       | duplicate-card-filtering      | Filtrowanie duplikatów fiszek                           | yes                   | S-02 done; równoległy z S-05           |
-| S-05       | srs-review-session            | Sesja powtórek z 3 przyciskami oceny                    | yes                   | S-02 done; równoległy z S-04           |
+| S-04       | duplicate-card-filtering      | Filtrowanie duplikatów fiszek                           | done                  | Zarchiwizowano 2026-09-09              |
+| S-05       | srs-review-session            | Sesja powtórek z 3 przyciskami oceny                    | done                  | Zarchiwizowano 2026-09-09              |
 
 ## Open Roadmap Questions
 
