@@ -193,9 +193,10 @@ describe('Ryzyko #5: kontrakt generatora', () => {
     expect(result.find((c) => c.front_en === 'card 5')?.example_en).toBe('');
   });
 
-  // Guard «pusta lista → rzut» MUSI zostać w generatorze: po S-04 «zero kart po
-  // deduplikacji» będzie odrębnym, legalnym wynikiem warstwy zapisu (badanie §9);
-  // T2.4 w `situations.integration.test.ts` dowodzi tego samego niezmiennika od strony bazy.
+  // Guard «pusta lista → rzut» MUSI zostać w generatorze: «zero kart po deduplikacji»
+  // (S-04, `lib/dedup.ts`) jest odrębnym, legalnym wynikiem warstwy zapisu (`done` bez
+  // kart — D2.4 w `situations.integration.test.ts`), a pusta lista z modelu nadal awarią;
+  // T2.4 tamże dowodzi tego niezmiennika od strony bazy.
   // Przypadek „wszystkie puste” (nie `[]` — to pokrywa test „pusta lista fiszek” wyżej):
   // filtr redukuje do zera, ścieżka inna niż pusta tablica z modelu.
   // Deliberate-break: usuń `if (cards.length === 0) throw` → resolves z [] → czerwony (T2.4 też).

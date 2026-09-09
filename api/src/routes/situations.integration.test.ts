@@ -16,6 +16,7 @@ import { env } from 'cloudflare:workers';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   raiseAbort,
+  readFlashcard,
   readFlashcards,
   readSituation,
   resetDb,
@@ -226,10 +227,12 @@ describe('Ryzyko #2: fiszki wszystko-albo-nic', () => {
     expect(objects).toHaveLength(0);
   });
 
-  // Niezmiennik warstwy zapisu: nigdy `done` bez kart. Zielony dziś tylko dlatego, że
-  // generator rzuca na pustą listę. Deliberate-break: tymczasowo usuń rzut na pustą
-  // listę w `src/lib/flashcards.ts` → `done` z 0 kart → czerwony (przywróć; guard w
-  // generatorze należy do Fazy 3 wdrożenia).
+  // Niezmiennik generatora: pusta lista Z MODELU = awaria (`failed`), nigdy `done`.
+  // Zielony dlatego, że generator rzuca na pustą listę (T5.4). Od S-04 `done` bez kart
+  // JEST legalne, ale wyłącznie gdy to dedup odsiał wszystkie kandydatki (D2.4 niżej) —
+  // pusta odpowiedź modelu nadal nie może udawać „wszystko już masz". Deliberate-break:
+  // tymczasowo usuń rzut na pustą listę w `src/lib/flashcards.ts` → `done` z 0 kart →
+  // czerwony (przywróć).
   it('T2.4 model zwraca pustą listę → zero kart i `failed`, nigdy `done` bez kart', async () => {
     const { token } = await seedUser(env);
 
@@ -539,4 +542,145 @@ describe('Ryzyko #6: dzień liczony w UTC', () => {
       expect((await readProposals(token)).generatingCount).toBe(0);
     },
   );
+});
+
+/**
+ * S-04 / FR-008 — dowód w kategoriach użytkownika: nowe propozycje nie dublują fiszek,
+ * które już ma (propozycje ORAZ zaakceptowane), cudza baza nie jest zbiorem odniesienia,
+ * a odpowiedź złożona wyłącznie z duplikatów kończy się `done` bez nowych kart (nie
+ * `failed` — kontrast z T2.4, gdzie pusta lista Z MODELU jest awarią). Definicję
+ * „to samo słowo/zwrot" (normalizacja) dowodzi `src/lib/dedup.test.ts` (D1.x); tu
+ * asertujemy skutek w D1 i w `GET /flashcards/proposals`, nie kształt filtra.
+ *
+ * Deliberate-break wspólny: w `generateAndStoreFlashcards` (`situations.ts`) zapisz
+ * `cards` zamiast `unique` (pomiń `filterDuplicates`) → D2.1, D2.3, D2.4 czerwone.
+ */
+describe('S-04 / FR-008: nowe propozycje nie dublują bazy użytkownika', () => {
+  /** Karta w kształcie odpowiedzi modelu — jawny fixture, żeby wartości były czytelne. */
+  function card(
+    front_en: string,
+    overrides: Partial<{ type: 'word' | 'phrase' | 'sentence'; is_variant: boolean }> = {},
+  ) {
+    return {
+      type: overrides.type ?? 'word',
+      front_en,
+      back_pl: `pl: ${front_en}`,
+      example_en: `Example: ${front_en}.`,
+      is_variant: overrides.is_variant ?? false,
+    };
+  }
+
+  /** Sytuacja `done` z wygenerowanymi fiszkami — rodzic dla zasianych kart. */
+  function seedDoneSituation(userId: number): Promise<number> {
+    return seedSituation(env, userId, { status: 'done', flashcardsStatus: 'done', transcript: TRANSCRIPT });
+  }
+
+  // Wyrocznia FR-008 (`prd.md`): duplikat = to samo słowo/zwrot; różnice wielkości liter
+  // i kropki na końcu to wciąż ta sama fiszka. Zbiór odniesienia obejmuje ZARÓWNO
+  // zaakceptowane (`invoice`), JAK I wciąż proponowane (`receipt`) — propozycja czekająca
+  // na decyzję nie może pojawić się w kolejce drugi raz.
+  // Deliberate-breaks: (a) dodaj `AND status = 'accepted'` do odczytu zbioru odniesienia
+  // → druga `receipt` zapisana → czerwony; (b) porównuj `front_en` surowo (bez
+  // `normalizeFront`) → `Invoice` i `receipt.` zapisane → czerwony.
+  it('D2.1 fronty już w bazie (zaakceptowany i proponowany) → zapisany tylko nowy front; propozycje bez dubla; `done`', async () => {
+    const alice = await seedUser(env, 'alice');
+    const earlierId = await seedDoneSituation(alice.id);
+    await seedFlashcard(env, { situationId: earlierId, userId: alice.id, frontEn: 'invoice', status: 'accepted' });
+    const receiptProposalId = await seedFlashcard(env, { situationId: earlierId, userId: alice.id, frontEn: 'receipt' });
+
+    const id = await postAndFinish(
+      alice.token,
+      chatResponse([card('Invoice'), card('receipt.', { is_variant: true }), card('bank statement', { type: 'phrase' })]),
+    );
+
+    const stored = await readFlashcards(env, id);
+    expect(stored.map((c) => c.front_en)).toEqual(['bank statement']);
+    expect(stored[0]?.type).toBe('phrase');
+    expect((await readSituation(env, id))?.flashcards_status).toBe('done');
+
+    const { proposals, generatingCount } = await readProposals(alice.token);
+    expect(proposals.map((p) => p.front_en).sort()).toEqual(['bank statement', 'receipt']);
+    expect(proposals.map((p) => p.id)).toContain(receiptProposalId);
+    expect(generatingCount).toBe(0);
+  });
+
+  // Access Control PRD: każdy użytkownik ma zamkniętą bazę — identyczny front u Boba nie
+  // jest duplikatem dla Alice. Ramię „cudze" (Bob nietknięty) + kontrolne (karta Alice
+  // zapisana). Deliberate-break: usuń `WHERE user_id = ?` (i `.bind(userId)`) z odczytu
+  // zbioru odniesienia → karta Alice odsiana → czerwony.
+  it('D2.2 identyczny front w bazie INNEGO użytkownika → karta zapisana; cudza baza nietknięta', async () => {
+    const alice = await seedUser(env, 'alice');
+    const bob = await seedUser(env, 'bob');
+    const bobSituationId = await seedDoneSituation(bob.id);
+    const bobCardId = await seedFlashcard(env, { situationId: bobSituationId, userId: bob.id, frontEn: 'invoice', status: 'accepted' });
+    const bobBefore = await readFlashcard(env, bobCardId);
+    expect(bobBefore).not.toBeNull();
+
+    const id = await postAndFinish(alice.token, chatResponse([card('invoice')]));
+
+    const stored = await readFlashcards(env, id);
+    expect(stored.map((c) => c.front_en)).toEqual(['invoice']);
+    expect(stored[0]?.user_id).toBe(alice.id);
+    expect((await readSituation(env, id))?.flashcards_status).toBe('done');
+
+    expect(await readFlashcard(env, bobCardId)).toEqual(bobBefore);
+    expect(await readFlashcards(env, bobSituationId)).toHaveLength(1);
+    expect((await readProposals(bob.token)).proposals).toEqual([]);
+  });
+
+  // Model potrafi zwrócić tę samą frazę jako fiszkę bazową i wariant. Pierwsze wystąpienie
+  // wygrywa (kolejność tablicy = kolejność zapisu), reszta partii w kolejności.
+  // Deliberate-break: filtruj tylko względem bazy, nie wewnątrz partii (usuń `seen.add`
+  // w pętli `filterDuplicates`) → 3 karty → czerwony.
+  it('D2.3 powtórka wewnątrz jednej odpowiedzi (`invoice` / `INVOICE`) → zostaje pierwsza z jej `type`/`is_variant`; reszta w kolejności', async () => {
+    const { token } = await seedUser(env);
+
+    const id = await postAndFinish(
+      token,
+      chatResponse([
+        card('invoice', { type: 'word', is_variant: false }),
+        card('INVOICE', { type: 'phrase', is_variant: true }),
+        card('receipt'),
+      ]),
+    );
+
+    const stored = await readFlashcards(env, id);
+    expect(stored.map(({ front_en, type, is_variant }) => ({ front_en, type, is_variant }))).toEqual([
+      { front_en: 'invoice', type: 'word', is_variant: 0 },
+      { front_en: 'receipt', type: 'word', is_variant: 0 },
+    ]);
+    expect((await readSituation(env, id))?.flashcards_status).toBe('done');
+    expect((await readProposals(token)).proposals).toHaveLength(2);
+  });
+
+  // „Wszystko już masz" to sukces, nie awaria: `done` bez nowych kart, transkrypt i
+  // sprzątanie R2 jak na ścieżce szczęśliwej, zero odrzucenia w tle (`postAndFinish`).
+  // Kontrast z T2.4: tam pusta lista pochodzi Z MODELU i musi dać `failed`.
+  // Deliberate-breaks: (a) rzuć, gdy `unique` puste → `failed` → czerwony;
+  // (b) pomiń `UPDATE ... 'done'` przy pustej partii → `pending` → czerwony.
+  it('D2.4 wszystkie karty z odpowiedzi już w bazie → zero nowych wierszy i `done` (nie `failed`); transkrypt zachowany, bucket pusty', async () => {
+    const { id: userId, token } = await seedUser(env);
+    const earlierId = await seedDoneSituation(userId);
+    await seedFlashcard(env, { situationId: earlierId, userId, frontEn: 'invoice', status: 'accepted' });
+    await seedFlashcard(env, { situationId: earlierId, userId, frontEn: 'ask for a refund', type: 'phrase' });
+
+    const id = await postAndFinish(
+      token,
+      chatResponse([card('Invoice'), card(' ask for a refund ', { type: 'phrase', is_variant: true })]),
+    );
+
+    expect(await readFlashcards(env, id)).toHaveLength(0);
+    const row = await readSituation(env, id);
+    expect(row?.flashcards_status).toBe('done');
+    expect(row?.status).toBe('done');
+    expect(row?.transcript).toBe(TRANSCRIPT);
+
+    const { proposals, generatingCount } = await readProposals(token);
+    // Jedyna propozycja to ta sprzed nagrania — nic nie doszło, nic nie zniknęło.
+    expect(proposals.map((p) => p.front_en)).toEqual(['ask for a refund']);
+    expect(generatingCount).toBe(0);
+
+    const { objects } = await env.AUDIO_BUCKET.list();
+    expect(objects).toHaveLength(0);
+  });
 });

@@ -181,15 +181,15 @@ Błąd `SELECT` trafia w istniejący `catch` → `failed` (bez nowej gałęzi). 
 
 #### Automated
 
-- [x] 1.1 Typecheck przechodzi (`cd api && npm run typecheck`)
-- [x] 1.2 Testy jednostkowe dedup przechodzą (`cd api && npx vitest run src/lib/dedup.test.ts`)
+- [x] 1.1 Typecheck przechodzi (`cd api && npm run typecheck`) — 11fcaba
+- [x] 1.2 Testy jednostkowe dedup przechodzą (`cd api && npx vitest run src/lib/dedup.test.ts`) — 11fcaba
 
 ### Phase 2: Wpięcie filtra w zapis w tle + dowód integracyjny
 
 #### Automated
 
-- [ ] 2.1 Typecheck przechodzi (`cd api && npm run typecheck`)
-- [ ] 2.2 Cały zestaw testów API przechodzi (`cd api && npm test`)
+- [x] 2.1 Typecheck przechodzi (`cd api && npm run typecheck`)
+- [x] 2.2 Cały zestaw testów API przechodzi (`cd api && npm test`)
 
 #### Manual
 

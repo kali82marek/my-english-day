@@ -13,7 +13,9 @@
  * Zadanie tła (`transcribeAndFinalize`) to trzy niezależne kroki: po zapisaniu
  * `status='done'` awaria generowania, zapisu stanu generowania ani kasowania R2 nie
  * nadpisuje `status` i nie zostawia odrzuconej obietnicy w `waitUntil`. Karty zapisywane
- * atomowo przez `DB.batch` — wszystkie albo żadna (ryzyko #2 z test-plan.md).
+ * atomowo przez `DB.batch` — wszystkie albo żadna (ryzyko #2 z test-plan.md). Przed
+ * zapisem kandydaci są odsiewani względem bazy użytkownika (`lib/dedup.ts`, FR-008) —
+ * „same duplikaty" to `done` bez nowych kart, nie awaria.
  *
  * Awaria zapisu w POST (`R2.put` lub `INSERT`): czytelny JSON 500 `{ error }` i
  * best-effort kasowanie pliku R2 — nieudany zapis nie zostawia wiersza-widma ani
@@ -28,6 +30,7 @@ import type { AppEnv, Bindings } from '../types';
 import { requireAuth } from '../middleware/auth';
 import { transcribeAudio } from '../lib/transcription';
 import { generateFlashcards } from '../lib/flashcards';
+import { filterDuplicates } from '../lib/dedup';
 
 // Limit Whisper to 25 MB — większy plik odrzucamy od razu jako 400.
 const MAX_AUDIO_BYTES = 25 * 1024 * 1024;
@@ -79,11 +82,17 @@ function extFromName(name: string): string {
  * Gwarancje (ryzyko #2 z `context/foundation/test-plan.md`, follow-up S-03 `DB.batch`):
  * - Atomowość: INSERTy wszystkich kart i `UPDATE flashcards_status='done'` idą w JEDNYM
  *   `DB.batch` (jedna transakcja D1). Błąd przy którejkolwiek karcie cofa całość —
- *   nigdy „część kart + failed", nigdy `done` bez kart.
- * - Nigdy nie rzuca: błąd LLM lub batcha ustawia `flashcards_status='failed'`; jeśli sam
- *   ten UPDATE padnie, jest tylko logowany (kolumna zostaje `pending`). Dzięki temu
- *   `transcribeAndFinalize` może po tej funkcji bezpiecznie sprzątać R2, a `status='done'`
- *   sytuacji nigdy nie jest nadpisywany przez awarię generowania.
+ *   nigdy „część kart + failed".
+ * - Dedup (S-04, FR-008): przed batchem kandydaci są odsiewani względem WSZYSTKICH fiszek
+ *   użytkownika (propozycje i zaakceptowane — cudze nie są zbiorem odniesienia) oraz
+ *   między sobą (`filterDuplicates`, `lib/dedup.ts`). Gdy nic nowego nie zostaje, batch
+ *   zawiera sam `UPDATE` — `done` bez kart to legalny wynik „wszystko już masz" (to
+ *   JEDYNA droga do `done` bez kart: pustą listę z modelu generator nadal odrzuca →
+ *   `failed`). Błąd odczytu zbioru odniesienia trafia w ten sam `catch` co błąd LLM.
+ * - Nigdy nie rzuca: błąd LLM, odczytu lub batcha ustawia `flashcards_status='failed'`;
+ *   jeśli sam ten UPDATE padnie, jest tylko logowany (kolumna zostaje `pending`). Dzięki
+ *   temu `transcribeAndFinalize` może po tej funkcji bezpiecznie sprzątać R2, a
+ *   `status='done'` sytuacji nigdy nie jest nadpisywany przez awarię generowania.
  */
 async function generateAndStoreFlashcards(
   env: Bindings,
@@ -93,11 +102,28 @@ async function generateAndStoreFlashcards(
 ): Promise<void> {
   try {
     const cards = await generateFlashcards(transcript, env.OPENAI_API_KEY);
+
+    // Zbiór odniesienia: fronty wszystkich fiszek TEGO użytkownika (izolacja po `user_id`).
+    const { results: existing } = await env.DB.prepare(
+      'SELECT front_en FROM flashcards WHERE user_id = ?',
+    )
+      .bind(userId)
+      .all<{ front_en: string }>();
+    const unique = filterDuplicates(
+      cards,
+      existing.map((row) => row.front_en),
+    );
+    const filtered = cards.length - unique.length;
+    if (filtered > 0) {
+      // Jedyna obserwowalność w projekcie to `wrangler tail`.
+      console.info(`Sytuacja ${situationId}: odfiltrowano ${filtered} duplikatów z ${cards.length} kart.`);
+    }
+
     const insertCard = env.DB.prepare(
       'INSERT INTO flashcards (situation_id, user_id, type, front_en, back_pl, example_en, is_variant) VALUES (?, ?, ?, ?, ?, ?, ?)',
     );
     await env.DB.batch([
-      ...cards.map((card) =>
+      ...unique.map((card) =>
         // SQLite boolean = INTEGER: wariant → 1, fiszka bazowa → 0.
         insertCard.bind(situationId, userId, card.type, card.front_en, card.back_pl, card.example_en, card.is_variant ? 1 : 0),
       ),

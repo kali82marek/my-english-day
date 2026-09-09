@@ -9,8 +9,9 @@
  * odpowiedź → wyjątek → `flashcards_status='failed'`, nigdy częściowy zapis kart
  * spoza kontraktu (ryzyko #5, `context/foundation/test-plan.md` §2).
  * Puste `front_en`/`back_pl` to treść, nie kontrakt — odsiew, nie odrzucenie.
- * Guard «pusta lista → rzut» zostaje tutaj celowo (S-04: zero kart po deduplikacji
- * będzie odrębnym wynikiem warstwy zapisu). Każdy wyjątek stąd jest zamierzony
+ * Guard «pusta lista → rzut» zostaje tutaj celowo: pusta lista Z MODELU to awaria
+ * (`failed`), natomiast zero kart PO deduplikacji (`lib/dedup.ts`, S-04) to odrębny,
+ * legalny wynik warstwy zapisu (`done` bez nowych kart). Każdy wyjątek stąd jest zamierzony
  * (`new Error`, nigdy przepuszczony `SyntaxError`/`TypeError`) i czytelny w logu;
  * wywołujący zamienia go na `failed` (transkrypt sytuacji zostaje nietknięty).
  *
