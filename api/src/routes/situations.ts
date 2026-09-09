@@ -89,6 +89,9 @@ function extFromName(name: string): string {
  *   zawiera sam `UPDATE` — `done` bez kart to legalny wynik „wszystko już masz" (to
  *   JEDYNA droga do `done` bez kart: pustą listę z modelu generator nadal odrzuca →
  *   `failed`). Błąd odczytu zbioru odniesienia trafia w ten sam `catch` co błąd LLM.
+ *   Dedup jest best-effort MIĘDZY sytuacjami: dwa równoległe `waitUntil` tego samego
+ *   użytkownika mogą oba przejść `SELECT` przed `INSERT` (brak `UNIQUE` w schemacie) —
+ *   `follow-ups/concurrent-generation-dedup.md` w folderze zmiany S-04.
  * - Nigdy nie rzuca: błąd LLM, odczytu lub batcha ustawia `flashcards_status='failed'`;
  *   jeśli sam ten UPDATE padnie, jest tylko logowany (kolumna zostaje `pending`). Dzięki
  *   temu `transcribeAndFinalize` może po tej funkcji bezpiecznie sprzątać R2, a
