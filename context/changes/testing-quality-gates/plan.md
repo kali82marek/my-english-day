@@ -456,11 +456,11 @@ to 0006. Deploy Workera w ramach tej zmiany nie jest wymagany (zero zmian w `api
 
 #### Automatyczne
 
-- [x] 3.1 0 × „required after §3 Phase 4” i 0 × „recommended after §3 Phase 4” w `test-plan.md`
-- [x] 3.2 `### 6.8` istnieje; ≥ 3 × `npm run gate` w `test-plan.md`
-- [x] 3.3 Hunki diffu `test-plan.md` wyłącznie w §5, §6.7, §6.8, `Last updated`, §8
-- [x] 3.4 `npm run gate` → exit 0
-- [ ] 3.5 `git diff --name-only HEAD` = `test-plan.md`, `change.md` (status `implemented`); commit `docs(testing-quality-gates): … (p3)`
+- [x] 3.1 0 × „required after §3 Phase 4” i 0 × „recommended after §3 Phase 4” w `test-plan.md` — d1e8ca6
+- [x] 3.2 `### 6.8` istnieje; ≥ 3 × `npm run gate` w `test-plan.md` — d1e8ca6
+- [x] 3.3 Hunki diffu `test-plan.md` wyłącznie w §5, §6.7, §6.8, `Last updated`, §8 — d1e8ca6
+- [x] 3.4 `npm run gate` → exit 0 — d1e8ca6
+- [x] 3.5 `git diff --name-only HEAD` = `test-plan.md`, `change.md` (status `implemented`); commit `docs(testing-quality-gates): … (p3)` — d1e8ca6
 
 #### Ręczne
 
