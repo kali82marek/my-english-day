@@ -6,7 +6,7 @@
 >
 > Refresh: re-run `/10x-test-plan --refresh` when stale (see §8).
 >
-> Last updated: 2026-09-07
+> Last updated: 2026-09-09
 
 ## 1. Strategy
 
@@ -78,7 +78,7 @@ orchestrator updates Status as artifacts appear on disk.
 |---|---|---|---|---|---|---|
 | 1 | Harness Workerów + zadania w tle | Udowodnić, że zadanie tła zawsze kończy się widocznym stanem, bez utraty nagrania i bez połowicznych zapisów; harness workerd z izolowanym D1 i migracjami | #1, #2, #4 | integration (workerd, izolowane D1 z migracjami, mock OpenAI na krawędzi sieci) | complete | `context/changes/testing-worker-harness-background-jobs/` |
 | 2 | Kontrakty tras: własność, izolacja, dzień | Udowodnić, że użytkownik widzi i zmienia tylko swoje dane i właściwy dzień lokalny | #3, #6 | integration na poziomie tras (dwóch użytkowników, kontrolowany czas) | complete | `context/archive/2026-09-04-testing-route-contracts-ownership-day/` |
-| 3 | Kontrakt generatora LLM | Udowodnić, że zdegenerowana odpowiedź modelu nie przecieka do bazy ani UI | #5 | unit/contract (mock fetch) | complete | `context/changes/testing-llm-generator-contract/` |
+| 3 | Kontrakt generatora LLM | Udowodnić, że zdegenerowana odpowiedź modelu nie przecieka do bazy ani UI | #5 | unit/contract (mock fetch) | complete | `context/archive/2026-09-07-testing-llm-generator-contract/` |
 | 4 | Bramki jakości | Zablokować podłogę: jedno lokalne polecenie (lint + typecheck + testy API) i checklista deployu; CI nazwane, konfiguracja w lekcji CI | cross-cutting | gates | change opened | `context/changes/testing-quality-gates/` |
 
 Warstwa AI-natywna: brak osobnej fazy. Wywiad (Q5) wyklucza sędziego LLM na treści
