@@ -46,9 +46,12 @@ status: deployed
 
 ### Deploy commands
 
+Pełna kolejność (migracja D1 PRZED `wrangler deploy`, smoke, rollback): `deploy-checklist.md`.
+
 ```bash
 # Backend
-cd api && npx wrangler deploy
+cd api && npx wrangler d1 migrations apply my-english-day-db --remote
+npx wrangler deploy
 
 # Frontend
 npx expo export --platform web
@@ -57,8 +60,9 @@ npx wrangler pages deploy dist --project-name my-english-day
 
 ### Następne kroki
 
-1. Dodać schemat D1 (users, situations, flashcards) z migracjami
-2. Dodać auth endpointy (register, login)
-3. Dodać AI integration (transkrypcja, generowanie fiszek)
+1. ~~Dodać schemat D1 (users, situations, flashcards) z migracjami~~ (done)
+2. ~~Dodać auth endpointy (register, login)~~ (done)
+3. ~~Dodać AI integration (transkrypcja, generowanie fiszek)~~ (done)
 4. Skonfigurować GitHub Actions CI/CD (auto-deploy on merge)
 5. Zaktualizować CORS origin po potwierdzeniu finalnego URL Pages
+6. Checklista deployu: `deploy-checklist.md` (2026-09-09)

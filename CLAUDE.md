@@ -11,7 +11,10 @@ Odpowiadaj użytkownikowi po polsku.
 - `npm start` — uruchamia Expo dev server (alias: `npx expo start`)
 - `npm run android` / `npm run ios` / `npm run web` — uruchamia na konkretnej platformie
 - `npm run lint` — ESLint via `expo lint`
-- Brak skonfigurowanych testów (brak Jest/Vitest w projekcie). Przed dodaniem testów: `npx expo install jest-expo jest @types/jest` + konfiguracja w package.json.
+- `npm run gate` — pełna bramka (regeneracja typów Expo, lint, typecheck front+api, testy api; ~20 s). Wymagana przed commitem i deployem. Szczegóły: `context/foundation/test-plan.md` §6.8.
+- `npm run typecheck` — sam front (`tsc --noEmit`).
+- `cd api && npm test` / `cd api && npm run typecheck` — sam backend (harness workerd; `context/foundation/test-plan.md` §6).
+- `npm run api:deploy` / `npm run web:deploy` — TYLKO wg `context/deployment/deploy-checklist.md` (migracja D1 przed Workerem).
 
 ## Architecture
 
@@ -38,7 +41,7 @@ Patrz `@tsconfig.json` → `compilerOptions.paths`.
 
 Aplikacja "My English Day" — nauka angielskiego z codziennych sytuacji. Użytkownik nagrywa sytuację głosowo po polsku → AI transkrybuje i generuje fiszki angielskie → użytkownik akceptuje/odrzuca → nauka spaced repetition. Szczegóły w `@context/foundation/prd.md`, decyzje stackowe w `@context/foundation/tech-stack.md`.
 
-Backend (auth, AI/transkrypcja, baza fiszek) jeszcze nie wybrany — planowany jako osobny serwis.
+Backend to Cloudflare Worker (Hono + D1 + R2) w `api/` — osobny pakiet npm (`cd api && npm install`). Deploy wyłącznie wg checklisty `context/deployment/deploy-checklist.md`.
 
 <!-- BEGIN @przeprogramowani/10x-cli -->
 
