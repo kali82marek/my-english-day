@@ -310,8 +310,8 @@ Nowy tab i ekran sesji: karta PL→EN z odsłonięciem, trzy przyciski oceny, lo
 
 #### Automated
 
-- [x] 3.1 Lint frontu przechodzi (`npm run lint`)
-- [x] 3.2 Typecheck frontu przechodzi (`npx tsc --noEmit`)
+- [x] 3.1 Lint frontu przechodzi (`npm run lint`) — 5102043
+- [x] 3.2 Typecheck frontu przechodzi (`npx tsc --noEmit`) — 5102043
 
 #### Manual
 
