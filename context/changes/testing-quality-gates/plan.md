@@ -441,11 +441,11 @@ to 0006. Deploy Workera w ramach tej zmiany nie jest wymagany (zero zmian w `api
 
 #### Automatyczne
 
-- [x] 2.1 `context/deployment/deploy-checklist.md` istnieje; `migrations apply` przed `wrangler deploy`; zawiera „0006” i „rollback”
-- [x] 2.2 `deploy-checklist.md` podlinkowany z `deploy-plan.md` i `CLAUDE.md`; `deploy-plan.md` ma linię `migrations apply`
-- [x] 2.3 `CLAUDE.md`: 0 × „Brak skonfigurowanych testów”, ≥ 1 × `npm run gate`; blok „## 10xDevs AI Toolkit” nietknięty
-- [x] 2.4 `npm run gate` → exit 0
-- [ ] 2.5 `git diff --name-only HEAD` = `CLAUDE.md`, `context/deployment/deploy-plan.md`, `context/deployment/deploy-checklist.md`; commit `docs(testing-quality-gates): … (p2)`
+- [x] 2.1 `context/deployment/deploy-checklist.md` istnieje; `migrations apply` przed `wrangler deploy`; zawiera „0006” i „rollback” — 1244f64
+- [x] 2.2 `deploy-checklist.md` podlinkowany z `deploy-plan.md` i `CLAUDE.md`; `deploy-plan.md` ma linię `migrations apply` — 1244f64
+- [x] 2.3 `CLAUDE.md`: 0 × „Brak skonfigurowanych testów”, ≥ 1 × `npm run gate`; blok „## 10xDevs AI Toolkit” nietknięty — 1244f64
+- [x] 2.4 `npm run gate` → exit 0 — 1244f64
+- [x] 2.5 `git diff --name-only HEAD` = `CLAUDE.md`, `context/deployment/deploy-plan.md`, `context/deployment/deploy-checklist.md`; commit `docs(testing-quality-gates): … (p2)` — 1244f64
 
 #### Ręczne
 
@@ -456,10 +456,10 @@ to 0006. Deploy Workera w ramach tej zmiany nie jest wymagany (zero zmian w `api
 
 #### Automatyczne
 
-- [ ] 3.1 0 × „required after §3 Phase 4” i 0 × „recommended after §3 Phase 4” w `test-plan.md`
-- [ ] 3.2 `### 6.8` istnieje; ≥ 3 × `npm run gate` w `test-plan.md`
-- [ ] 3.3 Hunki diffu `test-plan.md` wyłącznie w §5, §6.7, §6.8, `Last updated`, §8
-- [ ] 3.4 `npm run gate` → exit 0
+- [x] 3.1 0 × „required after §3 Phase 4” i 0 × „recommended after §3 Phase 4” w `test-plan.md`
+- [x] 3.2 `### 6.8` istnieje; ≥ 3 × `npm run gate` w `test-plan.md`
+- [x] 3.3 Hunki diffu `test-plan.md` wyłącznie w §5, §6.7, §6.8, `Last updated`, §8
+- [x] 3.4 `npm run gate` → exit 0
 - [ ] 3.5 `git diff --name-only HEAD` = `test-plan.md`, `change.md` (status `implemented`); commit `docs(testing-quality-gates): … (p3)`
 
 #### Ręczne

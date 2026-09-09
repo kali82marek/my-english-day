@@ -127,17 +127,18 @@ phase lands; before that, the gate is `planned`.
 
 | Gate | Where | Required? | Catches |
 |---|---|---|---|
-| lint + typecheck (front: `expo lint`, `tsc --noEmit`; api: `npm run typecheck`) | local; CI planned | required (dziś ręcznie, per plan slice'a); jedno polecenie required after §3 Phase 4 | dryf składni i typów, rozjazd typów DTO front ↔ api |
-| unit + integration (api) | local; CI planned | required (od Fazy 1; lokalnie `cd api && npm test`) | regresje zadań tła, przejść stanu, migracji, własności, dnia, kontraktu generatora |
+| lint + typecheck (front: `expo lint`, `tsc --noEmit`; api: `npm run typecheck`) | local: `npm run gate` (kroki 1–4); CI planned | required — `npm run gate` (front: `expo lint --max-warnings 0`, `tsc --noEmit`; api: `npm run typecheck`) | dryf składni i typów, rozjazd typów DTO front ↔ api |
+| unit + integration (api) | local; CI planned; w `npm run gate` (krok 5) | required (od Fazy 1; lokalnie `cd api && npm test`) | regresje zadań tła, przejść stanu, migracji, własności, dnia, kontraktu generatora |
 | e2e on critical flows | ręczny smoke na urządzeniu (nagranie → `pending` → transkrypt → Fiszki → akceptuj), checklista z sekcji Manual zarchiwizowanych planów | required manually before deploy; not automated in this rollout (zob. §7) | format audio z urządzenia, uprawnienia mikrofonu, bramka auth po restarcie |
-| pre-prod smoke: migracja przed deployem | local (`wrangler d1 migrations apply --remote` → `wrangler deploy`), checklista z follow-upów S-03 | required after §3 Phase 4 | Worker na starej bazie (Risk #4) |
-| post-edit hook | local (agent loop) | recommended after §3 Phase 4 (konfiguracja hooków należy do Lekcji 3) | regresje testów api w czasie edycji |
+| pre-prod smoke: migracja przed deployem | `context/deployment/deploy-checklist.md` (kroki 2–6: `wrangler whoami` → `d1 migrations list --remote` → `d1 migrations apply --remote` → `wrangler deploy` → `/health`) | required (ręcznie, przed każdym deployem Workera) | Worker na starej bazie (Risk #4) |
+| post-edit hook | local (agent loop) | recommended (konfiguracja hooków należy do Lekcji 3) | regresje testów api w czasie edycji |
 | visual diff (deterministic) | — | excluded (§7, interview Q5) | — |
 | multimodal visual review | — | excluded (§7, interview Q5) | — |
 
 CI (GitHub Actions) jest zaparkowane w roadmapie i należy do lekcji CI; ten plan nazywa
-bramki, które CI ma uruchamiać (dwa pierwsze wiersze), a Faza 4 dostarcza jedno lokalne
-polecenie, które CI później wywoła bez zmian.
+bramki, które CI ma uruchamiać (dwa pierwsze wiersze). Faza 4 dostarczyła (2026-09-09)
+jedno lokalne polecenie — `npm run gate` w katalogu głównym (zob. §6.8) — i CI ma wywołać
+dokładnie to polecenie, bez zmian, po `npm ci` w katalogu głównym i w `api/`.
 
 ## 6. Cookbook Patterns
 
@@ -266,6 +267,27 @@ here capturing anything surprising the rollout phase taught.)
 - **Deliberate-breaks — wszystkie czerwone, kod przywrócony**: żądanie (usunięty `enum`, `example_en` poza `required`, `additionalProperties: true`, zamiana kolejności `messages`) → T5.1; `MAX_CARDS = 12` / bez `slice` → T5.2; zamiana filtr/`slice` / bez filtra → T5.3; bez guarda pustej listy → T5.4 + T2.4; każde sprawdzenie walidatora zdjęte osobno → dokładnie swoje wiersze T5.5–T5.10; walidator bez `type` → T5.11 „idiom” (3 wiersze z `'idiom'`, `done`), a wiersz „odmowa” zostaje zielony — pada na `content: null`, jego deliberate-break żyje w T5.9; bind `'word'` / bind `0` w `situations.ts` → T5.12. **Smoke** z prawdziwym kluczem (gpt-4o, `wrangler dev` 3030, `scripts/sample.wav` — kawiarnia): 8 propozycji (5 `phrase`, 2 `word`, 1 `sentence`; 5 bazowych + 3 warianty na końcu tablicy; karta `sentence` z `example_en: ""`), `flashcards_status='done'`, `generatingCount: 0`; surowa odpowiedź: `refusal: null`, `finish_reason: 'stop'`, dodatkowo `annotations: []` i `logprobs: null` (ignorowane przez parser) — `smoke-phase4.md`.
 - **Zaparkowane obserwacje** (kandydaci do `--refresh`, bez testów i follow-upów): przy >10 kart warianty (koniec tablicy) giną pierwsze — S-04 (dedup) powinien decydować o kolejności ucinania; (S-04 tego NIE podjął: dedup działa PO ucięciu do 10 w generatorze, duplikaty zajmują miejsca w limicie — nadal zaparkowane;) żądanie bez `max_tokens`, `temperature`, timeoutu i retry (jedyny realny scenariusz ucięcia to limit modelu, `finish_reason: 'length'`); białe znaki w zapisanych polach nienormalizowane (`trim` jest tylko predykatem odsiewu); front: `TYPE_LABELS[card.type]` bez fallbacku i `example_en.trim()` bez guarda (brak runnera frontu, §7). Suite po Fazie 3: 9 plików, 86 testów (81 zielonych + 5 `it.fails`), ~4 s.
 
+**Faza 4 — Bramki jakości** (zamknięta 2026-09-09; `context/changes/testing-quality-gates/`):
+
+- **Dwa założenia z `change.md` obalone przez badanie**: (a) `&&` w skryptach npm PROPAGUJE kod wyjścia na Windows — npm uruchamia skrypty w `cmd.exe` (`npm config get script-shell` = null), nie w PowerShell; zmierzone: `npm --prefix api run typecheck` z wstrzykniętym błędem typu → exit 2, po usunięciu → 0, `cmd1 && echo X` z `cmd1` = exit 1 nie drukuje X. Problem `&&` w PowerShell 5.1 dotyczy WYŁĄCZNIE łańcuchów wpisywanych ręcznie w konsoli (błąd parsera, nie „fałszywie zielone”). (b) `tsc` obala NIE brak `.expo/types/router.d.ts` (exit 0 — `Href` degraduje się do `string`, utrata cicha), lecz brak `expo-env.d.ts` (exit 2: `src/components/animated-icon.web.tsx:5` TS2307, `src/constants/theme.ts:6` TS2882).
+- **`npx expo customize tsconfig.json`** = jedyna nieinteraktywna regeneracja typed routes i `expo-env.d.ts` w SDK 56 (`@expo/cli` `customize/typescript.js` → `startTypeScriptServices()` bez dev servera); 3 s, exit 0, `git status` czysty (nie nadpisuje `tsconfig.json` ani `.gitignore`). `expo export` typów NIE generuje; `expo typegen` nie istnieje. Notatka S-05 „wymaga `expo start`” była prawdziwa, ale niepełna.
+- **`expo lint` domyślnie nie przekazuje `--max-warnings`** (`@expo/cli` `lint/lintAsync.js:153-155`) → warningi nigdy wcześniej nie obalały lintu; bramka używa `--max-warnings 0` (baseline dziś: 0 warningów).
+- **Deliberate-breaks — każda warstwa obala bramkę, kod przywrócony** (2026-09-09, commit bf8202e): lint (nieużywany import w `src/`) → exit 1 „too many warnings (maximum: 0)”, vitest nieosiągnięty; tsc front TS2322 → exit 2; tsc api TS2322 → exit 2; test z fałszywą asercją → exit 1 „1 failed | 103 passed”; świeży checkout (`expo-env.d.ts` + `.expo/types/` usunięte) → exit 0, oba pliki zregenerowane w kroku 1. Po przywróceniu każdej warstwy → exit 0. Cała bramka ≈ 20 s (3 + 4 + 3 + 2 + 7).
+- **Checklista deployu wyjęta z archiwum**: jedyny zapis „migracja przed Workerem” żył w zarchiwizowanym follow-upie S-03 (`review-fixes.md`), a kanoniczny `deploy-plan.md` pomijał krok migracji — teraz `context/deployment/deploy-checklist.md` (bramka → `whoami` → `list --remote` → `apply --remote` → `deploy` → `/health` → smoke Manual → front). Migracja 0005 (`add_flashcard_review_state`) nadal czeka na produkcję (wiersz Manual: wykonać PRZED Workerem z S-05); następny numer migracji: 0006 (follow-up `enum-check-migration.md` mówi „0005” — slot zajęty).
+
+### 6.8 Running the full gate before commit/deploy
+
+- **Command**: `npm run gate` (katalog główny). Kroki w kolejności z `package.json`: (1) `expo customize tsconfig.json` → (2) `expo lint --max-warnings 0` → (3) `tsc --noEmit` → (4) `npm --prefix api run typecheck` → (5) `npm --prefix api test`. Czas ≈ 20 s (3 + 4 + 3 + 2 + 7). Exit ≠ 0 = stop: nic do commitu ani deployu. Pojedyncze warstwy: `npm run lint`, `npm run typecheck` (front), `cd api && npm run typecheck`, `cd api && npm test`.
+- **Fresh checkout**: `npm install` w katalogu głównym ORAZ w `api/` (dwa pakiety, brak workspaces; `npm --prefix api run typecheck` bez `api/node_modules` pada z mylącym „tsc not found”). `expo-env.d.ts` i `.expo/types/` są gitignored — bramka regeneruje je w kroku 1 przez `expo customize tsconfig.json` (jedyna nieinteraktywna droga w SDK 56; `expo export` ich nie generuje). Nigdy nie uruchamiaj `expo start` tylko po to, żeby powstały.
+- **Reading red**: lint → plik/reguła w wyjściu ESLint; warningi też obalają (`--max-warnings 0`, komunikat „too many warnings (maximum: 0)”). tsc front → `TS2307`/`TS2882` przy imporcie CSS/assetu = brak `expo-env.d.ts`: uruchom ponownie CAŁĄ bramkę, nie goły `tsc`. tsc api → jak dotąd (`cd api && npm run typecheck`). vitest → §6.2 (pojedyncze ryzyko: `cd api && npx vitest run -t "Ryzyko #N"`); vitest jest krokiem 5, więc czerwony lint/tsc oznacza, że testy w ogóle nie biegły.
+- **Before deploy**: `context/deployment/deploy-checklist.md` — bramka jest krokiem 1; migracja D1 (`d1 migrations apply --remote`) PRZED `wrangler deploy`; `wrangler rollback` NIE cofa D1 (cofnięcie migracji = osobna migracja w przód).
+- **Reguły**:
+  - Żadnych kroków interaktywnych (`wrangler login`, prompty) ani zależnych od sekretów (`.dev.vars`) w bramce — harness API ma sekrety testowe w `api/vitest.config.mts`, a CI ma wywołać `npm run gate` bez zmian po `npm ci` w obu katalogach.
+  - Bez wrapperów `.ps1`/`.sh` i bez `concurrently`: skrypty npm biegną w `cmd.exe`/`sh`, gdzie `&&` propaguje kod wyjścia (zmierzone na Windows, §6.7 Faza 4); wrapper PowerShell wymagałby `$LASTEXITCODE` po każdym natywnym poleceniu, równoległość nie jest warta zależności przy ~20 s.
+  - Nowy krok bramki wymaga nowego wiersza deliberate-break w planie tej zmiany (dowód, że krok obala `npm run gate`, a nie tylko „przechodzi”).
+  - CI wywołuje `npm run gate` bez zmian — nie duplikuj listy kroków w YAML.
+- **Uwaga**: brak `.expo/types/router.d.ts` NIE obala `tsc` — `Href` degraduje się do `string | HrefObject`, więc błędna ścieżka w `<Link href>` kompiluje się (cicha utrata typed routes). Dlatego regeneracja jest krokiem bramki, a nie reakcją na czerwony `tsc`.
+
 ## 7. What We Deliberately Don't Test
 
 Exclusions agreed during the rollout (Phase 2 interview, Q5). Future
@@ -280,7 +302,7 @@ contributors should respect these unless the underlying assumption changes.
 
 ## 8. Freshness Ledger
 
-- Strategy (§1–§5) last reviewed: 2026-09-03
+- Strategy (§1–§5) last reviewed: 2026-09-09 (§5 po Fazie 4)
 - Stack versions last verified: 2026-09-03
 - AI-native tool references last verified: 2026-09-03
 
