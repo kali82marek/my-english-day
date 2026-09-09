@@ -190,6 +190,7 @@ Błąd `SELECT` trafia w istniejący `catch` → `failed` (bez nowej gałęzi). 
 
 - [x] 2.1 Typecheck przechodzi (`cd api && npm run typecheck`) — ad6ba00
 - [x] 2.2 Cały zestaw testów API przechodzi (`cd api && npm test`) — ad6ba00
+
 #### Manual
 
 - [ ] 2.3 Druga sytuacja o tej samej treści zapisuje tylko fronty nieobecne po pierwszej; `flashcards_status='done'` dla obu
