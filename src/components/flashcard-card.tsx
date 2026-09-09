@@ -13,18 +13,12 @@ import { Pressable, StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { TYPE_LABELS } from '@/constants/flashcards';
 import { Spacing } from '@/constants/theme';
 import type { Flashcard } from '@/lib/api';
 
 const ACCEPT_COLOR = '#30A46C';
 const REJECT_COLOR = '#E5484D';
-
-/** Etykiety typów po polsku — `type` z API jest po angielsku. */
-const TYPE_LABELS: Record<Flashcard['type'], string> = {
-  word: 'słówko',
-  phrase: 'zwrot',
-  sentence: 'zdanie',
-};
 
 export function FlashcardCard({
   card,

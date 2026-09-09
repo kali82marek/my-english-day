@@ -26,6 +26,14 @@ export default function AppTabs() {
           renderingMode="template"
         />
       </NativeTabs.Trigger>
+      {/* S-05: sesja powtórek. Ikona współdzielona z „Fiszki" — osobna grafika to follow-up. */}
+      <NativeTabs.Trigger name="review">
+        <NativeTabs.Trigger.Label>Nauka</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Icon
+          src={require('@/assets/images/tabIcons/explore.png')}
+          renderingMode="template"
+        />
+      </NativeTabs.Trigger>
     </NativeTabs>
   );
 }

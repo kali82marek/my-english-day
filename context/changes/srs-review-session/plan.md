@@ -299,8 +299,8 @@ Nowy tab i ekran sesji: karta PL→EN z odsłonięciem, trzy przyciski oceny, lo
 
 #### Automated
 
-- [x] 2.1 Typecheck przechodzi (`cd api && npm run typecheck`)
-- [x] 2.2 Cały zestaw testów API przechodzi, w tym macierz 401 z nowymi trasami (`cd api && npm test`)
+- [x] 2.1 Typecheck przechodzi (`cd api && npm run typecheck`) — 36b5456
+- [x] 2.2 Cały zestaw testów API przechodzi, w tym macierz 401 z nowymi trasami (`cd api && npm test`) — 36b5456
 
 #### Manual
 
@@ -310,8 +310,8 @@ Nowy tab i ekran sesji: karta PL→EN z odsłonięciem, trzy przyciski oceny, lo
 
 #### Automated
 
-- [ ] 3.1 Lint frontu przechodzi (`npm run lint`)
-- [ ] 3.2 Typecheck frontu przechodzi (`npx tsc --noEmit`)
+- [x] 3.1 Lint frontu przechodzi (`npm run lint`)
+- [x] 3.2 Typecheck frontu przechodzi (`npx tsc --noEmit`)
 
 #### Manual
 

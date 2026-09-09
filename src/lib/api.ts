@@ -208,3 +208,30 @@ export const flashcardsApi = {
     return apiFetch<void>(`/flashcards/${id}`, { method: 'DELETE' });
   },
 };
+
+/** Ocena w sesji powtórek (S-05): `again` = Nie umiem, `hard` = Prawie, `good` = Umiem. */
+export type ReviewGrade = 'again' | 'hard' | 'good';
+
+/**
+ * Sesja powtórek (S-05, FR-011/FR-012). Fiszki z bazy nauki (zaakceptowane), których
+ * pora nadeszła — DTO = `Flashcard`, ten sam kształt co `/proposals` (stan powtórek
+ * zostaje po stronie serwera). `dueCount` to liczba WSZYSTKICH do powtórki (lista jest
+ * porcjowana), `acceptedCount` cała baza nauki — ekran odróżnia nimi „pusta baza" od
+ * „na dziś wszystko powtórzone".
+ */
+export const reviewApi = {
+  listDue(): Promise<{ cards: Flashcard[]; dueCount: number; acceptedCount: number }> {
+    return apiFetch<{ cards: Flashcard[]; dueCount: number; acceptedCount: number }>(
+      '/flashcards/review',
+      { method: 'GET' },
+    );
+  },
+
+  /** Ocena fiszki — serwer wyznacza następną powtórkę; 200 bez ciała. */
+  grade(id: number, grade: ReviewGrade): Promise<void> {
+    return apiFetch<void>(`/flashcards/${id}/grade`, {
+      method: 'POST',
+      body: JSON.stringify({ grade }),
+    });
+  },
+};
