@@ -36,7 +36,7 @@ Wedge produktu — jedna cecha, której usunięcie czyni produkt nieodróżnialn
 | S-02  | gated-ai-flashcard-generation | dostać fiszki AI z sytuacji i zaakceptować lub odrzucić każdą        | S-01, F-01    | US-01, FR-006, FR-009, FR-010 | done     |
 | S-03  | same-context-variants         | dostać warianty fiszek w obrębie tego samego kontekstu sytuacji      | S-02          | FR-007                        | done     |
 | S-04  | duplicate-card-filtering      | mieć pewność, że nowe fiszki nie dublują jego istniejącej bazy       | S-02          | FR-008                        | in-progress |
-| S-05  | srs-review-session            | uczyć się z fiszek w sesji powtórek z 3 przyciskami oceny            | S-02          | US-01, FR-011, FR-012         | planning |
+| S-05  | srs-review-session            | uczyć się z fiszek w sesji powtórek z 3 przyciskami oceny            | S-02          | US-01, FR-011, FR-012         | in-progress |
 
 ## Streams
 
@@ -143,7 +143,7 @@ Fundamenty poniżej zakładają, że to istnieje, i NIE scaffoldują tego ponown
 - **Unknowns:**
   - Jaki model odstępów odwzorować na 3 przyciski oceny? — Owner: team. Block: no.
 - **Risk:** Sekwencjonowane po S-02, bo wymaga zaakceptowanych fiszek w bazie. Domyka pętlę US-01 i drugorzędne Kryterium sukcesu („uczy się codziennie z fiszek"). Ryzyko: model powtórek źle dobrany do 3 przycisków obniży retencję.
-- **Status:** planning
+- **Status:** in-progress
 
 ## Backlog Handoff
 
