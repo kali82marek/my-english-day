@@ -1,10 +1,10 @@
 ---
 change_id: duplicate-card-filtering
 title: Filtrowanie duplikatów fiszek względem bazy użytkownika
-status: impl_reviewed
+status: archived
 created: 2026-09-09
 updated: 2026-09-09
-archived_at: null
+archived_at: 2026-09-09T12:10:24Z
 ---
 
 ## Notes

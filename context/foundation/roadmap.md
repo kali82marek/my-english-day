@@ -35,7 +35,7 @@ Wedge produktu — jedna cecha, której usunięcie czyni produkt nieodróżnialn
 | S-01  | capture-situation-by-voice    | nagrać głosowo sytuację po polsku i zobaczyć ją zapisaną             | F-01          | US-01, FR-003, FR-004, FR-005 | done     |
 | S-02  | gated-ai-flashcard-generation | dostać fiszki AI z sytuacji i zaakceptować lub odrzucić każdą        | S-01, F-01    | US-01, FR-006, FR-009, FR-010 | done     |
 | S-03  | same-context-variants         | dostać warianty fiszek w obrębie tego samego kontekstu sytuacji      | S-02          | FR-007                        | done     |
-| S-04  | duplicate-card-filtering      | mieć pewność, że nowe fiszki nie dublują jego istniejącej bazy       | S-02          | FR-008                        | in-progress |
+| S-04  | duplicate-card-filtering      | mieć pewność, że nowe fiszki nie dublują jego istniejącej bazy       | S-02          | FR-008                        | done |
 | S-05  | srs-review-session            | uczyć się z fiszek w sesji powtórek z 3 przyciskami oceny            | S-02          | US-01, FR-011, FR-012         | in-progress |
 
 ## Streams
@@ -130,7 +130,7 @@ Fundamenty poniżej zakładają, że to istnieje, i NIE scaffoldują tego ponown
 - **Unknowns:**
   - Jak operacyjnie zdefiniować „duplikat" (dokładne dopasowanie vs normalizacja wielkości liter / interpunkcji)? — Owner: team. Block: no.
 - **Risk:** Sekwencjonowane po S-02, bo dedup ma sens dopiero, gdy baza rośnie. Realizuje guardrail PRD „fiszki nie mogą się dublować". Ryzyko: zbyt agresywne filtrowanie usunie wartościowe synonimy/warianty (PRD wprost ostrzega).
-- **Status:** in-progress
+- **Status:** done
 
 ### S-05: Sesja powtórek (spaced repetition)
 
@@ -178,3 +178,4 @@ Fundamenty poniżej zakładają, że to istnieje, i NIE scaffoldują tego ponown
 - **S-01: użytkownik może jednym naciśnięciem nagrać po polsku przeżytą sytuację, system transkrybuje ją bez kroku edycji i zapisuje, a użytkownik widzi listę zapisanych sytuacji dnia.** — Zarchiwizowano 2026-09-02 → `context/archive/2026-06-07-capture-situation-by-voice/`. Lekcja: —.
 - **S-02: użytkownik może wieczorem zobaczyć fiszki angielskie wygenerowane przez AI z sytuacji dnia (AI dobiera typy: słówka / zwroty / zdania) i każdą zaakceptować lub odrzucić; zaakceptowane od razu trafiają do bazy nauki.** — Zarchiwizowano 2026-09-02 → `context/archive/2026-06-07-gated-ai-flashcard-generation/`. Lekcja: —.
 - **S-03: użytkownik może dostać warianty fiszek — rozszerzenia ściśle w obrębie tej samej sytuacji (ten sam sklep/rozmowa, inne detale: inny produkt, inna kwota, inne pytanie) — ucząc się elastyczności językowej, nie papugowania jednej frazy.** — Zarchiwizowano 2026-09-02 → `context/archive/2026-06-09-same-context-variants/`. Lekcja: —.
+- **S-04: użytkownik ma pewność, że nowe propozycje fiszek nie dublują jego istniejącej bazy — duplikat to dokładnie to samo słowo/zwrot; synonimy i warianty zostają jako osobne fiszki.** — Zarchiwizowano 2026-09-09 → `context/archive/2026-09-09-duplicate-card-filtering/`. Lekcja: —.
