@@ -33,7 +33,7 @@ Jedno miejsce, które człowiek i agent otwierają przed każdym deployem. Regu�
 
 ## Rollback
 
-- `npx wrangler rollback [VERSION_ID]` cofa Worker do poprzedniej wersji (`npx wrangler versions list` — historia), ale **NIE cofa D1** (`context/foundation/infrastructure.md:79`).
+- `npx wrangler rollback [VERSION_ID] --yes -m "<powód>"` cofa Worker do poprzedniej wersji (`npx wrangler versions list` — 10 ostatnich); bez `--yes -m` polecenie pyta interaktywnie o potwierdzenie i powód (agent/CI zawiśnie). **NIE cofa D1** (`context/foundation/infrastructure.md:79`).
 - Migrację cofa się **osobną migracją w przód** (nowy numer z rejestru), nigdy przez edycję już zaaplikowanego pliku.
 - Po nieudanym kroku 5: rollback Workera wystarcza — baza z nową addytywną migracją pozostaje zgodna ze starym kodem.
 
