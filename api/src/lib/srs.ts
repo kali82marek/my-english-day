@@ -43,6 +43,16 @@ export function isGrade(value: unknown): value is Grade {
 }
 
 /**
+ * Chwila UTC w formacie DEFAULT kolumn D1 (`YYYY-MM-DD HH:MM:SS`, bez `T` i bez `Z`) —
+ * jeden format dla `due_at`/`reviewed_at` i dla porównania „czy już pora" w trasie
+ * (bind z JS, nie `datetime('now')` w SQL: testy sterują wyłącznie zegarem JS).
+ * Lustro helpera o tej samej nazwie w `test/db.ts`.
+ */
+export function toSqlDatetime(date: Date): string {
+  return date.toISOString().slice(0, 19).replace('T', ' ');
+}
+
+/**
  * Wyznacza nowy stan powtórek i chwilę następnej powtórki. Nie mutuje `state`.
  * `due_at` zwracane jako `Date` (UTC) — `again` daje dokładnie `now`.
  */

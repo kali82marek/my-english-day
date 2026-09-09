@@ -24,7 +24,11 @@ export type SituationDTO = {
   created_at: string;
 };
 
-/** = `Flashcard` w `src/lib/api.ts` (bez `status`, `user_id`, `is_variant`). */
+/**
+ * = `Flashcard` w `src/lib/api.ts` (bez `status`, `user_id`, `is_variant` ani kolumn stanu
+ * powtórek `due_at`/`interval_days`/`ease`/`repetitions`/`reviewed_at`). Ten sam zbiór
+ * kluczy zwracają `GET /flashcards/proposals` i `GET /flashcards/review` (S-05).
+ */
 export type FlashcardDTO = {
   id: number;
   situation_id: number;
@@ -68,7 +72,7 @@ const authUserShape: Record<keyof AuthUserDTO, true> = {
 /** Posortowane klucze `SituationDTO` (`GET /situations`, `POST /situations`). */
 export const SITUATION_DTO_KEYS: readonly string[] = Object.keys(situationShape).sort();
 
-/** Posortowane klucze `FlashcardDTO` (`GET /flashcards/proposals`). */
+/** Posortowane klucze `FlashcardDTO` (`GET /flashcards/proposals`, `GET /flashcards/review`). */
 export const FLASHCARD_DTO_KEYS: readonly string[] = Object.keys(flashcardShape).sort();
 
 /** Posortowane klucze `AuthUserDTO` (`GET /auth/me` → `user`). */

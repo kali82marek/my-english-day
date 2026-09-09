@@ -131,6 +131,44 @@ export async function deleteFlashcard(env: Bindings, token: string, id: number):
   return res;
 }
 
+/** `GET /flashcards/review` — fiszki do powtórki teraz + `dueCount`/`acceptedCount` (S-05). */
+export function getReview(env: Bindings, token: string): Promise<Response> {
+  return getJson(env, token, '/flashcards/review');
+}
+
+/** Nagłówek JSON tras przyjmujących ciało (`POST /flashcards/:id/grade`). */
+export const JSON_HEADERS: Readonly<Record<string, string>> = { 'Content-Type': 'application/json' };
+
+/**
+ * `POST /flashcards/:id/grade` z ciałem JSON `body` (dowolne, także wadliwe — test
+ * macierzy 400 podaje np. `{ grade: 'easy' }`) — 200 z pustym ciałem, 400 albo 404.
+ */
+export async function gradeFlashcard(
+  env: Bindings,
+  token: string,
+  id: number,
+  body: unknown,
+): Promise<Response> {
+  return gradeFlashcardRaw(env, token, id, JSON.stringify(body));
+}
+
+/** Jak `gradeFlashcard`, ale z surowym ciałem (np. nie-JSON) pod tym samym nagłówkiem JSON. */
+export async function gradeFlashcardRaw(
+  env: Bindings,
+  token: string,
+  id: number,
+  rawBody: string,
+): Promise<Response> {
+  const { res } = await call(env, {
+    method: 'POST',
+    path: `/flashcards/${id}/grade`,
+    token,
+    headers: { ...JSON_HEADERS },
+    body: rawBody,
+  });
+  return res;
+}
+
 /** `GET /auth/me` — `{ user: { id, email } }` dla użytkownika z tokenu. */
 export function getMe(env: Bindings, token: string): Promise<Response> {
   return getJson(env, token, '/auth/me');

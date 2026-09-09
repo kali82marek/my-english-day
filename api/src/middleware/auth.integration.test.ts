@@ -7,9 +7,11 @@
  * testy `Ryzyko #3` w plikach tras (`src/routes/*.integration.test.ts`).
  *
  * REGUŁA: nowa trasa chroniona = nowy wiersz w `PROTECTED_ROUTES`. T3.3 porównuje macierz
- * z `app.routes` — trasa bez wiersza obala suite (S-04/S-05 dopisują swoje trasy tutaj).
- * Rejestruj trasy jawną metodą (`get`/`post`/…): wpisy `app.all()` mają `method: 'ALL'`
- * jak middleware i byłyby dla T3.3 niewidoczne.
+ * z `app.routes` — trasa bez wiersza obala suite (S-05 dopisało `GET /flashcards/review`
+ * i `POST /flashcards/:id/grade`; S-04 nie dodało tras). Rejestruj trasy jawną metodą
+ * (`get`/`post`/…): wpisy `app.all()` mają `method: 'ALL'` jak middleware i byłyby dla
+ * T3.3 niewidoczne. Trasa czytająca ciało JSON podaje je (z nagłówkiem) jak w szczęśliwej
+ * ścieżce — brama ma stać także przed poprawnym żądaniem.
  *
  * Dwa warianty na trasę i ani jednego więcej (§7 planu testów: kryptografię tokenu —
  * zły sekret, manipulacja, śmieci — pokrywa `src/lib/jwt.test.ts`): brak nagłówka
@@ -44,7 +46,7 @@ import {
   withWriteTripwire,
 } from '../../test/db';
 import { mockOpenAI } from '../../test/openai-mock';
-import { audioForm, call } from '../../test/request';
+import { audioForm, call, JSON_HEADERS } from '../../test/request';
 import { requireAuth } from './auth';
 
 /** Identyfikatory zasianych danych ofiary — do ścieżek z `:id`. */
@@ -57,6 +59,8 @@ type ProtectedRoute = {
   path: (ids: VictimIds) => string;
   /** Realne ciało żądania (jak w szczęśliwej ścieżce), gdy trasa je czyta. */
   body?: () => BodyInit;
+  /** Nagłówki ciała (np. JSON); multipart dostaje swój `Content-Type` z `FormData`. */
+  headers?: Record<string, string>;
 };
 
 /** Trasy publiczne — jedyne, których T3.3 nie wymaga w macierzy. */
@@ -71,6 +75,14 @@ const PROTECTED_ROUTES: readonly ProtectedRoute[] = [
   { name: 'GET /flashcards/proposals', method: 'GET', path: () => '/flashcards/proposals' },
   { name: 'POST /flashcards/:id/accept', method: 'POST', path: ({ flashcardId }) => `/flashcards/${flashcardId}/accept` },
   { name: 'DELETE /flashcards/:id', method: 'DELETE', path: ({ flashcardId }) => `/flashcards/${flashcardId}` },
+  { name: 'GET /flashcards/review', method: 'GET', path: () => '/flashcards/review' },
+  {
+    name: 'POST /flashcards/:id/grade',
+    method: 'POST',
+    path: ({ flashcardId }) => `/flashcards/${flashcardId}/grade`,
+    body: () => JSON.stringify({ grade: 'good' }),
+    headers: { ...JSON_HEADERS },
+  },
 ];
 
 /**
@@ -113,6 +125,7 @@ async function expectGateHolds(
     method: route.method,
     path: route.path(ids),
     token,
+    headers: route.headers,
     body: route.body?.(),
   });
 

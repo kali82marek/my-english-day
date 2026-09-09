@@ -291,16 +291,16 @@ Nowy tab i ekran sesji: karta PL→EN z odsłonięciem, trzy przyciski oceny, lo
 
 #### Automated
 
-- [x] 1.1 Typecheck przechodzi (`cd api && npm run typecheck`)
-- [x] 1.2 Testy jednostkowe algorytmu przechodzą (`cd api && npx vitest run src/lib/srs.test.ts`)
-- [x] 1.3 Cały zestaw API przechodzi na schemacie z migracji (`cd api && npm test`)
+- [x] 1.1 Typecheck przechodzi (`cd api && npm run typecheck`) — 661bd97
+- [x] 1.2 Testy jednostkowe algorytmu przechodzą (`cd api && npx vitest run src/lib/srs.test.ts`) — 661bd97
+- [x] 1.3 Cały zestaw API przechodzi na schemacie z migracji (`cd api && npm test`) — 661bd97
 
 ### Phase 2: Trasy sesji powtórek (API)
 
 #### Automated
 
-- [ ] 2.1 Typecheck przechodzi (`cd api && npm run typecheck`)
-- [ ] 2.2 Cały zestaw testów API przechodzi, w tym macierz 401 z nowymi trasami (`cd api && npm test`)
+- [x] 2.1 Typecheck przechodzi (`cd api && npm run typecheck`)
+- [x] 2.2 Cały zestaw testów API przechodzi, w tym macierz 401 z nowymi trasami (`cd api && npm test`)
 
 #### Manual
 

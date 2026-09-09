@@ -3,10 +3,12 @@
  * (z jawnym `created_at`), odczyt surowych wierszy, wstrzykiwanie błędów D1 triggerem,
  * tripwire na zapisach i sprzątanie po teście.
  *
- * ZASIEW I ODCZYT ŻYJĄ TYLKO TUTAJ: testy ryzyk nie piszą SQL. Jedyną dźwignią czasu
- * po stronie SQL jest jawny `created_at` (`seedSituation`/`seedFlashcard` + `toSqlDatetime`)
- * — `vi.setSystemTime` steruje `Date` w JS, ale NIE zegarem SQLite (`date('now')`
- * i DEFAULT kolumn to zawsze realny UTC). Pominięty `createdAt` = kolumna dostaje DEFAULT.
+ * ZASIEW I ODCZYT ŻYJĄ TYLKO TUTAJ: testy ryzyk nie piszą SQL. Dźwigniami czasu po
+ * stronie SQL są jawne `created_at` (`seedSituation`/`seedFlashcard`) i — od S-05 —
+ * `due_at` fiszki (`seedFlashcard`, chwila następnej powtórki; `null`/pominięte =
+ * „do powtórki od razu"), oba przez `toSqlDatetime`. `vi.setSystemTime` steruje `Date`
+ * w JS, ale NIE zegarem SQLite (`date('now')` i DEFAULT kolumn to zawsze realny UTC).
+ * Pominięty `createdAt` = kolumna dostaje DEFAULT.
  *
  * Izolacja w pluginie jest per PLIK testowy, więc każdy plik integracyjny woła
  * `afterEach(() => resetDb(env))`. Użytkownik jest zasiewany per test z unikalnym
@@ -32,7 +34,10 @@ export type SituationRow = {
   created_at: string;
 };
 
-/** Wiersz `flashcards` tak, jak siedzi w D1 (`is_variant` = INTEGER 0/1). */
+/**
+ * Wiersz `flashcards` tak, jak siedzi w D1 (`is_variant` = INTEGER 0/1; stan powtórek
+ * z migracji 0005: `due_at`/`reviewed_at` `NULL` = nowa, nieoceniana).
+ */
 export type FlashcardRow = {
   id: number;
   situation_id: number;
@@ -44,6 +49,11 @@ export type FlashcardRow = {
   status: 'proposed' | 'accepted';
   is_variant: number;
   created_at: string;
+  due_at: string | null;
+  interval_days: number;
+  ease: number;
+  repetitions: number;
+  reviewed_at: string | null;
 };
 
 /**
@@ -144,6 +154,17 @@ export type SeedFlashcardOptions = {
   exampleEn?: string;
   /** Pominięte = DEFAULT kolumny (realny zegar SQLite, UTC). */
   createdAt?: CreatedAt;
+  /**
+   * Chwila następnej powtórki (S-05). Pominięte lub `null` = DEFAULT kolumny (`NULL`,
+   * „do powtórki od razu"); `Date`/string = jawna chwila w przeszłości lub przyszłości.
+   */
+  dueAt?: CreatedAt | null;
+  /** Domyślnie DEFAULT kolumny (`0`). */
+  intervalDays?: number;
+  /** Domyślnie DEFAULT kolumny (`2.5`). */
+  ease?: number;
+  /** Domyślnie DEFAULT kolumny (`0`). */
+  repetitions?: number;
 };
 
 /** Zasiewa fiszkę bezpośrednim `INSERT`; zwraca `id`. */
@@ -158,6 +179,10 @@ export async function seedFlashcard(env: Bindings, options: SeedFlashcardOptions
     backPl = 'faktura',
     exampleEn = '',
     createdAt,
+    dueAt,
+    intervalDays,
+    ease,
+    repetitions,
   } = options;
 
   const columns = ['situation_id', 'user_id', 'type', 'front_en', 'back_pl', 'example_en', 'status', 'is_variant'];
@@ -165,6 +190,22 @@ export async function seedFlashcard(env: Bindings, options: SeedFlashcardOptions
   if (createdAt !== undefined) {
     columns.push('created_at');
     values.push(toCreatedAt(createdAt));
+  }
+  if (dueAt !== undefined && dueAt !== null) {
+    columns.push('due_at');
+    values.push(toCreatedAt(dueAt));
+  }
+  if (intervalDays !== undefined) {
+    columns.push('interval_days');
+    values.push(intervalDays);
+  }
+  if (ease !== undefined) {
+    columns.push('ease');
+    values.push(ease);
+  }
+  if (repetitions !== undefined) {
+    columns.push('repetitions');
+    values.push(repetitions);
   }
 
   const row = await env.DB.prepare(
