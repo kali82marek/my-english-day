@@ -1,7 +1,7 @@
 ---
 change_id: testing-quality-gates
 title: "Faza 4 testów: bramki jakości (jedno lokalne polecenie lint + typecheck + testy API, checklista deployu)"
-status: planned
+status: implementing
 created: 2026-09-09
 updated: 2026-09-09
 archived_at: null

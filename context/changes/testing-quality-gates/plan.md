@@ -424,13 +424,13 @@ to 0006. Deploy Workera w ramach tej zmiany nie jest wymagany (zero zmian w `api
 
 #### Automatyczne
 
-- [ ] 1.1 `npm run gate` na czystym drzewie → exit 0; „Generating: tsconfig.json”, wynik ESLint, „11 passed” w wyjściu
-- [ ] 1.2 `npm run typecheck` (root) → exit 0; `git status --short` → tylko `package.json`
-- [ ] 1.3 Deliberate-break lint (`src/__gate_probe__.tsx`) → exit ≠ 0 bez podsumowania vitest; po usunięciu → 0
-- [ ] 1.4 Deliberate-break tsc front (`src/__gate_probe__.tsx`, TS2322) → exit ≠ 0 bez vitest; po usunięciu → 0
-- [ ] 1.5 Deliberate-break tsc api (`api/src/__gate_probe__.ts`) → exit ≠ 0 bez vitest; po usunięciu → 0
-- [ ] 1.6 Deliberate-break test api (`api/src/lib/__gate_probe__.test.ts`, 1 failed) → exit ≠ 0; po usunięciu → 0
-- [ ] 1.7 Świeży checkout: usunięte `expo-env.d.ts` + `.expo/types/` → `npm run gate` exit 0, pliki odtworzone, git czysty poza `package.json`
+- [x] 1.1 `npm run gate` na czystym drzewie → exit 0; „Generating: tsconfig.json”, wynik ESLint, „11 passed” w wyjściu
+- [x] 1.2 `npm run typecheck` (root) → exit 0; `git status --short` → tylko `package.json`
+- [x] 1.3 Deliberate-break lint (`src/__gate_probe__.tsx`) → exit ≠ 0 bez podsumowania vitest; po usunięciu → 0
+- [x] 1.4 Deliberate-break tsc front (`src/__gate_probe__.tsx`, TS2322) → exit ≠ 0 bez vitest; po usunięciu → 0
+- [x] 1.5 Deliberate-break tsc api (`api/src/__gate_probe__.ts`) → exit ≠ 0 bez vitest; po usunięciu → 0
+- [x] 1.6 Deliberate-break test api (`api/src/lib/__gate_probe__.test.ts`, 1 failed) → exit ≠ 0; po usunięciu → 0
+- [x] 1.7 Świeży checkout: usunięte `expo-env.d.ts` + `.expo/types/` → `npm run gate` exit 0, pliki odtworzone, git czysty poza `package.json`
 - [ ] 1.8 `git diff --name-only HEAD` = `package.json`; commit `chore(testing-quality-gates): … (p1)`
 
 #### Ręczne
