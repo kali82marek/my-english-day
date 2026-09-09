@@ -3,7 +3,7 @@ project: "My English Day"
 version: 1
 status: draft
 created: 2026-05-31
-updated: 2026-09-04
+updated: 2026-09-09
 prd_version: 1
 main_goal: speed
 top_blocker: capacity
@@ -35,8 +35,8 @@ Wedge produktu — jedna cecha, której usunięcie czyni produkt nieodróżnialn
 | S-01  | capture-situation-by-voice    | nagrać głosowo sytuację po polsku i zobaczyć ją zapisaną             | F-01          | US-01, FR-003, FR-004, FR-005 | done     |
 | S-02  | gated-ai-flashcard-generation | dostać fiszki AI z sytuacji i zaakceptować lub odrzucić każdą        | S-01, F-01    | US-01, FR-006, FR-009, FR-010 | done     |
 | S-03  | same-context-variants         | dostać warianty fiszek w obrębie tego samego kontekstu sytuacji      | S-02          | FR-007                        | done     |
-| S-04  | duplicate-card-filtering      | mieć pewność, że nowe fiszki nie dublują jego istniejącej bazy       | S-02          | FR-008                        | proposed |
-| S-05  | srs-review-session            | uczyć się z fiszek w sesji powtórek z 3 przyciskami oceny            | S-02          | US-01, FR-011, FR-012         | proposed |
+| S-04  | duplicate-card-filtering      | mieć pewność, że nowe fiszki nie dublują jego istniejącej bazy       | S-02          | FR-008                        | in-progress |
+| S-05  | srs-review-session            | uczyć się z fiszek w sesji powtórek z 3 przyciskami oceny            | S-02          | US-01, FR-011, FR-012         | planning |
 
 ## Streams
 
@@ -130,7 +130,7 @@ Fundamenty poniżej zakładają, że to istnieje, i NIE scaffoldują tego ponown
 - **Unknowns:**
   - Jak operacyjnie zdefiniować „duplikat" (dokładne dopasowanie vs normalizacja wielkości liter / interpunkcji)? — Owner: team. Block: no.
 - **Risk:** Sekwencjonowane po S-02, bo dedup ma sens dopiero, gdy baza rośnie. Realizuje guardrail PRD „fiszki nie mogą się dublować". Ryzyko: zbyt agresywne filtrowanie usunie wartościowe synonimy/warianty (PRD wprost ostrzega).
-- **Status:** proposed
+- **Status:** in-progress
 
 ### S-05: Sesja powtórek (spaced repetition)
 
@@ -143,7 +143,7 @@ Fundamenty poniżej zakładają, że to istnieje, i NIE scaffoldują tego ponown
 - **Unknowns:**
   - Jaki model odstępów odwzorować na 3 przyciski oceny? — Owner: team. Block: no.
 - **Risk:** Sekwencjonowane po S-02, bo wymaga zaakceptowanych fiszek w bazie. Domyka pętlę US-01 i drugorzędne Kryterium sukcesu („uczy się codziennie z fiszek"). Ryzyko: model powtórek źle dobrany do 3 przycisków obniży retencję.
-- **Status:** proposed
+- **Status:** planning
 
 ## Backlog Handoff
 
