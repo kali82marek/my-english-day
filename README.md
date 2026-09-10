@@ -66,7 +66,7 @@ W katalogu głównym:
 
 ```bash
 npm install
-npm start              # Expo dev server; `w` otwiera web, `a` Android, `i` iOS
+npm start              # Expo dev server; `w` otwiera web, `a` Android, `i` iOS (Expo Go dla SDK 57)
 ```
 
 Adres API czyta `extra.apiBaseUrl` z `app.json` (domyślnie `http://localhost:3030`, czyli symulator iOS i web). Emulator Androida: `http://10.0.2.2:3030`. Fizyczne urządzenie: adres IP komputera w sieci lokalnej.

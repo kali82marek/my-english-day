@@ -43,7 +43,10 @@
           "microphonePermission": "Aplikacja używa mikrofonu, aby nagrać po polsku przeżytą sytuację do transkrypcji."
         }
       ],
-      "expo-image"
+      "expo-image",
+      "expo-font",
+      "expo-status-bar",
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true,
