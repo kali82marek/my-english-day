@@ -1,6 +1,6 @@
 ---
 project: my-english-day
-updated: 2026-09-09
+updated: 2026-09-10
 source: S-03 F4 (`context/archive/2026-06-09-same-context-variants/follow-ups/review-fixes.md`) + `context/foundation/test-plan.md` Risk #4 (Faza 4 „Bramki jakości”)
 ---
 
@@ -27,7 +27,10 @@ Jedno miejsce, które człowiek i agent otwierają przed każdym deployem. Regu�
 
 ## Frontend
 
-8. `npm run web:export` (= `npx expo export --platform web`)
+8. `npm run web:export` (= `npx expo export --platform web`) z adresem Workera w środowisku — `app.config.js` nadpisuje `extra.apiBaseUrl` z `app.json` (domyślnie `localhost:3030`, czyli eksport bez zmiennej celuje w localhost):
+   - bash: `EXPO_PUBLIC_API_BASE_URL=https://my-english-day-api.kali82marek.workers.dev npm run web:export`
+   - PowerShell: `$env:EXPO_PUBLIC_API_BASE_URL='https://my-english-day-api.kali82marek.workers.dev'; npm run web:export`
+   Kontrola: `grep -o "workers.dev" dist/_expo/static/js/web/*.js | head -1` (musi być trafienie, `localhost:3030` nie może).
 9. `npm run web:deploy` (= `npx wrangler pages deploy dist --project-name my-english-day`)
 10. Otwórz `https://my-english-day.pages.dev`, zaloguj się, sprawdź tab „Nauka”.
 
@@ -41,8 +44,8 @@ Jedno miejsce, które człowiek i agent otwierają przed każdym deployem. Regu�
 
 | Migracja | Stan lokalnie | Stan produkcja | Źródło |
 |---|---|---|---|
-| 0001 `create_users` … 0004 `add_flashcard_variant_flag` | zaaplikowane | zaaplikowane (deploye S-01–S-03) — do potwierdzenia przez `list --remote` (krok 3) | `deploy-plan.md`, S-03 F4 |
-| 0005 `add_flashcard_review_state` | zaaplikowana | **NIE** — wykonać przy najbliższym deployu, PRZED Workerem z S-05 | `context/archive/2026-09-09-srs-review-session/smoke-phase2.md:3`, tamże `plan.md` §Migration Notes |
+| 0001 `create_users` … 0004 `add_flashcard_variant_flag` | zaaplikowane | zaaplikowane 2026-09-10 (pierwszy pełny deploy; wcześniej NIE — `list --remote` pokazał 5 oczekujących, produkcja miała tylko stub z 2026-05-28) | `deploy-plan.md` |
+| 0005 `add_flashcard_review_state` | zaaplikowana | zaaplikowana 2026-09-10 (przed Workerem 55099ca1) | `context/archive/2026-09-09-srs-review-session/plan.md` §Migration Notes |
 
 - Następny numer migracji: **0006**. Follow-up `context/archive/2026-09-07-testing-llm-generator-contract/follow-ups/enum-check-migration.md` nadal mówi „0005” — slot zajęty przez S-05, użyć 0006.
 - Dług: `DROP INDEX` starego indeksu (nowy indeks z 0005 ma stary jako prefiks) — S-05 impl-review `context/archive/2026-09-09-srs-review-session/reviews/impl-review.md:88-89`; wchodzi do przyszłej migracji.

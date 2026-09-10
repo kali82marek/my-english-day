@@ -1,6 +1,6 @@
 ---
 project: my-english-day
-deployed_at: 2026-05-28
+deployed_at: 2026-09-10
 platform: Cloudflare Workers + Pages
 status: deployed
 ---
@@ -10,7 +10,7 @@ status: deployed
 ### URLs
 
 - **Frontend (Pages)**: https://my-english-day.pages.dev
-- **Preview URL**: https://8a9c8421.my-english-day.pages.dev
+- **Preview URL**: https://66215e1e.my-english-day.pages.dev (2026-09-10)
 - **Backend (Workers)**: https://my-english-day-api.kali82marek.workers.dev
 - **Health endpoint**: https://my-english-day-api.kali82marek.workers.dev/health
 
@@ -18,7 +18,7 @@ status: deployed
 
 | Resource | Name | ID |
 |---|---|---|
-| Workers | my-english-day-api | Version: 70618744-13c1-406f-a83a-bf778fab6f8d |
+| Workers | my-english-day-api | Version: 55099ca1-814e-4099-b501-370eeba11f46 (2026-09-10; stub z 2026-05-28: 70618744-13c1-406f-a83a-bf778fab6f8d) |
 | Pages | my-english-day | — |
 | D1 Database | my-english-day-db | 9bc5235d-6547-4b4d-8d6d-b62380e6f678 |
 
@@ -32,6 +32,17 @@ status: deployed
 - **Frontend**: Expo web static export (4 routes: /, /explore, /_sitemap, /+not-found)
 
 ### What was deployed
+
+**2026-09-10 — pierwszy pełny deploy produktu (F-01…S-05 + poprawka web z `ba23c2d`)**
+
+- D1: migracje 0001–0005 zaaplikowane `--remote` (baza była pusta — deploy z maja nigdy nie dostał schematu).
+- Sekrety Workera: `JWT_SECRET` (nowa losowa wartość, inna niż w `.dev.vars`) i `OPENAI_API_KEY` ustawione przez `wrangler secret put` — `secret list` przed deployem był pusty mimo zapisu poniżej.
+- Worker 55099ca1: auth, situations (upload R2 + Whisper + generowanie fiszek w tle), flashcards (proposals / accept / delete / review / grade).
+- Smoke na produkcji (użytkownik testowy `smoke-*@example.com`, 2 sytuacje z `api/scripts/sample.wav`): 201 w ~1,1 s, transkrypcja PL i 8 propozycji; accept ×3 → review `dueCount 3`; `good` zdejmuje, `again` zostawia, `easy` → 400; druga identyczna sytuacja bez dubli zaakceptowanych frontów (S-04 2.3, S-05 2.3).
+- Pages: eksport z `EXPO_PUBLIC_API_BASE_URL` (patrz `app.config.js`), bundle celuje w Worker, brak `localhost:3030`.
+- Nie zweryfikowano w przeglądarce na Pages: wiersze Manual UI S-04 2.4, S-05 3.3–3.6 (do przeklikania przez użytkownika).
+
+**2026-05-28 — stub**
 
 **Backend stub** (`api/`):
 - Hono app z jednym endpointem `GET /health`
@@ -64,5 +75,5 @@ npx wrangler pages deploy dist --project-name my-english-day
 2. ~~Dodać auth endpointy (register, login)~~ (done)
 3. ~~Dodać AI integration (transkrypcja, generowanie fiszek)~~ (done)
 4. Skonfigurować GitHub Actions CI/CD (auto-deploy on merge)
-5. Zaktualizować CORS origin po potwierdzeniu finalnego URL Pages
+5. ~~Zaktualizować CORS origin po potwierdzeniu finalnego URL Pages~~ (`my-english-day.pages.dev` jest w CORS; preview URL-e `*.my-english-day.pages.dev` NIE są — testuj na domenie głównej)
 6. Checklista deployu: `deploy-checklist.md` (2026-09-09)
