@@ -1,56 +1,108 @@
-# Welcome to your Expo app 👋
+# My English Day
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Nauka angielskiego z sytuacji, które naprawdę przeżyłeś.
 
-## Get started
+Użytkownik nagrywa po polsku krótką sytuację z dnia („nie wiedziałem, jak poprosić w sklepie o fakturę”). Backend transkrybuje nagranie i generuje z niego angielskie fiszki (słowo, zwrot, zdanie z przykładem). Wieczorem użytkownik przegląda propozycje, akceptuje trafne lub odrzuca zbędne, a zaakceptowane trafiają do bazy nauki z powtórkami rozłożonymi w czasie (spaced repetition).
 
-1. Install dependencies
+Grupa docelowa: samouk angielskiego na poziomie podstawowym, który potrzebuje języka w codziennych sytuacjach, nie na kursie.
 
-   ```bash
-   npm install
-   ```
+## Jak to działa
 
-2. Start the app
+1. **Nagraj** — jeden przycisk, kilka sekund mowy po polsku. Zapis jest optymistyczny: aplikacja odpowiada natychmiast, transkrypcja i generowanie fiszek dzieją się w tle.
+2. **Przejrzyj** — ekran *Fiszki* pokazuje propozycje AI. Akceptuj albo odrzucaj. Propozycje są odsiewane względem Twojej bazy, żeby nie dublować tego, co już masz.
+3. **Ucz się** — ekran *Powtórki* podaje fiszki, których pora nadeszła. Trzy oceny (Nie umiem / Prawie / Umiem) sterują uproszczonym algorytmem SM-2.
 
-   ```bash
-   npx expo start
-   ```
+## Architektura
 
-In the output, you'll find options to open the app in a
+| Warstwa | Technologia | Katalog |
+|---|---|---|
+| Aplikacja (iOS, Android, web) | Expo + React Native, Expo Router, TypeScript | `src/` |
+| API | Cloudflare Worker, Hono | `api/src/` |
+| Baza danych | Cloudflare D1 (SQLite), migracje | `api/migrations/` |
+| Pliki audio (tymczasowe) | Cloudflare R2 | binding `AUDIO_BUCKET` |
+| AI | OpenAI Whisper (transkrypcja), GPT-4o ze Structured Outputs (fiszki) | `api/src/lib/` |
+| Uwierzytelnianie | e-mail + hasło (PBKDF2), JWT | `api/src/routes/auth.ts` |
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+Każda tabela danych ma `user_id`; wszystkie trasy poza `/auth` wymagają tokenu, a cudze zasoby zwracają 404.
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+Endpointy API:
 
-## Get a fresh project
-
-When you're ready, run:
-
-```bash
-npm run reset-project
+```
+POST   /auth/register            POST   /auth/login             GET  /auth/me
+POST   /situations               GET    /situations             DELETE /situations/:id
+GET    /flashcards/proposals     POST   /flashcards/:id/accept  DELETE /flashcards/:id
+GET    /flashcards/review        POST   /flashcards/:id/grade
+GET    /health
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+## Uruchomienie lokalne
 
-### Other setup steps
+Wymagania: Node.js 20+, npm, konto Cloudflare (tylko do deployu), klucz OpenAI.
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+### Backend
 
-## Learn more
+```bash
+cd api
+npm install
+```
 
-To learn more about developing your project with Expo, look at the following resources:
+Utwórz `api/.dev.vars` (plik jest w `.gitignore`):
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+```
+OPENAI_API_KEY=sk-...
+JWT_SECRET=dowolny-dlugi-losowy-ciag
+```
 
-## Join the community
+Zastosuj migracje na lokalnej bazie i uruchom Workera:
 
-Join our community of developers creating universal apps.
+```bash
+npx wrangler d1 migrations apply my-english-day-db --local
+npm run dev            # http://localhost:3030
+```
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+### Aplikacja
+
+W katalogu głównym:
+
+```bash
+npm install
+npm start              # Expo dev server; `w` otwiera web, `a` Android, `i` iOS
+```
+
+Adres API czyta `extra.apiBaseUrl` z `app.json` (domyślnie `http://localhost:3030`, czyli symulator iOS i web). Emulator Androida: `http://10.0.2.2:3030`. Fizyczne urządzenie: adres IP komputera w sieci lokalnej.
+
+## Testy i bramka jakości
+
+```bash
+cd api && npm test     # Vitest w workerd: izolowane D1 z migracjami, mock OpenAI na krawędzi sieci
+npm run gate           # z katalogu głównego: lint + typecheck (front i api) + testy api, ~20 s
+```
+
+`npm run gate` jest wymagane przed każdym commitem i deployem. Testy są prowadzone przez plan oparty na ryzyku w `context/foundation/test-plan.md` (mapa ryzyk §2, jak dodać test §6).
+
+## Deploy
+
+Wyłącznie według `context/deployment/deploy-checklist.md`. Reguła nadrzędna: migracja D1 na produkcji przed `wrangler deploy`, bo rollback Workera nie cofa bazy.
+
+```bash
+npm run api:deploy     # Worker (po migracji --remote)
+npm run web:export     # z EXPO_PUBLIC_API_BASE_URL wskazującym na Worker
+npm run web:deploy     # Cloudflare Pages
+```
+
+## Dokumentacja projektu
+
+Projekt powstał w przepływie 10xDevs: kod jest generowany z pisemnych podstaw w `context/`.
+
+- `context/foundation/prd.md` — wymagania produktowe, persona, kryteria sukcesu, kontrola dostępu
+- `context/foundation/shape-notes.md` — notatki z kształtowania pomysłu
+- `context/foundation/roadmap.md` — kamienie milowe i slice'y
+- `context/foundation/tech-stack.md` — wybór stosu
+- `context/foundation/test-plan.md` — strategia testów oparta na ryzyku
+- `context/foundation/infrastructure.md` — wybór platformy
+- `context/archive/` — zamknięte zmiany (research, plan, przeglądy)
+- `CLAUDE.md` — instrukcje dla agentów AI pracujących w repozytorium
+
+## Licencja
+
+MIT, patrz `LICENSE`.
