@@ -1,13 +1,13 @@
 import { useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { Platform, Pressable, StyleSheet, View } from 'react-native';
 
+import { BrandMark } from '@/components/brand-mark';
 import { RecordButton } from '@/components/record-button';
+import { Screen } from '@/components/screen';
 import { SituationList, type LocalSituation } from '@/components/situation-list';
 import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { BottomTabInset, Spacing } from '@/constants/theme';
+import { Spacing } from '@/constants/theme';
 import { useAuth } from '@/contexts/auth-context';
 import { situationsApi, type AudioUpload, type Situation } from '@/lib/api';
 
@@ -25,6 +25,16 @@ function createdAtMs(createdAt: string): number {
   const iso = createdAt.includes('T') ? createdAt : `${createdAt.replace(' ', 'T')}Z`;
   const ms = new Date(iso).getTime();
   return Number.isNaN(ms) ? Date.now() : ms;
+}
+
+/** Data dnia po polsku, np. „środa, 10 września" — nagłówek listy sytuacji dnia. */
+function formatToday(): string {
+  const label = new Date().toLocaleDateString('pl-PL', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+  });
+  return label.charAt(0).toUpperCase() + label.slice(1);
 }
 
 /**
@@ -152,54 +162,52 @@ export default function HomeScreen() {
     [refresh],
   );
 
+  // Na web marka i wylogowanie żyją w górnym pasku zakładek (`app-tabs.web.tsx`).
+  const showAccountRow = Platform.OS !== 'web';
+
   return (
-    <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
-        <View style={styles.header}>
+    <Screen>
+      {showAccountRow && (
+        <View style={styles.accountRow}>
+          <BrandMark size={28} />
           <ThemedText type="small" themeColor="textSecondary" numberOfLines={1} style={styles.email}>
             {user?.email ?? '—'}
           </ThemedText>
           <Pressable onPress={signOut} style={({ pressed }) => pressed && styles.pressed}>
-            <ThemedView type="backgroundElement" style={styles.signOutButton}>
-              <ThemedText type="smallBold">Wyloguj</ThemedText>
-            </ThemedView>
+            <ThemedText type="smallBold" themeColor="tint">
+              Wyloguj
+            </ThemedText>
           </Pressable>
         </View>
+      )}
 
-        <RecordButton onCaptured={handleCaptured} />
+      <View style={styles.header}>
+        <ThemedText type="title">Dziś</ThemedText>
+        <ThemedText type="small" themeColor="textSecondary">
+          {formatToday()}
+        </ThemedText>
+      </View>
 
-        <View style={styles.listWrapper}>
-          <SituationList situations={situations} onDelete={handleDelete} />
-        </View>
-      </SafeAreaView>
-    </ThemedView>
+      <RecordButton onCaptured={handleCaptured} />
+
+      <View style={styles.listWrapper}>
+        <SituationList situations={situations} onDelete={handleDelete} />
+      </View>
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  safeArea: {
-    flex: 1,
-    paddingHorizontal: Spacing.four,
-    gap: Spacing.three,
-    paddingBottom: BottomTabInset,
-  },
-  header: {
+  accountRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: Spacing.three,
-    paddingTop: Spacing.three,
+    gap: Spacing.two,
   },
   email: {
-    flexShrink: 1,
+    flex: 1,
   },
-  signOutButton: {
-    paddingVertical: Spacing.one,
-    paddingHorizontal: Spacing.three,
-    borderRadius: Spacing.three,
+  header: {
+    gap: Spacing.half,
   },
   pressed: {
     opacity: 0.7,

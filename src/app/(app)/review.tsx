@@ -21,12 +21,13 @@
 import { useFocusEffect } from 'expo-router';
 import { useCallback, useRef, useState } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { ScreenHeader } from '@/components/card';
 import { ReviewCard } from '@/components/review-card';
+import { Screen } from '@/components/screen';
 import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { BottomTabInset, Spacing } from '@/constants/theme';
+import { Spacing } from '@/constants/theme';
+import { useTheme } from '@/hooks/use-theme';
 import { reviewApi, type Flashcard, type ReviewGrade } from '@/lib/api';
 
 export default function ReviewScreen() {
@@ -93,76 +94,61 @@ export default function ReviewScreen() {
   }, []);
 
   const current = queue[0];
+  const colors = useTheme();
 
   return (
-    <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
-        <View style={styles.header}>
-          <ThemedText type="subtitle">Nauka</ThemedText>
-          <ThemedText type="small" themeColor="textSecondary">
-            Do powtórki: {queue.length}
+    <Screen>
+      <ScreenHeader title="Nauka" caption={`Do powtórki: ${queue.length}`} />
+
+      {loading ? (
+        <View style={styles.centered}>
+          <ActivityIndicator color={colors.tint} />
+        </View>
+      ) : current ? (
+        <ReviewCard
+          card={current}
+          revealed={revealed}
+          onReveal={() => setRevealed(true)}
+          onGrade={(g) => grade(current, g)}
+        />
+      ) : acceptedCount === 0 ? (
+        <View style={styles.centered}>
+          <ThemedText type="default" style={styles.centeredText}>
+            Baza nauki jest pusta
+          </ThemedText>
+          <ThemedText type="small" themeColor="textSecondary" style={styles.centeredText}>
+            Zaakceptuj propozycje w zakładce Fiszki, a pojawią się tu do powtórki.
           </ThemedText>
         </View>
-
-        {loading ? (
-          <View style={styles.centered}>
-            <ActivityIndicator />
-          </View>
-        ) : current ? (
-          <ReviewCard
-            card={current}
-            revealed={revealed}
-            onReveal={() => setRevealed(true)}
-            onGrade={(g) => grade(current, g)}
-          />
-        ) : acceptedCount === 0 ? (
-          <View style={styles.centered}>
+      ) : (
+        <View style={styles.centered}>
+          <ThemedText type="default" style={styles.centeredText}>
+            Na dziś wszystko powtórzone
+          </ThemedText>
+          {sessionDone > 0 && (
             <ThemedText type="small" themeColor="textSecondary" style={styles.centeredText}>
-              Brak fiszek w bazie nauki. Zaakceptuj propozycje w zakładce Fiszki.
+              Oceniono: {sessionDone}
             </ThemedText>
-          </View>
-        ) : (
-          <View style={styles.centered}>
-            <ThemedText type="default" style={styles.centeredText}>
-              Na dziś wszystko powtórzone
+          )}
+          {moreDue && (
+            <ThemedText type="small" themeColor="textSecondary" style={styles.centeredText}>
+              Wróć na ekran, aby pobrać kolejną porcję.
             </ThemedText>
-            {sessionDone > 0 && (
-              <ThemedText type="small" themeColor="textSecondary" style={styles.centeredText}>
-                Oceniono: {sessionDone}
-              </ThemedText>
-            )}
-            {moreDue && (
-              <ThemedText type="small" themeColor="textSecondary" style={styles.centeredText}>
-                Wróć na ekran, aby pobrać kolejną porcję.
-              </ThemedText>
-            )}
-          </View>
-        )}
-      </SafeAreaView>
-    </ThemedView>
+          )}
+        </View>
+      )}
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  safeArea: {
-    flex: 1,
-    paddingHorizontal: Spacing.four,
-    gap: Spacing.three,
-    paddingBottom: BottomTabInset,
-  },
-  header: {
-    paddingTop: Spacing.three,
-    gap: Spacing.half,
-  },
   centered: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: Spacing.six,
-    gap: Spacing.two,
+    paddingHorizontal: Spacing.four,
+    gap: Spacing.one,
   },
   centeredText: {
     textAlign: 'center',

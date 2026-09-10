@@ -5,20 +5,19 @@
  * z plikiem audio i czasem trwania; krótsze nagranie hook odrzuca (zwraca `null`).
  *
  * Stan „nagrywam" jest widoczny od razu (kolor + licznik), zanim cokolwiek poleci
- * do sieci — to część UX-spec planu (optymistyczny feedback).
+ * do sieci — to część UX-spec planu (optymistyczny feedback). Bezczynny przycisk ma
+ * kolor akcentu marki; czerwień jest zarezerwowana dla trwającego nagrania.
  */
 
 import { useCallback } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
-import { Spacing } from '@/constants/theme';
+import { Radius, Spacing } from '@/constants/theme';
 import { useAudioRecorder } from '@/hooks/use-audio-recorder';
+import { useTheme } from '@/hooks/use-theme';
 import { showAlert } from '@/lib/alert';
 import type { AudioUpload } from '@/lib/api';
-
-// Czerwień stanu nagrywania — semantyczny akcent, którego nie ma w palecie motywu.
-const RECORDING_COLOR = '#E5484D';
 
 /**
  * Rozszerzenie z URI pliku nagrania (`file:///…/rec.m4a` → `m4a`). Dla `blob:` URI
@@ -47,6 +46,7 @@ export function RecordButton({
   onCaptured: (audio: AudioUpload, durationMs: number) => void;
 }) {
   const { isRecording, durationMs, start, stop } = useAudioRecorder();
+  const colors = useTheme();
 
   const handlePress = useCallback(async () => {
     try {
@@ -74,23 +74,32 @@ export function RecordButton({
     }
   }, [isRecording, start, stop, onCaptured]);
 
+  const background = isRecording ? colors.danger : colors.tint;
+  const foreground = isRecording ? '#FFFFFF' : colors.onTint;
+
   return (
     <Pressable
       onPress={handlePress}
-      style={({ pressed }) => [
-        styles.button,
-        isRecording ? styles.buttonRecording : styles.buttonIdle,
-        pressed && styles.pressed,
-      ]}>
+      accessibilityRole="button"
+      accessibilityLabel={isRecording ? 'Zakończ nagrywanie' : 'Nagraj sytuację'}
+      style={({ pressed }) => [styles.button, { backgroundColor: background }, pressed && styles.pressed]}>
       <View style={styles.content}>
-        {isRecording ? (
-          <ActivityIndicator color="#ffffff" />
-        ) : (
-          <View style={styles.dot} />
-        )}
-        <ThemedText type="smallBold" style={styles.label}>
-          {isRecording ? `Nagrywam… ${formatDuration(durationMs)}` : 'Nagraj sytuację'}
-        </ThemedText>
+        <View style={[styles.iconRing, { borderColor: foreground }]}>
+          <View
+            style={[
+              isRecording ? styles.stopSquare : styles.recordDot,
+              { backgroundColor: foreground },
+            ]}
+          />
+        </View>
+        <View style={styles.labels}>
+          <ThemedText type="subtitle" style={{ color: foreground }}>
+            {isRecording ? formatDuration(durationMs) : 'Nagraj sytuację'}
+          </ThemedText>
+          <ThemedText type="small" style={[styles.hint, { color: foreground }]}>
+            {isRecording ? 'Nagrywam… dotknij, aby zakończyć' : 'Opowiedz po polsku, co się wydarzyło'}
+          </ThemedText>
+        </View>
       </View>
     </Pressable>
   );
@@ -99,32 +108,40 @@ export function RecordButton({
 const styles = StyleSheet.create({
   button: {
     paddingVertical: Spacing.four,
-    paddingHorizontal: Spacing.five,
-    borderRadius: Spacing.five,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  buttonIdle: {
-    backgroundColor: RECORDING_COLOR,
-  },
-  buttonRecording: {
-    backgroundColor: '#B91C1C',
+    paddingHorizontal: Spacing.four,
+    borderRadius: Radius.card,
   },
   content: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.two,
+    gap: Spacing.three,
   },
-  dot: {
-    width: Spacing.two,
-    height: Spacing.two,
-    borderRadius: Spacing.one,
-    backgroundColor: '#ffffff',
+  iconRing: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    borderWidth: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  label: {
-    color: '#ffffff',
+  recordDot: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+  },
+  stopSquare: {
+    width: 18,
+    height: 18,
+    borderRadius: 4,
+  },
+  labels: {
+    flex: 1,
+    gap: Spacing.half,
+  },
+  hint: {
+    opacity: 0.85,
   },
   pressed: {
-    opacity: 0.8,
+    opacity: 0.85,
   },
 });

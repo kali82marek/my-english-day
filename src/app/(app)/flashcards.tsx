@@ -16,12 +16,13 @@
 import { useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { ScreenHeader } from '@/components/card';
 import { FlashcardCard } from '@/components/flashcard-card';
+import { Screen } from '@/components/screen';
 import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { BottomTabInset, Spacing } from '@/constants/theme';
+import { Spacing } from '@/constants/theme';
+import { useTheme } from '@/hooks/use-theme';
 import { flashcardsApi, type Flashcard } from '@/lib/api';
 
 // Co ile odpytujemy serwer, dopóki trwa generowanie.
@@ -109,68 +110,70 @@ export default function FlashcardsScreen() {
   }, []);
 
   const current = queue[0];
+  const colors = useTheme();
+  const caption =
+    queue.length > 0
+      ? `Do przejrzenia: ${queue.length}`
+      : generatingCount > 0 && !pollExpired
+        ? 'Generuję…'
+        : 'Propozycje z dzisiejszych sytuacji';
 
   return (
-    <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
-        <ThemedText type="subtitle" style={styles.heading}>
-          Fiszki
-        </ThemedText>
+    <Screen>
+      <ScreenHeader title="Fiszki" caption={caption} />
 
-        {loading ? (
-          <View style={styles.centered}>
-            <ActivityIndicator />
-          </View>
-        ) : current ? (
-          <FlashcardCard
-            key={current.id}
-            card={current}
-            onAccept={() => decide(current, 'accept')}
-            onReject={() => decide(current, 'reject')}
-          />
-        ) : pollExpired ? (
-          <View style={styles.centered}>
-            <ThemedText type="small" themeColor="textSecondary" style={styles.centeredText}>
-              Część fiszek mogła się nie wygenerować. Zajrzyj ponownie później.
-            </ThemedText>
-          </View>
-        ) : generatingCount > 0 ? (
-          <View style={styles.centered}>
-            <ActivityIndicator style={styles.spinner} />
-            <ThemedText type="small" themeColor="textSecondary" style={styles.centeredText}>
-              Generuję fiszki…
-            </ThemedText>
-          </View>
-        ) : (
-          <View style={styles.centered}>
-            <ThemedText type="small" themeColor="textSecondary" style={styles.centeredText}>
-              Brak fiszek do przejrzenia.
-            </ThemedText>
-          </View>
-        )}
-      </SafeAreaView>
-    </ThemedView>
+      {loading ? (
+        <View style={styles.centered}>
+          <ActivityIndicator color={colors.tint} />
+        </View>
+      ) : current ? (
+        <FlashcardCard
+          key={current.id}
+          card={current}
+          onAccept={() => decide(current, 'accept')}
+          onReject={() => decide(current, 'reject')}
+        />
+      ) : pollExpired ? (
+        <View style={styles.centered}>
+          <ThemedText type="default" style={styles.centeredText}>
+            Coś poszło nie tak
+          </ThemedText>
+          <ThemedText type="small" themeColor="textSecondary" style={styles.centeredText}>
+            Część fiszek mogła się nie wygenerować. Zajrzyj ponownie później.
+          </ThemedText>
+        </View>
+      ) : generatingCount > 0 ? (
+        <View style={styles.centered}>
+          <ActivityIndicator color={colors.tint} style={styles.spinner} />
+          <ThemedText type="default" style={styles.centeredText}>
+            Generuję fiszki…
+          </ThemedText>
+          <ThemedText type="small" themeColor="textSecondary" style={styles.centeredText}>
+            To zwykle trwa kilkanaście sekund.
+          </ThemedText>
+        </View>
+      ) : (
+        <View style={styles.centered}>
+          <ThemedText type="default" style={styles.centeredText}>
+            Wszystko przejrzane
+          </ThemedText>
+          <ThemedText type="small" themeColor="textSecondary" style={styles.centeredText}>
+            Nagraj nową sytuację, a pojawią się tu kolejne propozycje.
+          </ThemedText>
+        </View>
+      )}
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  safeArea: {
-    flex: 1,
-    paddingHorizontal: Spacing.four,
-    gap: Spacing.three,
-    paddingBottom: BottomTabInset,
-  },
-  heading: {
-    paddingTop: Spacing.three,
-  },
   centered: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: Spacing.six,
+    paddingHorizontal: Spacing.four,
+    gap: Spacing.one,
   },
   centeredText: {
     textAlign: 'center',

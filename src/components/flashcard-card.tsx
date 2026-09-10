@@ -3,22 +3,20 @@
  *
  * Renderuje jedną fiszkę naraz: angielski front (wyróżniony), polskie tłumaczenie,
  * znacznik typu (słówko/zwrot/zdanie) oraz — gdy niepusty — angielski przykład
- * użycia. Pod spodem dwa przyciski: Akceptuj (→ baza nauki) i Odrzuć (→ kasacja).
+ * użycia. Pod spodem dwa przyciski: Odrzuć (→ kasacja) i Akceptuj (→ baza nauki).
  *
  * Czysta prezentacja: decyzje (akceptacja/odrzucenie) deleguje przez callbacki do
  * ekranu przeglądu (`src/app/(app)/flashcards.tsx`).
  */
 
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
+import { Button } from '@/components/button';
+import { Card, TypeBadge } from '@/components/card';
 import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { TYPE_LABELS } from '@/constants/flashcards';
 import { Spacing } from '@/constants/theme';
+import { useTheme } from '@/hooks/use-theme';
 import type { Flashcard } from '@/lib/api';
-
-const ACCEPT_COLOR = '#30A46C';
-const REJECT_COLOR = '#E5484D';
 
 export function FlashcardCard({
   card,
@@ -29,85 +27,56 @@ export function FlashcardCard({
   onAccept: () => void;
   onReject: () => void;
 }) {
+  const colors = useTheme();
   // `example_en` bywa pustym stringiem (gł. dla typu `sentence`) — ukrywamy wtedy sekcję.
   const hasExample = card.example_en.trim().length > 0;
 
   return (
-    <ThemedView type="backgroundElement" style={styles.card}>
-      <ThemedView type="backgroundSelected" style={styles.typeBadge}>
-        <ThemedText type="smallBold" themeColor="textSecondary">
-          {TYPE_LABELS[card.type]}
-        </ThemedText>
-      </ThemedView>
+    <Card>
+      <TypeBadge type={card.type} />
 
-      <ThemedText type="subtitle">{card.front_en}</ThemedText>
-      <ThemedText type="default" themeColor="textSecondary">
-        {card.back_pl}
-      </ThemedText>
+      <View style={styles.body}>
+        <ThemedText type="title">{card.front_en}</ThemedText>
+        <ThemedText type="default" themeColor="textSecondary">
+          {card.back_pl}
+        </ThemedText>
+      </View>
 
       {hasExample && (
-        <ThemedText type="small" themeColor="textSecondary" style={styles.example}>
-          {card.example_en}
-        </ThemedText>
+        <View style={[styles.example, { borderLeftColor: colors.tint }]}>
+          <ThemedText type="small" themeColor="textSecondary" style={styles.exampleText}>
+            {card.example_en}
+          </ThemedText>
+        </View>
       )}
 
       <View style={styles.actions}>
-        <Pressable
-          onPress={onReject}
-          style={({ pressed }) => [styles.button, styles.rejectButton, pressed && styles.pressed]}>
-          <ThemedText type="smallBold" style={styles.buttonLabel}>
-            Odrzuć
-          </ThemedText>
-        </Pressable>
-        <Pressable
-          onPress={onAccept}
-          style={({ pressed }) => [styles.button, styles.acceptButton, pressed && styles.pressed]}>
-          <ThemedText type="smallBold" style={styles.buttonLabel}>
-            Akceptuj
-          </ThemedText>
-        </Pressable>
+        <Button label="Odrzuć" variant="secondary" onPress={onReject} style={styles.action} />
+        <Button label="Akceptuj" variant="primary" onPress={onAccept} style={styles.action} />
       </View>
-    </ThemedView>
+    </Card>
   );
 }
 
 const styles = StyleSheet.create({
-  card: {
-    padding: Spacing.four,
-    borderRadius: Spacing.three,
-    gap: Spacing.two,
-  },
-  typeBadge: {
-    alignSelf: 'flex-start',
-    paddingVertical: Spacing.half,
-    paddingHorizontal: Spacing.two,
-    borderRadius: Spacing.two,
+  body: {
+    gap: Spacing.one,
+    marginTop: Spacing.two,
   },
   example: {
+    borderLeftWidth: 3,
+    paddingLeft: Spacing.three,
+    marginTop: Spacing.two,
+  },
+  exampleText: {
     fontStyle: 'italic',
-    marginTop: Spacing.one,
   },
   actions: {
     flexDirection: 'row',
     gap: Spacing.two,
     marginTop: Spacing.three,
   },
-  button: {
+  action: {
     flex: 1,
-    paddingVertical: Spacing.three,
-    borderRadius: Spacing.three,
-    alignItems: 'center',
-  },
-  acceptButton: {
-    backgroundColor: ACCEPT_COLOR,
-  },
-  rejectButton: {
-    backgroundColor: REJECT_COLOR,
-  },
-  buttonLabel: {
-    color: '#ffffff',
-  },
-  pressed: {
-    opacity: 0.7,
   },
 });

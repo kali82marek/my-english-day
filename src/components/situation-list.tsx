@@ -15,14 +15,15 @@
  */
 
 import { useCallback, useRef } from 'react';
-import { FlatList, Pressable, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, FlatList, Pressable, StyleSheet, View } from 'react-native';
 import ReanimatedSwipeable, {
   type SwipeableMethods,
 } from 'react-native-gesture-handler/ReanimatedSwipeable';
 
+import { Card } from '@/components/card';
 import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Spacing } from '@/constants/theme';
+import { Radius, Spacing } from '@/constants/theme';
+import { useTheme } from '@/hooks/use-theme';
 import { confirmAction } from '@/lib/alert';
 import type { Situation } from '@/lib/api';
 
@@ -33,8 +34,6 @@ import type { Situation } from '@/lib/api';
  */
 export type LocalSituation = Omit<Situation, 'id'> & { id: number | null; tempId?: string };
 
-const DELETE_COLOR = '#E5484D';
-
 /** Godzina `HH:mm` z `created_at` (SQLite `datetime('now')`, UTC). */
 function formatTime(createdAt: string): string {
   const date = new Date(`${createdAt.replace(' ', 'T')}Z`);
@@ -44,37 +43,59 @@ function formatTime(createdAt: string): string {
   return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 }
 
-function SituationCard({ item }: { item: LocalSituation }) {
-  return (
-    <ThemedView type="backgroundElement" style={styles.card}>
-      {item.status === 'pending' && (
+function StatusLine({ item }: { item: LocalSituation }) {
+  const colors = useTheme();
+
+  if (item.status === 'pending') {
+    return (
+      <View style={styles.statusRow}>
+        <ActivityIndicator size="small" color={colors.tint} />
         <ThemedText type="small" themeColor="textSecondary">
           Transkrybuję…
         </ThemedText>
-      )}
+      </View>
+    );
+  }
 
-      {item.status === 'done' && (
+  if (item.status === 'failed') {
+    return (
+      <ThemedText type="small" style={{ color: colors.danger }}>
+        Nie udało się — nagraj ponownie.
+      </ThemedText>
+    );
+  }
+
+  return (
+    <View style={styles.statusRow}>
+      <ThemedText type="small" themeColor="textSecondary">
+        {formatTime(item.created_at)}
+      </ThemedText>
+      {item.flashcards_status === 'pending' && (
         <>
-          <ThemedText type="default">{item.transcript ?? ''}</ThemedText>
-          <View style={styles.metaRow}>
-            <ThemedText type="small" themeColor="textSecondary">
-              {formatTime(item.created_at)}
-            </ThemedText>
-            {item.flashcards_status === 'pending' && (
-              <ThemedText type="small" themeColor="textSecondary">
-                · Generuję fiszki…
-              </ThemedText>
-            )}
-          </View>
+          <ThemedText type="small" themeColor="textSecondary">
+            ·
+          </ThemedText>
+          <ActivityIndicator size="small" color={colors.tint} />
+          <ThemedText type="small" style={{ color: colors.tint }}>
+            Generuję fiszki…
+          </ThemedText>
         </>
       )}
-
-      {item.status === 'failed' && (
-        <ThemedText type="small" style={styles.failedText}>
-          Nie udało się — nagraj ponownie.
+      {item.flashcards_status === 'done' && (
+        <ThemedText type="small" themeColor="textSecondary">
+          · Fiszki gotowe
         </ThemedText>
       )}
-    </ThemedView>
+    </View>
+  );
+}
+
+function SituationCard({ item }: { item: LocalSituation }) {
+  return (
+    <Card style={styles.card}>
+      {item.status === 'done' && <ThemedText type="default">{item.transcript ?? ''}</ThemedText>}
+      <StatusLine item={item} />
+    </Card>
   );
 }
 
@@ -86,6 +107,7 @@ function SituationRow({
   onDelete: (id: number) => void;
 }) {
   const swipeRef = useRef<SwipeableMethods>(null);
+  const colors = useTheme();
 
   const confirmDelete = useCallback(() => {
     if (item.id == null) {
@@ -112,7 +134,9 @@ function SituationRow({
       friction={2}
       rightThreshold={Spacing.five}
       renderRightActions={() => (
-        <Pressable style={styles.deleteAction} onPress={confirmDelete}>
+        <Pressable
+          style={[styles.deleteAction, { backgroundColor: colors.danger }]}
+          onPress={confirmDelete}>
           <ThemedText type="smallBold" style={styles.deleteLabel}>
             Usuń
           </ThemedText>
@@ -133,8 +157,11 @@ export function SituationList({
   if (situations.length === 0) {
     return (
       <View style={styles.empty}>
+        <ThemedText type="default" style={styles.emptyText}>
+          Jeszcze nic dzisiaj
+        </ThemedText>
         <ThemedText type="small" themeColor="textSecondary" style={styles.emptyText}>
-          Brak sytuacji dnia — nagraj pierwszą.
+          Nagraj pierwszą sytuację — wieczorem znajdziesz z niej fiszki.
         </ThemedText>
       </View>
     );
@@ -146,6 +173,7 @@ export function SituationList({
       keyExtractor={(item) => item.tempId ?? String(item.id)}
       renderItem={({ item }) => <SituationRow item={item} onDelete={onDelete} />}
       contentContainerStyle={styles.listContent}
+      showsVerticalScrollIndicator={false}
     />
   );
 }
@@ -153,29 +181,24 @@ export function SituationList({
 const styles = StyleSheet.create({
   listContent: {
     gap: Spacing.two,
-    paddingVertical: Spacing.three,
+    paddingBottom: Spacing.four,
   },
   card: {
     padding: Spacing.three,
-    borderRadius: Spacing.three,
-    gap: Spacing.one,
+    gap: Spacing.two,
   },
-  metaRow: {
+  statusRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
+    alignItems: 'center',
     gap: Spacing.one,
-    marginTop: Spacing.one,
-  },
-  failedText: {
-    color: DELETE_COLOR,
   },
   deleteAction: {
-    backgroundColor: DELETE_COLOR,
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: Spacing.four,
     marginLeft: Spacing.two,
-    borderRadius: Spacing.three,
+    borderRadius: Radius.card,
   },
   deleteLabel: {
     color: '#ffffff',
@@ -185,6 +208,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: Spacing.six,
+    paddingHorizontal: Spacing.four,
+    gap: Spacing.one,
   },
   emptyText: {
     textAlign: 'center',

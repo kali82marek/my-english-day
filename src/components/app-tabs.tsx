@@ -1,37 +1,39 @@
 import { NativeTabs } from 'expo-router/unstable-native-tabs';
-import { useColorScheme } from 'react-native';
 
-import { Colors } from '@/constants/theme';
+import { useTheme } from '@/hooks/use-theme';
 
+/**
+ * Natywne zakładki (iOS/Android). Ikony systemowe: SF Symbols na iOS, Material na
+ * Androidzie — bez własnych PNG. Wariant web: `app-tabs.web.tsx`.
+ */
 export default function AppTabs() {
-  const scheme = useColorScheme();
-  const colors = Colors[scheme === 'unspecified' ? 'light' : scheme];
+  const colors = useTheme();
 
   return (
     <NativeTabs
-      backgroundColor={colors.background}
-      indicatorColor={colors.backgroundElement}
-      labelStyle={{ selected: { color: colors.text } }}>
+      backgroundColor={colors.backgroundElement}
+      indicatorColor={colors.tintSoft}
+      iconColor={{ default: colors.textSecondary, selected: colors.tint }}
+      labelStyle={{
+        default: { color: colors.textSecondary },
+        selected: { color: colors.tint },
+      }}>
       <NativeTabs.Trigger name="index">
-        <NativeTabs.Trigger.Label>Home</NativeTabs.Trigger.Label>
-        <NativeTabs.Trigger.Icon
-          src={require('@/assets/images/tabIcons/home.png')}
-          renderingMode="template"
-        />
+        <NativeTabs.Trigger.Label>Nagraj</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Icon sf={{ default: 'mic', selected: 'mic.fill' }} md="mic" />
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="flashcards">
         <NativeTabs.Trigger.Label>Fiszki</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon
-          src={require('@/assets/images/tabIcons/explore.png')}
-          renderingMode="template"
+          sf={{ default: 'rectangle.on.rectangle', selected: 'rectangle.fill.on.rectangle.fill' }}
+          md="style"
         />
       </NativeTabs.Trigger>
-      {/* S-05: sesja powtórek. Ikona współdzielona z „Fiszki" — osobna grafika to follow-up. */}
       <NativeTabs.Trigger name="review">
         <NativeTabs.Trigger.Label>Nauka</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon
-          src={require('@/assets/images/tabIcons/explore.png')}
-          renderingMode="template"
+          sf={{ default: 'graduationcap', selected: 'graduationcap.fill' }}
+          md="school"
         />
       </NativeTabs.Trigger>
     </NativeTabs>

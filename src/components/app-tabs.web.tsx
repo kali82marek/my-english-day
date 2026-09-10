@@ -7,14 +7,23 @@ import {
   TabListProps,
 } from 'expo-router/ui';
 import { SymbolView } from 'expo-symbols';
-import { Pressable, useColorScheme, View, StyleSheet } from 'react-native';
+import { Pressable, View, StyleSheet, useWindowDimensions } from 'react-native';
 
-import { ExternalLink } from './external-link';
+import { BrandMark } from './brand-mark';
 import { ThemedText } from './themed-text';
 import { ThemedView } from './themed-view';
 
-import { Colors, MaxContentWidth, Spacing } from '@/constants/theme';
+import { MaxContentWidth, Radius, Spacing } from '@/constants/theme';
+import { useAuth } from '@/contexts/auth-context';
+import { useTheme } from '@/hooks/use-theme';
 
+/** Nazwa ikony Material Symbols (web) dla każdej zakładki. */
+type TabIcon = 'mic' | 'style' | 'school';
+
+/**
+ * Górny pasek zakładek na web: marka po lewej, trzy zakładki na środku, wylogowanie
+ * po prawej. Ekrany rezerwują pod niego miejsce przez `WebTabBarHeight`.
+ */
 export default function AppTabs() {
   return (
     <Tabs>
@@ -22,13 +31,13 @@ export default function AppTabs() {
       <TabList asChild>
         <CustomTabList>
           <TabTrigger name="home" href="/" asChild>
-            <TabButton>Home</TabButton>
+            <TabButton icon="mic">Nagraj</TabButton>
           </TabTrigger>
           <TabTrigger name="flashcards" href="/flashcards" asChild>
-            <TabButton>Fiszki</TabButton>
+            <TabButton icon="style">Fiszki</TabButton>
           </TabTrigger>
           <TabTrigger name="review" href="/review" asChild>
-            <TabButton>Nauka</TabButton>
+            <TabButton icon="school">Nauka</TabButton>
           </TabTrigger>
         </CustomTabList>
       </TabList>
@@ -36,13 +45,22 @@ export default function AppTabs() {
   );
 }
 
-export function TabButton({ children, isFocused, ...props }: TabTriggerSlotProps) {
+export function TabButton({
+  children,
+  isFocused,
+  icon,
+  ...props
+}: TabTriggerSlotProps & { icon: TabIcon }) {
+  const colors = useTheme();
+  const color = isFocused ? colors.tint : colors.textSecondary;
+
   return (
     <Pressable {...props} style={({ pressed }) => pressed && styles.pressed}>
       <ThemedView
-        type={isFocused ? 'backgroundSelected' : 'backgroundElement'}
+        type={isFocused ? 'tintSoft' : 'backgroundElement'}
         style={styles.tabButtonView}>
-        <ThemedText type="small" themeColor={isFocused ? 'text' : 'textSecondary'}>
+        <SymbolView tintColor={color} name={{ ios: 'circle', web: icon }} size={18} />
+        <ThemedText type="smallBold" style={{ color }}>
           {children}
         </ThemedText>
       </ThemedView>
@@ -51,28 +69,36 @@ export function TabButton({ children, isFocused, ...props }: TabTriggerSlotProps
 }
 
 export function CustomTabList(props: TabListProps) {
-  const scheme = useColorScheme();
-  const colors = Colors[scheme === 'unspecified' ? 'light' : scheme];
+  const colors = useTheme();
+  const { signOut } = useAuth();
+  // Nazwa marki widoczna od szerokości tabletu; na wąskim oknie zostaje sam znak.
+  const { width } = useWindowDimensions();
+  const showBrandText = width >= 640;
 
   return (
     <View {...props} style={styles.tabListContainer}>
-      <ThemedView type="backgroundElement" style={styles.innerContainer}>
-        <ThemedText type="smallBold" style={styles.brandText}>
-          Expo Starter
-        </ThemedText>
+      <ThemedView
+        type="backgroundElement"
+        style={[styles.innerContainer, { borderColor: colors.border }]}>
+        <View style={styles.brand}>
+          <BrandMark size={28} />
+          {showBrandText && <ThemedText type="smallBold">My English Day</ThemedText>}
+        </View>
 
-        {props.children}
+        <View style={styles.tabs}>{props.children}</View>
 
-        <ExternalLink href="https://docs.expo.dev" asChild>
-          <Pressable style={styles.externalPressable}>
-            <ThemedText type="link">Docs</ThemedText>
+        <Pressable onPress={signOut} style={({ pressed }) => pressed && styles.pressed}>
+          <View style={styles.signOut}>
             <SymbolView
-              tintColor={colors.text}
-              name={{ ios: 'arrow.up.right.square', web: 'link' }}
-              size={12}
+              tintColor={colors.textSecondary}
+              name={{ ios: 'circle', web: 'logout' }}
+              size={16}
             />
-          </Pressable>
-        </ExternalLink>
+            <ThemedText type="small" themeColor="textSecondary">
+              Wyloguj
+            </ThemedText>
+          </View>
+        </Pressable>
       </ThemedView>
     </View>
   );
@@ -81,38 +107,50 @@ export function CustomTabList(props: TabListProps) {
 const styles = StyleSheet.create({
   tabListContainer: {
     position: 'absolute',
+    top: 0,
     width: '100%',
     padding: Spacing.three,
     justifyContent: 'center',
     alignItems: 'center',
     flexDirection: 'row',
+    zIndex: 10,
   },
   innerContainer: {
     paddingVertical: Spacing.two,
-    paddingHorizontal: Spacing.five,
-    borderRadius: Spacing.five,
+    paddingHorizontal: Spacing.three,
+    borderRadius: Radius.badge,
+    borderWidth: 1,
     flexDirection: 'row',
     alignItems: 'center',
     flexGrow: 1,
-    gap: Spacing.two,
+    gap: Spacing.three,
     maxWidth: MaxContentWidth,
   },
-  brandText: {
+  brand: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.two,
     marginRight: 'auto',
+  },
+  tabs: {
+    flexDirection: 'row',
+    gap: Spacing.one,
   },
   pressed: {
     opacity: 0.7,
   },
   tabButtonView: {
-    paddingVertical: Spacing.one,
-    paddingHorizontal: Spacing.three,
-    borderRadius: Spacing.three,
-  },
-  externalPressable: {
     flexDirection: 'row',
-    justifyContent: 'center',
+    alignItems: 'center',
+    gap: Spacing.two,
+    paddingVertical: Spacing.two,
+    paddingHorizontal: Spacing.three,
+    borderRadius: Radius.badge,
+  },
+  signOut: {
+    flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.one,
-    marginLeft: Spacing.three,
+    marginLeft: 'auto',
   },
 });

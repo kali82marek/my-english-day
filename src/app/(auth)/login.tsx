@@ -1,18 +1,14 @@
 import { Link } from 'expo-router';
 import { useState } from 'react';
-import {
-  ActivityIndicator,
-  KeyboardAvoidingView,
-  Platform,
-  Pressable,
-  StyleSheet,
-  TextInput,
-} from 'react-native';
+import { KeyboardAvoidingView, Platform, StyleSheet, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { BrandMark } from '@/components/brand-mark';
+import { Button } from '@/components/button';
+import { Card } from '@/components/card';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { MaxContentWidth, Spacing } from '@/constants/theme';
+import { ContentColumnWidth, Radius, Spacing } from '@/constants/theme';
 import { useAuth } from '@/contexts/auth-context';
 import { useTheme } from '@/hooks/use-theme';
 import { ApiError } from '@/lib/api';
@@ -62,7 +58,11 @@ export default function LoginScreen() {
 
   const inputStyle = [
     styles.input,
-    { color: theme.text, backgroundColor: theme.backgroundElement },
+    {
+      color: theme.text,
+      backgroundColor: theme.background,
+      borderColor: theme.border,
+    },
   ];
 
   return (
@@ -71,59 +71,58 @@ export default function LoginScreen() {
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={styles.flex}>
         <SafeAreaView style={styles.safeArea}>
-          <ThemedText type="title" style={styles.title}>
-            Zaloguj się
-          </ThemedText>
-
-          <TextInput
-            style={inputStyle}
-            placeholder="Email"
-            placeholderTextColor={theme.textSecondary}
-            autoCapitalize="none"
-            autoComplete="email"
-            keyboardType="email-address"
-            value={email}
-            onChangeText={setEmail}
-            editable={!submitting}
-          />
-          <TextInput
-            style={inputStyle}
-            placeholder="Hasło"
-            placeholderTextColor={theme.textSecondary}
-            autoCapitalize="none"
-            secureTextEntry
-            value={password}
-            onChangeText={setPassword}
-            editable={!submitting}
-          />
-
-          {error && (
-            <ThemedText type="small" style={styles.error}>
-              {error}
+          <View style={styles.brand}>
+            <BrandMark size={56} />
+            <ThemedText type="subtitle">My English Day</ThemedText>
+            <ThemedText type="small" themeColor="textSecondary" style={styles.tagline}>
+              Angielski z sytuacji, które naprawdę przeżyłeś
             </ThemedText>
-          )}
+          </View>
 
-          <Pressable
-            onPress={onSubmit}
-            disabled={submitting}
-            style={({ pressed }) => pressed && styles.pressed}>
-            <ThemedView type="backgroundSelected" style={styles.button}>
-              {submitting ? (
-                <ActivityIndicator color={theme.text} />
-              ) : (
-                <ThemedText type="smallBold">Zaloguj</ThemedText>
-              )}
-            </ThemedView>
-          </Pressable>
-
-          <ThemedView style={styles.footer}>
-            <ThemedText type="small" themeColor="textSecondary">
-              Nie masz konta?{' '}
+          <Card style={styles.card}>
+            <ThemedText type="subtitle" style={styles.title}>
+              Zaloguj się
             </ThemedText>
-            <Link href="/register" replace>
-              <ThemedText type="linkPrimary">Załóż konto</ThemedText>
-            </Link>
-          </ThemedView>
+
+            <TextInput
+              style={inputStyle}
+              placeholder="Email"
+              placeholderTextColor={theme.textSecondary}
+              autoCapitalize="none"
+              autoComplete="email"
+              keyboardType="email-address"
+              value={email}
+              onChangeText={setEmail}
+              editable={!submitting}
+            />
+            <TextInput
+              style={inputStyle}
+              placeholder="Hasło"
+              placeholderTextColor={theme.textSecondary}
+              autoCapitalize="none"
+              secureTextEntry
+              value={password}
+              onChangeText={setPassword}
+              editable={!submitting}
+            />
+
+            {error && (
+              <ThemedText type="small" themeColor="danger">
+                {error}
+              </ThemedText>
+            )}
+
+            <Button label="Zaloguj" onPress={onSubmit} loading={submitting} />
+
+            <View style={styles.footer}>
+              <ThemedText type="small" themeColor="textSecondary">
+                Nie masz konta?{' '}
+              </ThemedText>
+              <Link href="/register" replace>
+                <ThemedText type="linkPrimary">Załóż konto</ThemedText>
+              </Link>
+            </View>
+          </Card>
         </SafeAreaView>
       </KeyboardAvoidingView>
     </ThemedView>
@@ -142,32 +141,29 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignSelf: 'center',
     width: '100%',
-    maxWidth: MaxContentWidth,
+    maxWidth: ContentColumnWidth,
     paddingHorizontal: Spacing.four,
+    gap: Spacing.four,
+  },
+  brand: {
+    alignItems: 'center',
+    gap: Spacing.two,
+  },
+  tagline: {
+    textAlign: 'center',
+  },
+  card: {
     gap: Spacing.three,
   },
   title: {
-    textAlign: 'center',
-    marginBottom: Spacing.three,
+    marginBottom: Spacing.one,
   },
   input: {
     paddingVertical: Spacing.three,
     paddingHorizontal: Spacing.three,
-    borderRadius: Spacing.three,
+    borderRadius: Radius.button,
+    borderWidth: 1,
     fontSize: 16,
-  },
-  button: {
-    paddingVertical: Spacing.three,
-    borderRadius: Spacing.three,
-    alignItems: 'center',
-    justifyContent: 'center',
-    minHeight: 48,
-  },
-  error: {
-    color: '#e5484d',
-  },
-  pressed: {
-    opacity: 0.7,
   },
   footer: {
     flexDirection: 'row',
