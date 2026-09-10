@@ -9,15 +9,29 @@
  */
 
 import { useCallback } from 'react';
-import { ActivityIndicator, Alert, Pressable, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
 import { useAudioRecorder } from '@/hooks/use-audio-recorder';
+import { showAlert } from '@/lib/alert';
 import type { AudioUpload } from '@/lib/api';
 
 // Czerwień stanu nagrywania — semantyczny akcent, którego nie ma w palecie motywu.
 const RECORDING_COLOR = '#E5484D';
+
+/**
+ * Rozszerzenie z URI pliku nagrania (`file:///…/rec.m4a` → `m4a`). Dla `blob:` URI
+ * z przeglądarki zwraca `null` — tam format zna dopiero `situationsApi.create`
+ * (po odczycie MIME Bloba), więc nazwa poniżej jest tylko placeholderem.
+ */
+function extFromUri(uri: string): string | null {
+  if (uri.startsWith('blob:')) return null;
+  const last = uri.split('/').pop() ?? '';
+  const dot = last.lastIndexOf('.');
+  if (dot < 0 || dot === last.length - 1) return null;
+  return last.slice(dot + 1).toLowerCase();
+}
 
 /** `mm:ss` z milisekund — licznik czasu nagrania. */
 function formatDuration(ms: number): string {
@@ -39,9 +53,11 @@ export function RecordButton({
       if (isRecording) {
         const result = await stop();
         if (result) {
-          // Preset HIGH_QUALITY = kontener MPEG-4 (`.m4a`) — Whisper wykrywa format
-          // po rozszerzeniu nazwy, więc niesiemy je z URI nagrania.
-          const ext = result.uri.split('.').pop()?.toLowerCase() || 'm4a';
+          // Preset HIGH_QUALITY = kontener MPEG-4 (`.m4a`) natywnie — Whisper wykrywa
+          // format po rozszerzeniu nazwy, więc niesiemy je z URI nagrania. Na web
+          // (`blob:` URI) nazwa jest placeholderem — właściwe rozszerzenie dopasowuje
+          // `situationsApi.create` po MIME Bloba (webm/mp4 zależnie od przeglądarki).
+          const ext = extFromUri(result.uri) ?? 'm4a';
           onCaptured(
             { uri: result.uri, name: `sytuacja.${ext}`, type: `audio/${ext}` },
             result.durationMs,
@@ -51,7 +67,7 @@ export function RecordButton({
         await start();
       }
     } catch (err) {
-      Alert.alert(
+      showAlert(
         'Nagrywanie',
         err instanceof Error ? err.message : 'Nie udało się nagrać sytuacji.',
       );

@@ -15,7 +15,7 @@
  */
 
 import { useCallback, useRef } from 'react';
-import { Alert, FlatList, Pressable, StyleSheet, View } from 'react-native';
+import { FlatList, Pressable, StyleSheet, View } from 'react-native';
 import ReanimatedSwipeable, {
   type SwipeableMethods,
 } from 'react-native-gesture-handler/ReanimatedSwipeable';
@@ -23,6 +23,7 @@ import ReanimatedSwipeable, {
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
+import { confirmAction } from '@/lib/alert';
 import type { Situation } from '@/lib/api';
 
 /**
@@ -91,10 +92,13 @@ function SituationRow({
       return;
     }
     const id = item.id;
-    Alert.alert('Usuń sytuację', 'Czy na pewno chcesz usunąć tę sytuację?', [
-      { text: 'Anuluj', style: 'cancel', onPress: () => swipeRef.current?.close() },
-      { text: 'Usuń', style: 'destructive', onPress: () => onDelete(id) },
-    ]);
+    confirmAction({
+      title: 'Usuń sytuację',
+      message: 'Czy na pewno chcesz usunąć tę sytuację?',
+      confirmLabel: 'Usuń',
+      onConfirm: () => onDelete(id),
+      onCancel: () => swipeRef.current?.close(),
+    });
   }, [item.id, onDelete]);
 
   // Wiersz „w locie" (bez serwerowego `id`) nie jest usuwalny — renderuj bez swipe.

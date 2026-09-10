@@ -9,6 +9,7 @@
 
 import Constants from 'expo-constants';
 import { File } from 'expo-file-system';
+import { Platform } from 'react-native';
 
 import { getToken } from '@/lib/session';
 
@@ -140,6 +141,24 @@ export type AudioUpload = {
   type: string;
 };
 
+/**
+ * Rozszerzenie pliku dla typu MIME nagrania z przeglądarki (`MediaRecorder`).
+ * Chrome/Firefox dają `audio/webm;codecs=opus`, Safari `audio/mp4` — Whisper
+ * wykrywa format po nazwie pliku, więc nazwa musi zgadzać się z zawartością.
+ */
+function extForMime(mime: string): string | null {
+  const base = mime.split(';')[0].trim().toLowerCase();
+  const map: Record<string, string> = {
+    'audio/webm': 'webm',
+    'audio/mp4': 'm4a',
+    'audio/x-m4a': 'm4a',
+    'audio/ogg': 'ogg',
+    'audio/wav': 'wav',
+    'audio/mpeg': 'mp3',
+  };
+  return map[base] ?? null;
+}
+
 /** Operacje na sytuacjach dnia (S-01). */
 export const situationsApi = {
   /**
@@ -147,17 +166,30 @@ export const situationsApi = {
    * `FormData` z polem-plikiem w kształcie RN (`{ uri, name, type }`).
    */
   async create(audio: AudioUpload, durationMs: number): Promise<Situation> {
-    // Globalny `fetch` w Expo SDK 56 to WinterCG fetch. Jego `convertFormData`
-    // NIE obsługuje natywnego wariantu RN `{ uri }` ani Bloba z `ArrayBuffer`
-    // (RN-owy `Blob`). Akceptuje za to część będącą obiektem z metodą `bytes()`
-    // oraz polami `name`/`type` (nagłówki multipart). Wczytujemy nagranie do bajtów
-    // przez `expo-file-system` i dokładamy taką część — `name` z rozszerzeniem
-    // `.m4a` jest kluczowe (serwer i Whisper wykrywają format po nazwie pliku).
-    const bytes = new Uint8Array(await new File(audio.uri).arrayBuffer());
-    const filePart = { name: audio.name, type: audio.type, bytes: async () => bytes };
-
     const form = new FormData();
-    form.append('audio', filePart as unknown as Blob);
+
+    if (Platform.OS === 'web') {
+      // Web: `expo-file-system` to atrapa, a URI nagrania to `blob:` z MediaRecordera.
+      // Pobieramy Bloba przez `fetch` i wysyłamy jako zwykły plik multipart; nazwę
+      // dopasowujemy do faktycznego MIME (webm w Chrome/Firefox, mp4 w Safari).
+      const blob = await (await fetch(audio.uri)).blob();
+      const mime = blob.type || audio.type;
+      const ext = extForMime(mime);
+      const stem = audio.name.replace(/\.[^.]*$/, '');
+      const name = ext ? `${stem}.${ext}` : audio.name;
+      form.append('audio', new Blob([blob], { type: mime.split(';')[0] }), name);
+    } else {
+      // Natywnie: globalny `fetch` w Expo SDK 56 to WinterCG fetch. Jego `convertFormData`
+      // NIE obsługuje wariantu RN `{ uri }` ani Bloba z `ArrayBuffer` (RN-owy `Blob`).
+      // Akceptuje za to część będącą obiektem z metodą `bytes()` oraz polami
+      // `name`/`type` (nagłówki multipart). Wczytujemy nagranie do bajtów przez
+      // `expo-file-system` i dokładamy taką część — `name` z rozszerzeniem `.m4a`
+      // jest kluczowe (serwer i Whisper wykrywają format po nazwie pliku).
+      const bytes = new Uint8Array(await new File(audio.uri).arrayBuffer());
+      const filePart = { name: audio.name, type: audio.type, bytes: async () => bytes };
+      form.append('audio', filePart as unknown as Blob);
+    }
+
     form.append('duration_ms', String(durationMs));
 
     return apiFetch<Situation>('/situations', { method: 'POST', body: form });
