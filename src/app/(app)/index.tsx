@@ -5,27 +5,22 @@ import { Platform, Pressable, StyleSheet, View } from 'react-native';
 import { BrandMark } from '@/components/brand-mark';
 import { RecordButton } from '@/components/record-button';
 import { Screen } from '@/components/screen';
-import { SituationList, type LocalSituation } from '@/components/situation-list';
+import {
+  SituationList,
+  createdAtMs,
+  isGenerationLive,
+  type LocalSituation,
+} from '@/components/situation-list';
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
 import { useAuth } from '@/contexts/auth-context';
 import { situationsApi, type AudioUpload, type Situation } from '@/lib/api';
 
-// Co ile odpytujemy serwer, dopóki istnieją wiersze `pending`.
+// Co ile odpytujemy serwer, dopóki trwa transkrypcja lub generowanie fiszek.
 const POLL_MS = 2000;
 // Twardy limit: po tym czasie bez finalizacji uznajemy `pending` za osierocony
 // (ubity/przekroczony `waitUntil`, błąd UPDATE) i renderujemy jak stan błędu.
 const ORPHAN_MS = 60000;
-
-/**
- * Czas utworzenia w ms. Serwer: `YYYY-MM-DD HH:MM:SS` (UTC); wiersz tymczasowy: ISO.
- * Sprowadzamy oba do formy parsowalnej; niepewny parse traktujemy jak „świeży".
- */
-function createdAtMs(createdAt: string): number {
-  const iso = createdAt.includes('T') ? createdAt : `${createdAt.replace(' ', 'T')}Z`;
-  const ms = new Date(iso).getTime();
-  return Number.isNaN(ms) ? Date.now() : ms;
-}
 
 /** Data dnia po polsku, np. „środa, 10 września" — nagłówek listy sytuacji dnia. */
 function formatToday(): string {
@@ -73,6 +68,10 @@ export default function HomeScreen() {
   // błędzie DELETE id jest zdejmowane i `refresh()` przywraca wiersz.
   const deletingRef = useRef<Set<number>>(new Set());
 
+  // Chwila ostatniego ticku — jedyne źródło „teraz" w renderze (czysty render, bez
+  // `Date.now()`): od niej liczymy, czy generowanie fiszek jest jeszcze „żywe".
+  const [now, setNow] = useState(() => Date.now());
+
   const refresh = useCallback(async () => {
     try {
       const { situations: server } = await situationsApi.list();
@@ -89,25 +88,31 @@ export default function HomeScreen() {
   // Pobranie na wejściu i przy każdym powrocie na ekran.
   useFocusEffect(
     useCallback(() => {
+      setNow(Date.now());
       void refresh();
     }, [refresh]),
   );
 
-  const hasPending = situations.some((r) => r.status === 'pending');
+  // Polling trwa, dopóki jakaś sytuacja jest w transkrypcji (`pending`) ALBO ma
+  // transkrypt, a fiszki jeszcze się generują (żywe, w limicie czasu). Bez drugiego
+  // warunku lista gasła po transkrypcji i „Generuję fiszki…" wisiało do refokusu.
+  const shouldPoll = situations.some(
+    (r) => r.status === 'pending' || isGenerationLive(r, now),
+  );
 
-  // Polling aktywny tylko gdy istnieją wiersze `pending`. Każdy tick: (1) osierocone
-  // `pending` (wiek > ORPHAN_MS) flipujemy w `failed` — to zatrzyma polling, (2) gdy
-  // wciąż są żywe `pending`, odświeżamy z serwera.
+  // Każdy tick: (1) osierocone `pending` (wiek > ORPHAN_MS) flipujemy w `failed`,
+  // (2) przesuwamy `now` — generowanie poza limitem przestaje być „żywe" i polling
+  // gaśnie sam, (3) odświeżamy z serwera.
   useEffect(() => {
-    if (!hasPending) {
+    if (!shouldPoll) {
       return;
     }
     const interval = setInterval(() => {
+      const tick = Date.now();
       setSituations((prev) => {
-        const now = Date.now();
         let changed = false;
         const next = prev.map((r) => {
-          if (r.status === 'pending' && now - createdAtMs(r.created_at) > ORPHAN_MS) {
+          if (r.status === 'pending' && tick - createdAtMs(r.created_at) > ORPHAN_MS) {
             changed = true;
             return { ...r, status: 'failed' as const };
           }
@@ -115,10 +120,11 @@ export default function HomeScreen() {
         });
         return changed ? next : prev;
       });
+      setNow(tick);
       void refresh();
     }, POLL_MS);
     return () => clearInterval(interval);
-  }, [hasPending, refresh]);
+  }, [shouldPoll, refresh]);
 
   const handleCaptured = useCallback((audio: AudioUpload, durationMs: number) => {
     const tempId = `temp-${Date.now()}-${Math.random().toString(36).slice(2)}`;
@@ -191,7 +197,7 @@ export default function HomeScreen() {
       <RecordButton onCaptured={handleCaptured} />
 
       <View style={styles.listWrapper}>
-        <SituationList situations={situations} onDelete={handleDelete} />
+        <SituationList situations={situations} now={now} onDelete={handleDelete} />
       </View>
     </Screen>
   );
