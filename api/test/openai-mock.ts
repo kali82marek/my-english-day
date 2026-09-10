@@ -5,7 +5,7 @@
  *
  * Routing po URL: `mockOpenAI({ transcription, chat })` — brak wpisu albo inny adres
  * → `Unmocked fetch: <url>` (test nigdy nie wychodzi do sieci). Odpowiedzi budują
- * `whisperResponse` (Whisper zwraca `text/plain`) oraz para builderów Chat Completions.
+ * `whisperResponse` / `whisperVerboseResponse` (Whisper `verbose_json`) oraz para builderów Chat Completions.
  *
  * Kształt odpowiedzi Chat Completions żyje TYLKO tutaj (dawniej kopia w
  * `src/lib/flashcards.test.ts`). Dwa buildery, dwa zastosowania:
@@ -32,9 +32,43 @@ export function requestUrl(input: FetchInput): string {
   return input.url;
 }
 
-/** Odpowiedź Whisper (`response_format=text` → surowy transkrypt w ciele). */
+/** Jeden segment odpowiedzi `verbose_json` Whisper — w zakresie, którego używa kod. */
+export type WhisperSegment = { text: string; no_speech_prob?: number };
+
+/**
+ * Odpowiedź Whisper `verbose_json` z jawnymi segmentami — do testów filtra ciszy
+ * (`no_speech_prob`) i halucynacji. `text` to złączenie segmentów, jak w realnej odpowiedzi.
+ */
+export function whisperVerboseResponse(segments: WhisperSegment[], status = 200): Response {
+  const body = {
+    task: 'transcribe',
+    language: 'polish',
+    duration: segments.length * 2,
+    text: segments.map((s) => s.text).join(' '),
+    segments: segments.map((s, i) => ({
+      id: i,
+      start: i * 2,
+      end: i * 2 + 2,
+      text: s.text,
+      no_speech_prob: s.no_speech_prob ?? 0.01,
+      avg_logprob: -0.3,
+    })),
+  };
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { 'Content-Type': 'application/json' },
+  });
+}
+
+/**
+ * Odpowiedź Whisper: sukces → `verbose_json` z jednym segmentem mowy (`no_speech_prob`
+ * niski); status non-2xx → surowe ciało tekstowe błędu (jak realny błąd API).
+ */
 export function whisperResponse(text: string, status = 200): Response {
-  return new Response(text, { status, headers: { 'Content-Type': 'text/plain' } });
+  if (status < 200 || status >= 300) {
+    return new Response(text, { status, headers: { 'Content-Type': 'text/plain' } });
+  }
+  return whisperVerboseResponse([{ text }], status);
 }
 
 /** Surowy kształt wiadomości asystenta w `choices[0]` — jak w realnej odpowiedzi OpenAI. */

@@ -26,7 +26,13 @@ import {
   withTrigger,
 } from '../../test/db';
 import { keysOf, SITUATION_DTO_KEYS, type SituationDTO } from '../../test/dto';
-import { chatResponse, chatResponseRaw, mockOpenAI, whisperResponse } from '../../test/openai-mock';
+import {
+  chatResponse,
+  chatResponseRaw,
+  mockOpenAI,
+  whisperResponse,
+  whisperVerboseResponse,
+} from '../../test/openai-mock';
 import { deleteSituation, getProposals, getSituations, postSituation } from '../../test/request';
 
 async function listSituations(token: string): Promise<SituationDTO[]> {
@@ -60,6 +66,35 @@ describe('Ryzyko #1: nagranie nie przepada', () => {
     expect(listed?.status).toBe('failed');
 
     // Tylko Whisper; generowanie fiszek nie ruszyło.
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
+  });
+
+  // Cisza: Whisper na nagraniu bez mowy „halucynuje" napisy Amara (bug zgłoszony
+  // 2026-09-10 — z halucynacji powstawały fiszki). Deliberate-break: w
+  // `lib/transcription.ts` ustaw `NO_SPEECH_THRESHOLD = 1` i opróżnij
+  // `HALLUCINATION_PHRASES` → transkrypt = Amara, chat wywołany → czerwony.
+  it('T1.5 nagranie bez mowy (halucynacja Amara) → `failed`, transkrypt NULL, zero fiszek, chat nie wywołany', async () => {
+    const { token } = await seedUser(env);
+    const fetchSpy = mockOpenAI({
+      transcription: whisperVerboseResponse([
+        { text: 'Napisy stworzone przez społeczność Amara.org', no_speech_prob: 0.91 },
+      ]),
+      chat: chatResponse([
+        { type: 'phrase', front_en: 'subtitles', back_pl: 'napisy', example_en: '', is_variant: false },
+      ]),
+    });
+
+    const { res, ctx } = await postSituation(env, token);
+    expect(res.status).toBe(201);
+    const { id } = (await res.json()) as { id: number };
+    await expect(waitOnExecutionContext(ctx)).resolves.toBeUndefined();
+
+    const row = await readSituation(env, id);
+    expect(row?.status).toBe('failed');
+    expect(row?.transcript).toBeNull();
+    expect(await readFlashcards(env, id)).toHaveLength(0);
+
+    // Tylko Whisper — generator nie dostał halucynacji.
     expect(fetchSpy).toHaveBeenCalledTimes(1);
   });
 
